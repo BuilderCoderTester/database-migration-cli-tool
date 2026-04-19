@@ -2,6 +2,7 @@ package com.project.demo.core;
 
 import com.project.demo.config.MigrationProperties;
 import com.project.demo.model.MigrationScript;
+import com.project.demo.utility.VersionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -29,76 +30,81 @@ public class MigrationLoader {
     private MigrationProperties properties;
 
     public List<MigrationScript> loadPendingMigrations(String currentVersion) throws IOException {
-        List<MigrationScript> pending = new ArrayList<>();
+
         List<MigrationScript> versioned = new ArrayList<>();
         List<MigrationScript> repeatables = new ArrayList<>();
 
-        Path path = Paths.get(properties.getPath());  // FIXED: use properties
+        Path path = Paths.get(properties.getPath());
 
         if (!Files.exists(path)) {
             Files.createDirectories(path);
-            return pending;
+            return List.of();
         }
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(path, "*.sql")) {
+
             for (Path file : stream) {
+
                 String fileName = file.getFileName().toString();
-                Matcher matcher = MIGRATION_PATTERN.matcher(fileName);
 
                 Matcher v = VERSIONED_PATTERN.matcher(fileName);
                 Matcher r = REPEATABLE_PATTERN.matcher(fileName);
 
-                if (matcher.matches()) {
-                    String version = matcher.group(1);
-                    String description = matcher.group(2).replace("_", " ");
+                String content = Files.readString(file); // ✅ FIXED
 
-                    // Only load migrations newer than current version
-                    if (currentVersion == null || version.compareTo(currentVersion) > 0) {
-                        String content = Files.readString(file);
-                        MigrationScript script = parseScript(version, description, content);
-                        script.setFileName(fileName);
-                        pending.add(script);
-                    }
-                }
+                // ========================
+                // VERSIONED MIGRATIONS
+                // ========================
                 if (v.matches()) {
+
                     String version = "V" + v.group(1);
                     String description = v.group(2).replace("_", " ");
 
                     if (currentVersion == null ||
                             VersionUtils.extract(version) > VersionUtils.extract(currentVersion)) {
 
-                        MigrationScript s = parseScript(version, description, content);
-                        s.setFileName(fileName);
-                        s.setRepeatable(false);
-                        versioned.add(s);
+                        MigrationScript script = parseScript(version, description, content);
+                        script.setFileName(fileName);
+                        script.setRepeatable(false);
+
+                        versioned.add(script);
                     }
                 }
-                if (r.matches()) {
+
+                // ========================
+                // REPEATABLE MIGRATIONS
+                // ========================
+                else if (r.matches()) {
+
                     String name = r.group(1);
 
-                    MigrationScript s = parseScript("R__" + name, name, content);
-                    s.setFileName(fileName);
-                    s.setRepeatable(true);
-                    s.setName(name);
-                    repeatables.add(s);
+                    MigrationScript script = parseScript("R__" + name, name, content);
+                    script.setFileName(fileName);
+                    script.setRepeatable(true);
+                    script.setName(name);
+
+                    repeatables.add(script);
                 }
             }
         }
 
-        // sort versioned numerically
-        versioned.sort(Comparator.comparingLong(m -> VersionUtils.extract(m.getVersion())));
+        // 🔥 sort versioned (numeric safe)
+        versioned.sort(Comparator.comparingLong(
+                m -> VersionUtils.extract(m.getVersion())
+        ));
 
-        // repeatables can be sorted by name for determinism
+        // 🔥 sort repeatables
         repeatables.sort(Comparator.comparing(MigrationScript::getName));
 
-        // IMPORTANT: versioned first, then repeatables
-        List<MigrationScript> all = new ArrayList<>();
-        all.addAll(versioned);
-        all.addAll(repeatables);
+        // 🔥 combine
+        List<MigrationScript> result = new ArrayList<>();
+        result.addAll(versioned);
+        result.addAll(repeatables);
 
-        pending.sort(Comparator.comparing(MigrationScript::getVersion));
-        return pending;
+        return result;
     }
+
+//    public listloadPendingMigrations
 
     public MigrationScript loadSpecificVersion(String version) throws IOException {
         Path path = Paths.get(properties.getPath());  // FIXED: use properties

@@ -37,7 +37,7 @@ public class MigrationCommands {
 
     @Command(command = "status", description = "Show current migration status")
     public String status() {
-        var currentOpt = engine.getCurrentVersion();
+        var currentOpt = helper.getCurrentVersion();
         String current = currentOpt.orElse("None");
 
         try {
@@ -66,7 +66,7 @@ public class MigrationCommands {
 
         try {
             migrationLockService.acquireLock();
-            var currentOpt = engine.getCurrentVersion();
+            var currentOpt = helper.getCurrentVersion();
             List<MigrationScript> pending = loader.loadPendingMigrations(currentOpt.orElse(null));
 
             if (pending.isEmpty()) {
@@ -125,7 +125,7 @@ public class MigrationCommands {
     @Command(command = "rollback", description = "Rollback last migration or to specific version")
     public String rollback(@Option(description = "Target version") String targetVersion) {
         try {
-            var currentOpt = engine.getCurrentVersion();
+            var currentOpt = helper.getCurrentVersion();
             if (currentOpt.isEmpty()) {
                 return "No migrations to rollback";
             }
@@ -171,7 +171,7 @@ public class MigrationCommands {
 
     @Command(command = "history", description = "Show migration history")
     public Table history() {
-        List<Migration> migrations = engine.getMigrationHistory();
+        List<Migration> migrations = helper.getMigrationHistory();
 
         String[][] data = new String[migrations.size() + 1][5];
         data[0] = new String[]{"Version", "Description", "Executed At", "Time (ms)", "Status"};
@@ -212,12 +212,12 @@ public class MigrationCommands {
     @Command(command = "validate", description = "Validate migrations against database")
     public String validate() {
         try {
-            List<Migration> history = engine.getMigrationHistory();
+            List<Migration> history = helper.getMigrationHistory();
             int errors = 0;
 
             for (Migration migration : history) {
                 MigrationScript script = loader.loadSpecificVersion(migration.getVersion());
-                if (script != null && !engine.validateChecksum(migration.getVersion(), script.getUpScript())) {
+                if (script != null && !helper.validateChecksum(migration.getVersion(), script.getUpScript())) {
                     errors++;
                     System.out.println("Checksum mismatch: " + migration.getVersion());
                 }

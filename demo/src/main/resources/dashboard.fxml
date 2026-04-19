@@ -1,0 +1,80 @@
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="15"
+      xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml">
+
+    <padding>
+        <Insets top="15" right="15" bottom="15" left="15"/>
+    </padding>
+
+    <!-- HEADER -->
+    <Label text="Migration Dashboard"
+           style="-fx-font-size: 22px; -fx-font-weight: bold;" />
+
+    <!-- STATUS PANEL -->
+    <HBox spacing="30"
+          style="-fx-background-color: #252526; -fx-padding: 10; -fx-background-radius: 6;">
+
+        <VBox>
+            <Label text="Current Version"/>
+            <Label fx:id="currentVersion" text="-" />
+        </VBox>
+
+        <VBox>
+            <Label text="Status"/>
+            <Label fx:id="statusLabel" text="-" />
+        </VBox>
+
+        <VBox>
+            <Label text="Pending"/>
+            <Label fx:id="pendingCount" text="-" />
+        </VBox>
+
+    </HBox>
+
+    <!-- ACTION BUTTONS -->
+    <HBox spacing="10">
+        <Button text="Run Migration" onAction="#runMigration"/>
+        <Button text="Refresh" onAction="#refresh"/>
+    </HBox>
+
+    <!-- HISTORY TABLE -->
+    <VBox spacing="5"
+          style="-fx-background-color: #252526; -fx-padding: 10; -fx-background-radius: 6;">
+
+        <Label text="Migration History"
+               style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+
+        <TableView fx:id="historyTable" prefHeight="200">
+            <columns>
+                <TableColumn fx:id="colVersion" text="Version" prefWidth="120"/>
+                <TableColumn fx:id="colStatus" text="Status" prefWidth="120"/>
+                <TableColumn fx:id="colTime" text="Time(ms)" prefWidth="120"/>
+                <TableColumn fx:id="colDate" text="Executed At" prefWidth="200"/>
+            </columns>
+        </TableView>
+
+    </VBox>
+
+    <!-- LOG PANEL -->
+    <VBox spacing="5"
+          style="-fx-background-color: #252526; -fx-padding: 10; -fx-background-radius: 6;">
+
+        <Label text="Logs"
+               style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+
+        <TextArea fx:id="logArea"
+                  prefHeight="150"
+                  editable="false"
+                  wrapText="true"/>
+    </VBox>
+
+</VBox>
