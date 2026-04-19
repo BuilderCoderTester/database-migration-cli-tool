@@ -34,7 +34,7 @@ public class MigrationEngine {
     private final MigrationFailureService failureService;
     private final MigrationValidator validator;
     private final SqlExecutor sqlExecutor;
-    private final ChecksumService checksumService;
+    private final Helper helper;
 
     public void initialize() {
         repository.createSchemaHistoryTable();
@@ -49,13 +49,12 @@ public class MigrationEngine {
         logger.info("Applying migration: {} - {}", script.getVersion(), script.getDescription());
 
         try {
-            // 1.validate
             validator.validateBeforeUp(script);
 
             if (script.isRepeatable()) {
                 applyRepeatable(script, startTime);
             } else {
-                applyVersioned(script, startTime);
+                helper.applyVersioned(script, startTime);
             }
 
         } catch (Exception e) {
@@ -64,16 +63,9 @@ public class MigrationEngine {
         }
     }
 
-    private void applyVersioned(MigrationScript script, long start) {
-
-        sqlExecutor.executeScript(script.getUpScript());
-
-        saveMigrationRecord(script, System.currentTimeMillis() - start, false);
-    }
-
     private void applyRepeatable(MigrationScript script, long start) {
 
-        String checksum = calculateChecksum(script.getUpScript());
+        String checksum = helper.calculateChecksum(script.getUpScript());
 
         Optional<Migration> existing = repository.findById(script.getVersion());
 
@@ -85,32 +77,11 @@ public class MigrationEngine {
 
             sqlExecutor.executeScript(script.getUpScript());
 
-            saveMigrationRecord(script, System.currentTimeMillis() - start, true);
+            helper.saveMigrationRecord(script, System.currentTimeMillis() - start, true);
 
         } else {
             logger.info("Skipping repeatable (no changes): {}", script.getVersion());
         }
-    }
-
-    private void saveMigrationRecord(MigrationScript script,
-                                     long executionTime,
-                                     boolean repeatable) {
-
-        Migration m = new Migration(
-                script.getVersion(),
-                script.getDescription(),
-                script.getUpScript()
-        );
-
-        m.setChecksum(calculateChecksum(script.getUpScript()));
-        m.setExecutedAt(LocalDateTime.now());
-        m.setExecutionTime(executionTime);
-        m.setSuccess(true);
-        m.setDirty(false);
-        m.setRepeatable(repeatable);
-        m.setName(script.getName());
-
-        repository.save(m);
     }
 
     @Transactional
@@ -162,29 +133,4 @@ public class MigrationEngine {
         migrateUp(script);
     }
 
-    public boolean validateChecksum(String version, String script) {
-        Optional<Migration> existing = repository.findByVersion(version);
-        if (existing.isEmpty()) return true;
-
-        String currentChecksum = calculateChecksum(script);
-        return currentChecksum.equals(existing.get().getChecksum());
-    }
-
-    private String calculateChecksum(String content) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(content.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("SHA-256 not available", e);
-        }
-    }
-
-    public Optional<String> getCurrentVersion() {
-        return repository.findLastSuccessful().map(Migration::getVersion);
-    }
-
-    public List<Migration> getMigrationHistory() {
-        return repository.findAll();
-    }
 }

@@ -20,10 +20,6 @@ public class MigrationValidator {
             throw new RuntimeException("Database is in DIRTY state. Resolve before continuing.");
         }
 
-        if (script.isRepeatable()) {
-            return; // 🔴 skip version checks
-        }
-
         repository.findById(script.getVersion()).ifPresent(existing -> {
             String newChecksum = checksumService.calculate(script.getUpScript());
             if (!existing.getChecksum().equals(newChecksum)) {
@@ -54,6 +50,13 @@ public class MigrationValidator {
                                 " but found: " + script.getVersion()
                 );
             }
+        }
+    }
+    public boolean validateDirtyDb(){
+        if (repository.existsByDirtyTrue()) {
+            throw new RuntimeException("Database is in DIRTY state. Resolve before continuing.");
+        }else{
+            return true;
         }
     }
     private long extractVersionNumber(String version) {

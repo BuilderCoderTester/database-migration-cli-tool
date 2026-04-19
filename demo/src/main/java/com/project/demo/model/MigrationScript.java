@@ -6,7 +6,6 @@ import lombok.*;
 @Getter
 @Setter
 @NoArgsConstructor
-@RequiredArgsConstructor
 @AllArgsConstructor
 public class MigrationScript {
     private String version;
