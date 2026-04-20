@@ -7,6 +7,7 @@ import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.repository.MigrationRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 @AllArgsConstructor
+@Component
 public class Helper {
 
     private final SqlExecutor sqlExecutor;

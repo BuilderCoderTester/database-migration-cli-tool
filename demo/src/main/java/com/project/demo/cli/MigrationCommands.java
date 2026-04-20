@@ -35,6 +35,11 @@ public class MigrationCommands {
         return "✓ Migration schema initialized successfully";
     }
 
+    @Command(command = "list" ,description = "List all pending Migration")
+    public String list(){
+        return loader.listAllPendingMigration();
+    }
+
     @Command(command = "status", description = "Show current migration status")
     public String status() {
         var currentOpt = helper.getCurrentVersion();

@@ -4,13 +4,12 @@ import com.project.demo.config.MigrationProperties;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.utility.VersionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,6 +27,11 @@ public class MigrationLoader {
 
     @Autowired
     private MigrationProperties properties;
+    private final JdbcTemplate jdbcTemplate;
+
+    public MigrationLoader(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     public List<MigrationScript> loadPendingMigrations(String currentVersion) throws IOException {
 
@@ -157,5 +161,72 @@ public class MigrationLoader {
         }
 
         Files.writeString(filePath, content.toString());
+    }
+
+    public String listAllPendingMigration() {
+        try {
+            // 1️⃣ Load all migration files from folder
+            List<MigrationScript> allScripts = loadFromFolder();
+
+            // 2️⃣ Load executed versions from DB
+            Set<String> executedVersions = loadExecutedVersionsFromDB();
+
+            // 3️⃣ Filter pending scripts
+            List<MigrationScript> pending = allScripts.stream()
+                    .filter(script -> !executedVersions.contains(script.getVersion()))
+                    .toList();
+
+            // 4️⃣ Format output
+            if (pending.isEmpty()) {
+                return "✅ No pending migrations";
+            }
+
+            StringBuilder sb = new StringBuilder("⏳ Pending Migrations:\n");
+
+            for (MigrationScript script : pending) {
+                sb.append(String.format(" - %s__%s\n",
+                        script.getVersion(),
+                        script.getDescription()));
+            }
+
+            return sb.toString();
+
+        } catch (Exception e) {
+            return "❌ Error fetching pending migrations: " + e.getMessage();
+        }
+    }
+
+    private List<MigrationScript> loadFromFolder() throws IOException {
+
+        Path path = Paths.get("migrations");
+
+        if (!Files.exists(path)) {
+            return List.of();
+        }
+
+        return Files.list(path)
+                .filter(p -> p.getFileName().toString().endsWith(".sql"))
+                .map(this::parseFileName)
+                .sorted(Comparator.comparing(MigrationScript::getVersion))
+                .toList();
+    }
+
+    private MigrationScript parseFileName(Path file) {
+
+        String name = file.getFileName().toString(); // V1__init.sql
+
+        String[] parts = name.replace(".sql", "").split("__");
+
+        return new MigrationScript(
+                parts[0],  // version
+                parts[1]   // description
+        );
+    }
+
+    private Set<String> loadExecutedVersionsFromDB() {
+
+        String sql = "SELECT version FROM schema_history WHERE success = true";
+
+        return new HashSet<>(jdbcTemplate.queryForList(sql, String.class));
     }
 }

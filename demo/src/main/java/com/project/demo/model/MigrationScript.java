@@ -25,4 +25,7 @@ public class MigrationScript {
 
     public MigrationScript(String version, String description, String script) {
     }
+
+    public MigrationScript(String part, String part1) {
+    }
 }
