@@ -199,7 +199,7 @@ public class MigrationLoader {
     private List<MigrationScript> loadFromFolder() throws IOException {
 
         Path path = Paths.get("migrations");
-
+        System.out.println("the path is : "+path);
         if (!Files.exists(path)) {
             return List.of();
         }
@@ -216,6 +216,9 @@ public class MigrationLoader {
         String name = file.getFileName().toString(); // V1__init.sql
 
         String[] parts = name.replace(".sql", "").split("__");
+        for(String c:parts){
+            System.out.println("the scripts : " + c);
+        }
 
         return new MigrationScript(
                 parts[0],  // version

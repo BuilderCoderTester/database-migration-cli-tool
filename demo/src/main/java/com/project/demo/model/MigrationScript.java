@@ -27,5 +27,7 @@ public class MigrationScript {
     }
 
     public MigrationScript(String part, String part1) {
+        this.version = part;
+        this.description = part1;
     }
 }
