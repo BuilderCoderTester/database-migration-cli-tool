@@ -27,34 +27,6 @@ public class Helper {
     private final MigrationValidator validator;
     private final MigrationLoader migrationLoader;
 
-    /// split the sql for migration validation
-    public List<String> splitSql(String sql) {
-
-        List<String> statements = new ArrayList<>();
-
-        StringBuilder current = new StringBuilder();
-        boolean inString = false;
-
-        for (char c : sql.toCharArray()) {
-
-            if (c == '\'') {
-                inString = !inString;
-            }
-
-            if (c == ';' && !inString) {
-                statements.add(current.toString().trim());
-                current.setLength(0);
-            } else {
-                current.append(c);
-            }
-        }
-
-        if (!current.isEmpty()) {
-            statements.add(current.toString().trim());
-        }
-
-        return statements;
-    }
 
     /// compare the scripts version
     public int compareVersion(String v1, String v2) {

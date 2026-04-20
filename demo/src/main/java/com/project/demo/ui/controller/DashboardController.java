@@ -12,13 +12,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Component
-@AllArgsConstructor
 public class DashboardController {
 
     @Autowired
     private MigrationEngine engine;
 
-    private final Helper helper;
+    @Autowired
+    private  Helper helper;
 
     @FXML
     private Label currentVersion;
