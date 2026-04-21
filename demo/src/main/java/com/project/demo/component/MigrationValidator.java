@@ -17,10 +17,12 @@ public class MigrationValidator {
 
     public void validateBeforeUp(MigrationScript script) {
         if (repository.existsByDirtyTrue()) {
+            System.out.println("break at the DirtyDb");
             throw new RuntimeException("Database is in DIRTY state. Resolve before continuing.");
         }
 
         repository.findById(script.getVersion()).ifPresent(existing -> {
+            System.out.println("break at the find");
             String newChecksum = checksumService.calculate(script.getUpScript());
             if (!existing.getChecksum().equals(newChecksum)) {
                 throw new RuntimeException("Checksum mismatch for version: " + script.getVersion());

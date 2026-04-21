@@ -70,10 +70,14 @@ public class MigrationCommands {
     public String migrate(@Option(description = "Target version") String targetVersion) {
 
         try {
-            migrationLockService.acquireLock();
-            var currentOpt = helper.getCurrentVersion();
-            List<MigrationScript> pending = loader.loadPendingMigrations(currentOpt.orElse(null));
 
+//            if(migrationLockService.acquireLock()){
+//                System.out.println("yes happering ");
+//            }
+            var currentOpt = helper.getCurrentVersion();
+            System.out.println("the current version "+ currentOpt);
+            List<MigrationScript> pending = loader.loadPendingMigrations(currentOpt.orElse(null));
+            System.out.println("the pending scripts are : " + pending);
             if (pending.isEmpty()) {
                 return "✓ No pending migrations";
             }
@@ -86,6 +90,7 @@ public class MigrationCommands {
 
                 if (targetVersion != null &&
                         helper.compareVersion(script.getVersion(), targetVersion) > 0) {
+                    System.out.println("break here");
                     break;
                 }
 

@@ -12,8 +12,9 @@ public class MigrationLockService {
         this.repository = repository;
     }
 
-    public void acquireLock() {
-        repository.holdLock(getHostName());
+    public Boolean acquireLock() {
+        System.out.println("reach-1");
+        return repository.holdLock(getHostName());
     }
 
     public void releaseLock() {

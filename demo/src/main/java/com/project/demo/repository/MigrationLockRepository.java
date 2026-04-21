@@ -9,7 +9,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Optional;
+
 @Repository
 public class MigrationLockRepository {
 
@@ -20,34 +23,55 @@ public class MigrationLockRepository {
     }
 
     @Transactional
-    public void holdLock(String lockedBy) {
+    public Boolean holdLock(String lockedBy) {
+
+//        check whether the tables exist or not
+        String check = """
+                CREATE TABLE IF NOT EXISTS migration_lock (
+                    id VARCHAR(255) PRIMARY KEY,
+                    locked BOOLEAN DEFAULT FALSE,
+                    locked_at TIMESTAMP,
+                    locked_by VARCHAR(255)
+                    )
+                """;
+        jdbcTemplate.execute(check);
 
         String sql = """
-            UPDATE migration_lock
-            SET locked = true,
-                locked_at = CURRENT_TIMESTAMP,
-                locked_by = ?
-            WHERE id = 1
-              AND (locked = false OR locked_at < CURRENT_TIMESTAMP - INTERVAL '10 minutes')
-        """;
+                    UPDATE migration_lock
+                    SET locked = true,
+                        locked_at = CURRENT_TIMESTAMP,
+                        locked_by = ?
+                    WHERE id = 1
+                      AND (
+                          locked = false 
+                          OR locked_at < ?
+                      )
+                """;
 
-        int updated = jdbcTemplate.update(sql, lockedBy);
 
+        Timestamp timeout = Timestamp.valueOf(
+                LocalDateTime.now().minusMinutes(10)
+        );
+
+        int updated = jdbcTemplate.update(sql, lockedBy, timeout);
         if (updated == 0) {
-            throw new RuntimeException("Another migration is already running.");
+            throw new RuntimeException(
+                    "Migration lock not acquired. Another process is running."
+            );
         }
+        return true;
     }
 
     @Transactional
     public void releaseLock() {
 
         String sql = """
-            UPDATE migration_lock
-            SET locked = false,
-                locked_at = NULL,
-                locked_by = NULL
-            WHERE id = 1
-        """;
+                    UPDATE migration_lock
+                    SET locked = false,
+                        locked_at = NULL,
+                        locked_by = NULL
+                    WHERE id = 1
+                """;
 
         jdbcTemplate.update(sql);
     }

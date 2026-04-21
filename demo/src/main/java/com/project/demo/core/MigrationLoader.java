@@ -50,24 +50,28 @@ public class MigrationLoader {
             for (Path file : stream) {
 
                 String fileName = file.getFileName().toString();
-
+                System.out.println("the current file : " + fileName);
                 Matcher v = VERSIONED_PATTERN.matcher(fileName);
                 Matcher r = REPEATABLE_PATTERN.matcher(fileName);
 
                 String content = Files.readString(file); // ✅ FIXED
-
+                System.out.println("the content to the file : "+content);
                 // ========================
                 // VERSIONED MIGRATIONS
                 // ========================
+                System.out.println("version migration");
                 if (v.matches()) {
 
                     String version = "V" + v.group(1);
                     String description = v.group(2).replace("_", " ");
+                    System.out.println("the version : " + version);
+                    System.out.println("the version : " + description);
 
                     if (currentVersion == null ||
                             VersionUtils.extract(version) > VersionUtils.extract(currentVersion)) {
 
                         MigrationScript script = parseScript(version, description, content);
+                        System.out.println("the migraiotn scipt : " + script);
                         script.setFileName(fileName);
                         script.setRepeatable(false);
 
