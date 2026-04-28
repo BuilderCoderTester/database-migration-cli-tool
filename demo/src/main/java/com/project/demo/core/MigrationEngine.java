@@ -49,8 +49,11 @@ public class MigrationEngine {
         logger.info("Applying migration: {} - {}", script.getVersion(), script.getDescription());
 
         try {
-            validator.validateBeforeUp(script);
+            if(!validator.validateBeforeUp(script)){
+                System.out.println("false");
+            }
 
+            System.out.println("break--after validation");
             if (script.isRepeatable()) {
                 applyRepeatable(script, startTime);
             } else {

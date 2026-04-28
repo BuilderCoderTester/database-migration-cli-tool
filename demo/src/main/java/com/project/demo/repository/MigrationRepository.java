@@ -26,8 +26,8 @@ public class MigrationRepository {
 
     public void createSchemaHistoryTable() {
         String sql = """
-            CREATE TABLE IF NOT EXISTS schema_history (
-                id VARCHAR(255) PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS migration (
+                id BIGSERIAL PRIMARY KEY ,
                 version VARCHAR(50) NOT NULL,
                 description VARCHAR(255),
                 script TEXT,
@@ -43,9 +43,9 @@ public class MigrationRepository {
     @Transactional
     public void save(Migration migration) {
         String sql = """
-            INSERT INTO schema_history (id, version, description, script, checksum, 
+            INSERT INTO migration ( version, description, script, checksum, 
                                        executed_at, execution_time, success)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES ( ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (id) DO UPDATE SET
                 success = EXCLUDED.success,
                 execution_time = EXCLUDED.execution_time
@@ -121,29 +121,39 @@ public class MigrationRepository {
 
     @Transactional
     public Optional<Migration> findById(String version) {
-
-        String sql = "SELECT * FROM migrations WHERE version = ?";
+        System.out.println("reach point -2 " + version );
+        String sql = "SELECT * FROM migration WHERE version = ?";
 
         try {
+            System.out.println("eseche");
             Migration migration = jdbcTemplate.queryForObject(
                     sql,
                     new MigrationRowMapper(),
                     version
             );
+            System.out.println("the migrateoin after = " + migration);
             return Optional.ofNullable(migration);
 
         } catch (EmptyResultDataAccessException e) {
+            System.out.println("at the cache system .");
             return Optional.empty();
         }
     }
 
     @Transactional
     public boolean existsByDirtyTrue() {
-
-        String sql = "SELECT COUNT(*) FROM migrations WHERE dirty = true";
-
-        Integer count = jdbcTemplate.queryForObject(sql, Integer.class);
+        System.out.println("come");
+        String sql = "SELECT COUNT(*) FROM migration ;";
+        Integer count= 0;
+        try {
+             count = jdbcTemplate.queryForObject(sql, Integer.class);
+            System.out.println("come -2");
+        }catch (Exception e){
+            System.out.println("exception");
+        }
+        System.out.println("come-3" + count);
         return count != null && count > 0;
+
     }
 
     @Transactional

@@ -7,13 +7,15 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Table(name = "migrations")
+@Entity
+@Table(name = "migration")
 @Getter
 @Setter
 @NoArgsConstructor
 public class Migration {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String version;
 
     private String description;
