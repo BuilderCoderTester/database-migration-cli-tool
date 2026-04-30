@@ -50,28 +50,25 @@ public class MigrationLoader {
             for (Path file : stream) {
 
                 String fileName = file.getFileName().toString();
-                System.out.println("the current file : " + fileName);
+                System.out.println("CURRENT FILE : " + fileName);
                 Matcher v = VERSIONED_PATTERN.matcher(fileName);
                 Matcher r = REPEATABLE_PATTERN.matcher(fileName);
 
                 String content = Files.readString(file); // ✅ FIXED
-                System.out.println("the content to the file : "+content);
                 // ========================
                 // VERSIONED MIGRATIONS
                 // ========================
-                System.out.println("version migration");
                 if (v.matches()) {
 
                     String version = "V" + v.group(1);
                     String description = v.group(2).replace("_", " ");
-                    System.out.println("the version : " + version);
-                    System.out.println("the version : " + description);
+                    System.out.println("VERSION : " + version);
+                    System.out.println("DESCRIPTION : " + description);
 
                     if (currentVersion == null ||
                             VersionUtils.extract(version) > VersionUtils.extract(currentVersion)) {
 
                         MigrationScript script = parseScript(version, description, content);
-                        System.out.println("the migraiotn scipt : " + script);
                         script.setFileName(fileName);
                         script.setRepeatable(false);
 
@@ -116,16 +113,20 @@ public class MigrationLoader {
 
     public MigrationScript loadSpecificVersion(String version) throws IOException {
         Path path = Paths.get(properties.getPath());  // FIXED: use properties
-
+        System.out.println(path);
         // Try exact match first
-        String exactPattern = String.format("V%s__*.sql", version);
+        String exactPattern = String.format("%s__*.sql", version);
+        System.out.println(exactPattern);
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(path, exactPattern)) {
+            System.out.println(stream);
             for (Path file : stream) {
                 String content = Files.readString(file);
+                System.out.println(content);
                 String desc = file.getFileName().toString()
                         .replaceFirst("V\\d+__", "")
                         .replace(".sql", "")
                         .replace("_", " ");
+                System.out.println(desc);
                 return parseScript(version, desc, content);
             }
         }
@@ -135,7 +136,7 @@ public class MigrationLoader {
     private MigrationScript parseScript(String version, String description, String content) {
         String upScript = content;
         String downScript = null;
-
+        System.out.println("poiny");
         // Support for -- DOWN marker to separate up/down scripts
         int downIndex = content.indexOf("-- DOWN");
         if (downIndex != -1) {

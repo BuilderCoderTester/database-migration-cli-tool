@@ -23,43 +23,28 @@ public class MigrationLockRepository {
     }
 
     @Transactional
-    public Boolean holdLock(String lockedBy) {
-
-//        check whether the tables exist or not
-        String check = """
-                CREATE TABLE IF NOT EXISTS migration_lock (
-                    id VARCHAR(255) PRIMARY KEY,
-                    locked BOOLEAN DEFAULT FALSE,
-                    locked_at TIMESTAMP,
-                    locked_by VARCHAR(255)
-                    )
-                """;
-        jdbcTemplate.execute(check);
-
+    public void holdLock(String lockedBy) {
+        System.out.println("THE LOCKED IS HOLD BY : "+lockedBy);
         String sql = """
                     UPDATE migration_lock
                     SET locked = true,
                         locked_at = CURRENT_TIMESTAMP,
                         locked_by = ?
-                    WHERE id = 1
-                      AND (
-                          locked = false 
-                          OR locked_at < ?
-                      )
-                """;
+                    ;
+               """;
 
 
         Timestamp timeout = Timestamp.valueOf(
                 LocalDateTime.now().minusMinutes(10)
         );
 
-        int updated = jdbcTemplate.update(sql, lockedBy, timeout);
-        if (updated == 0) {
+        int updated = jdbcTemplate.update(sql, lockedBy);
+        // * this is a bug , not yet solved.
+        if (updated != 0) {
             throw new RuntimeException(
                     "Migration lock not acquired. Another process is running."
             );
         }
-        return true;
     }
 
     @Transactional

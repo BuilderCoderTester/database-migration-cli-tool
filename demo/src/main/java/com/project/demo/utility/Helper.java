@@ -58,7 +58,7 @@ public class Helper {
     public void applyVersioned(MigrationScript script, long start) {
 
         sqlExecutor.executeScript(script.getUpScript());
-
+        System.out.println("SCRIPT CHECKING IS DONE");
         saveMigrationRecord(script, System.currentTimeMillis() - start, false);
     }
 

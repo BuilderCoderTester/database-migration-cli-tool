@@ -15,6 +15,7 @@ public class SqlExecutor {
 
     public void executeScript(String script) {
         for (String statement : helper.splitSql(script)) {
+            System.out.println("THE STATEMENT : "+ statement);
             if (!statement.isBlank()) {
                 jdbcTemplate.execute(statement);
             }

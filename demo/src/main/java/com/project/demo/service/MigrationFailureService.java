@@ -23,7 +23,7 @@ public class MigrationFailureService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logFailure(MigrationScript script, Exception e) {
-
+        System.out.println("MIGRATION IS FAILING!");
         Migration migration = new Migration();
 
         migration.setVersion(script.getVersion());
@@ -34,7 +34,7 @@ public class MigrationFailureService {
         migration.setSuccess(false);
 
         // ✅ FIXED naming
-        migration.setErrorMessage(e.getMessage());
+        migration.setErrorMessage("Migration failed.");
 
         // ✅ stack trace method
         migration.setErrorStackTrace(getStackTrace(e));

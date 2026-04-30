@@ -15,27 +15,29 @@ public class MigrationValidator {
     private final MigrationRepository repository;
     private final ChecksumService checksumService;
 
-    public Boolean validateBeforeUp(MigrationScript script) {
+    public void validateBeforeUp(MigrationScript script) {
 
         if (!repository.existsByDirtyTrue()) {
-            System.out.println("break at the DirtyDb");
             throw new RuntimeException("Database is in DIRTY state. Resolve before continuing.");
         }
-        System.out.println("running--after checking dirt");
 //        repository.findById(script.getVersion()).ifPresent(existing -> {
-//            System.out.println("break at the find");
 //            String newChecksum = checksumService.calculate(script.getUpScript());
-//            System.out.println("the checksum " + newChecksum);
-//            if (!existing.getChecksum().equals(newChecksum)) {
+//            System.out.println("VERSION " + script.getVersion() + " " + " CHECKSUM " + newChecksum);
+
+            // the string equal function is not returning anything **BUG**
+//            System.out.println("EXISTING : " + newChecksum.equals(existing.getChecksum().toString()));
+
+//            if (!Boolean.parseBoolean(existing.getChecksum())) {
 //                throw new RuntimeException("Checksum mismatch for version: " + script.getVersion());
 //            }
 //            throw new RuntimeException("Migration already applied: " + script.getVersion());
 //        });
-        System.out.println("point -1 ");
 //        Optional<Migration> lastMigration =
 //                repository.findTopByOrderByExecutedAtDesc();
-        System.out.println("point -2 ");
-
+//        if(lastMigration.isEmpty()){
+//            System.out.println("LAST MIGRATION PRESENT : " + true);
+//        }
+//
 //        if (lastMigration.isPresent()) {
 //
 //            long last = extractVersionNumber(lastMigration.get().getVersion());
@@ -56,7 +58,6 @@ public class MigrationValidator {
 //                );
 //            }
 //        }
-        return true;
     }
 
     public boolean validateDirtyDb() {

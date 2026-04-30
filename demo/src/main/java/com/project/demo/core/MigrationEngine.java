@@ -14,6 +14,7 @@ import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.SqlOutParameter;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,22 +47,22 @@ public class MigrationEngine {
 
         long startTime = System.currentTimeMillis();
 
-        logger.info("Applying migration: {} - {}", script.getVersion(), script.getDescription());
+        System.out.println("Applying migration: " + script.getVersion()+" - "+ script.getDescription());
 
         try {
-            if(!validator.validateBeforeUp(script)){
-                System.out.println("false");
-            }
+//            validator.validateBeforeUp(script);
 
             System.out.println("break--after validation");
             if (script.isRepeatable()) {
                 applyRepeatable(script, startTime);
             } else {
+                System.out.println("HELPER FUNCITON IS RUNNING!");
                 helper.applyVersioned(script, startTime);
             }
 
         } catch (Exception e) {
             failureService.logFailure(script, e); // Log in separate transaction
+            System.out.println("MIGRATION FAILURE FUNCTION CALLED!");
             throw new RuntimeException("Migration failed: " + script.getVersion(), e);
         }
     }
