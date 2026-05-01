@@ -168,7 +168,7 @@ public class MigrationLoader {
         Files.writeString(filePath, content.toString());
     }
 
-    public String listAllPendingMigration() {
+    public List<MigrationScript> listAllPendingMigration() {
         try {
             // 1️⃣ Load all migration files from folder
             List<MigrationScript> allScripts = loadFromFolder();
@@ -183,7 +183,7 @@ public class MigrationLoader {
 
             // 4️⃣ Format output
             if (pending.isEmpty()) {
-                return "✅ No pending migrations";
+                return Collections.emptyList();
             }
 
             StringBuilder sb = new StringBuilder("⏳ Pending Migrations:\n");
@@ -194,10 +194,11 @@ public class MigrationLoader {
                         script.getDescription()));
             }
 
-            return sb.toString();
+            return pending;
 
         } catch (Exception e) {
-            return "❌ Error fetching pending migrations: " + e.getMessage();
+//            return "❌ Error fetching pending migrations: " + e.getMessage();
+            return Collections.emptyList();
         }
     }
 

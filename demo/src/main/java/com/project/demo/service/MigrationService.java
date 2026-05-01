@@ -1,47 +1,43 @@
-// MigrationCommands.java
-package com.project.demo.cli;
+package com.project.demo.service;
 
 import com.project.demo.core.MigrationEngine;
 import com.project.demo.core.MigrationLoader;
+import com.project.demo.dto.MigrationResult;
+import com.project.demo.dto.StatusResponse;
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.repository.MigrationRepository;
-import com.project.demo.service.MigrationLockService;
 import com.project.demo.utility.Helper;
-import lombok.AllArgsConstructor;
-import org.springframework.shell.command.annotation.Command;
 import org.springframework.shell.command.annotation.Option;
-import org.springframework.shell.table.*;
+import org.springframework.shell.table.ArrayTableModel;
+import org.springframework.shell.table.BorderStyle;
+import org.springframework.shell.table.Table;
+import org.springframework.shell.table.TableBuilder;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-@Command(group = "Database Migration")
-@AllArgsConstructor
-public class MigrationCommands {
+@Service
+public class MigrationService {
 
-    private final MigrationEngine engine;
-    private final MigrationLoader loader;
     private final Helper helper;
+    private final MigrationLoader loader;
+    private final MigrationEngine engine;
     private final MigrationLockService migrationLockService;
     private final MigrationRepository repository;
-
-
-    @Command(command = "init", description = "Initialize migration schema")
-    public String initialize() {
-        engine.initialize();
-        return "✓ Migration schema initialized successfully";
+    public MigrationService(Helper helper, MigrationLoader loader, MigrationEngine engine, MigrationLockService migrationLockService, MigrationRepository repository) {
+        this.helper = helper;
+        this.loader = loader;
+        this.engine = engine;
+        this.migrationLockService = migrationLockService;
+        this.repository = repository;
     }
 
-//    @Command(command = "list" ,description = "List all pending Migration")
-//    public String list(){
-//        return loader.listAllPendingMigration();
-//    }
-
-    @Command(command = "status", description = "Show current migration status")
-    public String status() {
+    public StatusResponse status (){
         var currentOpt = helper.getCurrentVersion();
         String current = currentOpt.orElse("None");
 
@@ -52,6 +48,8 @@ public class MigrationCommands {
             sb.append("Current Version: ").append(current).append("\n");
             sb.append("Pending Migrations: ").append(pending.size()).append("\n\n");
 
+            StatusResponse statusResponse = new StatusResponse(currentOpt.toString(),pending.size(),pending);
+
             if (!pending.isEmpty()) {
                 sb.append("Pending:\n");
                 for (MigrationScript script : pending) {
@@ -60,15 +58,22 @@ public class MigrationCommands {
                 }
             }
 
-            return sb.toString();
+            return statusResponse;
         } catch (IOException e) {
-            return "Error loading migrations: " + e.getMessage();
+//            return "Error loading migrations: " + e.getMessage();
+                return new StatusResponse();
         }
     }
 
-    @Command(command = "migrate", description = "Run pending migrations")
-    public String migrate(@Option(description = "Target version") String targetVersion) {
+    public void initialize() {
+        engine.initialize();
+    }
 
+    public List<MigrationScript> listAllPendingMigration() {
+        return loader.listAllPendingMigration();
+    }
+
+    public MigrationResult migrate(String targetVersion) {
         try {
             migrationLockService.acquireLock();
             System.out.println("MIGRATION LOCK IS ACQUIRED! ");
@@ -78,8 +83,11 @@ public class MigrationCommands {
             for(MigrationScript script : pending){
                 System.out.println("PENDING : " + script);
             }
+            StringBuilder message = new StringBuilder();
+//            MigrationResult result = new MigrationResult();
+
             if (pending.isEmpty()) {
-                return "✓ No pending migrations";
+                message.append("✓ No pending migrations");
             }
 
             int success = 0;
@@ -101,24 +109,25 @@ public class MigrationCommands {
                 } catch (Exception e) {
                     failed++;
 
-                    return String.format(
+                    message.append(String.format(
                             "✗ Migration failed at version %s\nReason: %s\nApplied: %s",
                             script.getVersion(),
                             e.getMessage(),
                             applied
-                    );
+                    ));
+                    return new MigrationResult(message.toString(),success,failed);
                 }
             }
 
-            return String.format(
+            return new MigrationResult( String.format(
                     "✓ Migration complete\nApplied: %s\nSuccess: %d, Failed: %d",
                     applied,
                     success,
                     failed
-            );
+            ),success,failed);
 
         } catch (IOException e) {
-            return "✗ Migration failed: " + e.getMessage();
+            return new MigrationResult("✗ Migration failed: " + e.getMessage(),0,0);
         }
         finally {
             try {
@@ -129,9 +138,6 @@ public class MigrationCommands {
         }
     }
 
-
-
-    @Command(command = "rollback", description = "Rollback last migration or to specific version")
     public String rollback(@Option(description = "Target version") String targetVersion) {
         try {
             var currentOpt = helper.getCurrentVersion();
@@ -157,7 +163,6 @@ public class MigrationCommands {
         }
     }
 
-    @Command(command = "repair", description = "Repair failed migrations")
     public String repair() {
 
         List<Migration> failed = repository.findFailedMigrations();
@@ -178,8 +183,7 @@ public class MigrationCommands {
         return "✓ Repaired " + failed.size() + " failed migrations";
     }
 
-    @Command(command = "history", description = "Show migration history")
-    public Table history() {
+    public List<Migration> history() {
         List<Migration> migrations = helper.getMigrationHistory();
 
         String[][] data = new String[migrations.size() + 1][5];
@@ -198,12 +202,12 @@ public class MigrationCommands {
             };
         }
 
-        return new TableBuilder(new ArrayTableModel(data))
-                .addFullBorder(BorderStyle.fancy_light)
-                .build();
+//        return new TableBuilder(new ArrayTableModel(data))
+//                .addFullBorder(BorderStyle.fancy_light)
+//                .build();
+        return migrations;
     }
 
-    @Command(command = "create", description = "Create new migration file")
     public String create(
             @Option(required = true, description = "Migration version") String version,
             @Option(required = true, description = "Description") String description,
@@ -218,7 +222,6 @@ public class MigrationCommands {
         }
     }
 
-    @Command(command = "validate", description = "Validate migrations against database")
     public String validate() {
         try {
             List<Migration> history = helper.getMigrationHistory();
