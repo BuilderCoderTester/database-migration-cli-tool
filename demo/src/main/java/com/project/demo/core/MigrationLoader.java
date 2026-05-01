@@ -193,7 +193,9 @@ public class MigrationLoader {
                         script.getVersion(),
                         script.getDescription()));
             }
-
+            for(int i = 0;i<pending.size();i++){
+                System.out.println("the pendingare : " + pending.get(i));
+            }
             return pending;
 
         } catch (Exception e) {
@@ -234,7 +236,7 @@ public class MigrationLoader {
 
     private Set<String> loadExecutedVersionsFromDB() {
 
-        String sql = "SELECT version FROM schema_history WHERE success = true";
+        String sql = "SELECT version FROM migration WHERE success = true";
 
         return new HashSet<>(jdbcTemplate.queryForList(sql, String.class));
     }

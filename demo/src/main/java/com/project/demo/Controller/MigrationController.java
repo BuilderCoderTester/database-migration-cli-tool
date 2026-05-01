@@ -1,6 +1,7 @@
 package com.project.demo.Controller;
 
 import com.project.demo.dto.ApiResponse;
+import com.project.demo.dto.ConnectionRequest;
 import com.project.demo.dto.MigrationResult;
 import com.project.demo.dto.StatusResponse;
 import com.project.demo.model.Migration;
@@ -9,6 +10,8 @@ import com.project.demo.service.MigrationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
 @RestController
@@ -19,6 +22,12 @@ public class MigrationController {
 
     private final MigrationService migrationService;
 
+    // connection cretaiotn
+    public ApiResponse connection(
+            @RequestBody ConnectionRequest connection
+    ) throws SQLException {
+        return migrationService.connect(connection);
+    }
     // ✅ INIT
     @PostMapping("/init")
     public ApiResponse initialize() {

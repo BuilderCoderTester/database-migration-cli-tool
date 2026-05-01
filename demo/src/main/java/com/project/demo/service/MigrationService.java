@@ -2,12 +2,15 @@ package com.project.demo.service;
 
 import com.project.demo.core.MigrationEngine;
 import com.project.demo.core.MigrationLoader;
+import com.project.demo.dto.ApiResponse;
+import com.project.demo.dto.ConnectionRequest;
 import com.project.demo.dto.MigrationResult;
 import com.project.demo.dto.StatusResponse;
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.repository.MigrationRepository;
 import com.project.demo.utility.Helper;
+import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.shell.command.annotation.Option;
 import org.springframework.shell.table.ArrayTableModel;
 import org.springframework.shell.table.BorderStyle;
@@ -15,7 +18,9 @@ import org.springframework.shell.table.Table;
 import org.springframework.shell.table.TableBuilder;
 import org.springframework.stereotype.Service;
 
+import javax.sql.DataSource;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +34,7 @@ public class MigrationService {
     private final MigrationEngine engine;
     private final MigrationLockService migrationLockService;
     private final MigrationRepository repository;
+    private ConnectionRequest connectionRequest;
     public MigrationService(Helper helper, MigrationLoader loader, MigrationEngine engine, MigrationLockService migrationLockService, MigrationRepository repository) {
         this.helper = helper;
         this.loader = loader;
@@ -239,5 +245,19 @@ public class MigrationService {
         } catch (IOException e) {
             return "Validation error: " + e.getMessage();
         }
+    }
+
+    public ApiResponse connect(ConnectionRequest connectionRequest) throws SQLException {
+        String url = "jdbc:postgresql://" + connectionRequest.getHost()+":"+connectionRequest.getPort()+
+                    "/"+connectionRequest.getDatabase();
+        DataSource ds = DataSourceBuilder.create()
+                .url(url)
+                .username(connectionRequest.getUsername())
+                .password(connectionRequest.getPassword())
+                .build();
+
+        ds.getConnection().close();
+        this.connectionRequest = connectionRequest;
+        return new ApiResponse(true,"connection succesfull");
     }
 }
