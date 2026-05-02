@@ -41,7 +41,9 @@ public class Migration {
     private boolean dirty;
     private boolean repeatable;
     private String name;
-
+    @ManyToOne
+    @JoinColumn(name = "connection_id") // FK column
+    private ConnectionConfig connection;
     public Migration(String version, String description, String script) {
         this.version = version;
         this.description = description;

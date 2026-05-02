@@ -2,12 +2,11 @@ package com.project.demo.service;
 
 import com.project.demo.core.MigrationEngine;
 import com.project.demo.core.MigrationLoader;
-import com.project.demo.dto.ApiResponse;
-import com.project.demo.dto.ConnectionRequest;
-import com.project.demo.dto.MigrationResult;
-import com.project.demo.dto.StatusResponse;
+import com.project.demo.dto.*;
+import com.project.demo.model.ConnectionConfig;
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
+import com.project.demo.repository.ConnectionRepo;
 import com.project.demo.repository.MigrationRepository;
 import com.project.demo.utility.Helper;
 import org.springframework.boot.jdbc.DataSourceBuilder;
@@ -20,7 +19,9 @@ import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,12 +36,14 @@ public class MigrationService {
     private final MigrationLockService migrationLockService;
     private final MigrationRepository repository;
     private ConnectionRequest connectionRequest;
-    public MigrationService(Helper helper, MigrationLoader loader, MigrationEngine engine, MigrationLockService migrationLockService, MigrationRepository repository) {
+    private ConnectionRepo connectionRepo;
+    public MigrationService(Helper helper, MigrationLoader loader, MigrationEngine engine, MigrationLockService migrationLockService, MigrationRepository repository, ConnectionRepo connectionRepo) {
         this.helper = helper;
         this.loader = loader;
         this.engine = engine;
         this.migrationLockService = migrationLockService;
         this.repository = repository;
+        this.connectionRepo = connectionRepo;
     }
 
     public StatusResponse status (){
@@ -247,17 +250,73 @@ public class MigrationService {
         }
     }
 
-    public ApiResponse connect(ConnectionRequest connectionRequest) throws SQLException {
-        String url = "jdbc:postgresql://" + connectionRequest.getHost()+":"+connectionRequest.getPort()+
-                    "/"+connectionRequest.getDatabase();
-        DataSource ds = DataSourceBuilder.create()
-                .url(url)
-                .username(connectionRequest.getUsername())
-                .password(connectionRequest.getPassword())
-                .build();
+    public ConnectionResponse connect(ConnectionRequest connectionRequest) {
 
-        ds.getConnection().close();
-        this.connectionRequest = connectionRequest;
-        return new ApiResponse(true,"connection succesfull");
+        String baseUrl = "jdbc:postgresql://"
+                + connectionRequest.getHost() + ":"
+                + connectionRequest.getPort() + "/postgres";
+
+        try {
+            // 1. Connect to default DB
+            DataSource ds = DataSourceBuilder.create()
+                    .url(baseUrl)
+                    .username(connectionRequest.getUsername())
+                    .password(connectionRequest.getPassword())
+                    .build();
+
+            Connection conn = ds.getConnection();
+
+            // 2. Create DB if not exists
+            String dbName = connectionRequest.getDatabase();
+
+            if (!dbName.matches("[a-zA-Z0-9_]+")) {
+                throw new RuntimeException("Invalid database name");
+            }
+
+            String sql = "CREATE DATABASE " + dbName;
+
+            try (Statement stmt = conn.createStatement()) {
+                stmt.executeUpdate(sql);
+                System.out.println("Database created: " + dbName);
+            } catch (SQLException e) {
+                if (!e.getMessage().contains("already exists")) {
+                    throw e;
+                }
+            }
+
+            conn.close();
+
+            // 3. Test connection to new DB
+            String newDbUrl = "jdbc:postgresql://"
+                    + connectionRequest.getHost() + ":"
+                    + connectionRequest.getPort() + "/"
+                    + dbName;
+
+            DataSource newDs = DataSourceBuilder.create()
+                    .url(newDbUrl)
+                    .username(connectionRequest.getUsername())
+                    .password(connectionRequest.getPassword())
+                    .build();
+
+            newDs.getConnection().close();
+
+            // 🔥 4. SAVE CONNECTION (THIS IS WHAT YOU WERE MISSING)
+            ConnectionConfig config = new ConnectionConfig();
+            config.setName(connectionRequest.getName());
+            config.setHost(connectionRequest.getHost());
+            config.setPort(connectionRequest.getPort());
+            config.setDatabase(connectionRequest.getDatabase());
+            config.setUsername(connectionRequest.getUsername());
+            config.setPassword(connectionRequest.getPassword());
+            config.setSchema(connectionRequest.getSchema());
+
+            ConnectionConfig saved = connectionRepo.save(config);
+
+            // 🔥 5. RETURN ID
+            return new ConnectionResponse(true, "Connection successful", saved.getConnectionId());
+
+        } catch (SQLException e) {
+            return new ConnectionResponse(false, e.getMessage(), null);
+        }
     }
 }

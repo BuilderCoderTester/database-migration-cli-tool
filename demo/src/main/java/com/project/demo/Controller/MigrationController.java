@@ -1,9 +1,6 @@
 package com.project.demo.Controller;
 
-import com.project.demo.dto.ApiResponse;
-import com.project.demo.dto.ConnectionRequest;
-import com.project.demo.dto.MigrationResult;
-import com.project.demo.dto.StatusResponse;
+import com.project.demo.dto.*;
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.service.MigrationService;
@@ -23,9 +20,11 @@ public class MigrationController {
     private final MigrationService migrationService;
 
     // connection cretaiotn
-    public ApiResponse connection(
+    @PostMapping("/connect")
+    public ConnectionResponse connection(
             @RequestBody ConnectionRequest connection
     ) throws SQLException {
+        System.out.println(connection.getName());
         return migrationService.connect(connection);
     }
     // ✅ INIT

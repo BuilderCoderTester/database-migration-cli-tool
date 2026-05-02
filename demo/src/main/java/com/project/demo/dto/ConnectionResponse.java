@@ -5,11 +5,8 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class ApiResponse {
+public class ConnectionResponse {
     private boolean success;
     private String message;
-
-
-    public ApiResponse(boolean success, String connectionSuccessful, Long connectionId) {
-    }
+    private Long connectionId;
 }

@@ -1,6 +1,8 @@
 // MigrationScript.java
 package com.project.demo.model;
 
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.*;
 
 @Getter
@@ -15,6 +17,9 @@ public class MigrationScript {
     private String fileName;
     private boolean repeatable;
     private String name;
+    @ManyToOne
+    @JoinColumn(name = "connection_id")
+    private ConnectionConfig connection;
 
     public MigrationScript(String version, String description, String upScript, String downScript) {
         this.version = version;

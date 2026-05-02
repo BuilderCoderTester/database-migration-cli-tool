@@ -5,7 +5,10 @@ spring:
     username: postgres
     password: sigilotech
     driver-class-name: org.postgresql.Driver
-  
+  jpa:
+    hibernate:
+      ddl-auto: update   # 🔥 THIS LINE FIXES YOUR ISSUE
+    show-sql: true       # optional (good for debugging)
   shell:
     interactive:
       enabled: true
