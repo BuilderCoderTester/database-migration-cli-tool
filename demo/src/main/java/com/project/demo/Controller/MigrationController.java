@@ -29,7 +29,7 @@ public class MigrationController {
         return migrationService.connect(connection);
     }
 
-    // ACTIVATE THE DATABASE CONNECTION WITH SPECFIC ID
+    // ACTIVATE THE DATABASE CONNECTION WITH SPECIFIC ID
     @PostMapping("/set-active")
     public ApiResponse setActive(@RequestBody Map<String, String> req){
         String databaseName = req.get("database");
@@ -45,7 +45,7 @@ public class MigrationController {
         return new ApiResponse(true, "Migration schema initialized");
     }
 
-    // RETURNS THE DATABASE CONNECITON ID
+    // RETURNS THE DATABASE CONNECTION ID
     @GetMapping("/get-connection")
     public Long sendConnectionId(){
         Long id = migrationService.getConnectionId();
@@ -79,6 +79,7 @@ public class MigrationController {
     public ApiResponse rollback(
             @RequestParam(required = false) String targetVersion , @RequestParam Long connectionId
     ) {
+        System.out.println("the connection " + connectionId);
         return new ApiResponse(true, migrationService.rollback(targetVersion,connectionId));
     }
 

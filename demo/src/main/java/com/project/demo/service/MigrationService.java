@@ -175,12 +175,12 @@ public class MigrationService {
             }
 
             String current = currentOpt.get();
-            MigrationScript script = loader.loadSpecificVersion(current);
+            MigrationScript script = loader.loadSpecificVersion(current,connectionId);
 
             if (script == null) {
                 return "Could not find migration script for version: " + current;
             }
-
+            System.out.println("the script is "+ script.getUpScript());
             if (engine.migrateDown(script)) {
                 return "✓ Rolled back version " + current;
             } else {
@@ -257,7 +257,7 @@ public class MigrationService {
             int errors = 0;
 
             for (Migration migration : history) {
-                MigrationScript script = loader.loadSpecificVersion(migration.getVersion());
+                MigrationScript script = loader.loadSpecificVersion(migration.getVersion(),connectionId);
                 if (script != null && !helper.validateChecksum(migration.getVersion(), script.getUpScript())) {
                     errors++;
                     System.out.println("Checksum mismatch: " + migration.getVersion());
