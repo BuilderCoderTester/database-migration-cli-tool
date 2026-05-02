@@ -55,15 +55,15 @@ public class Helper {
     }
 
     /// version id managebale
-    public void applyVersioned(MigrationScript script, long start) {
+    public void applyVersioned(MigrationScript script, long start, Long connectionId) {
 
         sqlExecutor.executeScript(script.getUpScript());
         System.out.println("SCRIPT CHECKING IS DONE");
-        saveMigrationRecord(script, System.currentTimeMillis() - start, false);
+        saveMigrationRecord(script, connectionId,System.currentTimeMillis() - start, false);
     }
 
-    /// save migration records
-    public void saveMigrationRecord(MigrationScript script,
+    /// SAVE THE MIGRATION RECORDS
+    public void saveMigrationRecord(MigrationScript script,Long connectionId,
                                     long executionTime,
                                     boolean repeatable) {
 
@@ -81,7 +81,7 @@ public class Helper {
         m.setRepeatable(repeatable);
         m.setName(script.getName());
 
-        repository.save(m);
+        repository.save(m,connectionId);
     }
 
     /// SFA checksum
@@ -96,13 +96,13 @@ public class Helper {
     }
 
     /// get current version of the schema or scripts
-    public Optional<String> getCurrentVersion() {
-        return repository.findLastSuccessful().map(Migration::getVersion);
+    public Optional<String> getCurrentVersion(Long connectionId) {
+        return repository.findLastSuccessful(connectionId).map(Migration::getVersion);
     }
 
     /// history of migration records
-    public List<Migration> getMigrationHistory() {
-        return repository.findAll();
+    public List<Migration> getMigrationHistory(Long connectionId) {
+        return repository.findAll(connectionId);
     }
 
     ///  checksum validation
@@ -120,10 +120,10 @@ public class Helper {
     }
 
     /// pending migration request
-    public int getPendingCount() {
+    public int getPendingCount(Long connectionId) {
         try {
-            String currentVersion = getCurrentVersion().orElse(null);
-            return migrationLoader.loadPendingMigrations(currentVersion).size();
+            String currentVersion = getCurrentVersion(connectionId).orElse(null);
+            return migrationLoader.loadPendingMigrations(currentVersion,connectionId).size();
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch pending migrations", e);
         }

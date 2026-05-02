@@ -22,7 +22,7 @@ public class MigrationFailureService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logFailure(MigrationScript script, Exception e) {
+    public void logFailure(MigrationScript script, Exception e,Long connectionId) {
         System.out.println("MIGRATION IS FAILING!");
         Migration migration = new Migration();
 
@@ -47,7 +47,7 @@ public class MigrationFailureService {
         int retry = existing.map(Migration::getRetryCount).orElse(0);
         migration.setRetryCount(retry + 1);
 
-        repository.save(migration);
+        repository.save(migration,connectionId);
     }
 
     // ✅ Utility method moved here

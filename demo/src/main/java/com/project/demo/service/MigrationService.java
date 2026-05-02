@@ -1,5 +1,6 @@
 package com.project.demo.service;
 
+import com.project.demo.component.ConnectionContext;
 import com.project.demo.core.MigrationEngine;
 import com.project.demo.core.MigrationLoader;
 import com.project.demo.dto.*;
@@ -10,6 +11,7 @@ import com.project.demo.repository.ConnectionRepo;
 import com.project.demo.repository.MigrationRepository;
 import com.project.demo.utility.Helper;
 import org.springframework.boot.jdbc.DataSourceBuilder;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.shell.command.annotation.Option;
 import org.springframework.shell.table.ArrayTableModel;
 import org.springframework.shell.table.BorderStyle;
@@ -35,42 +37,42 @@ public class MigrationService {
     private final MigrationEngine engine;
     private final MigrationLockService migrationLockService;
     private final MigrationRepository repository;
-    private ConnectionRequest connectionRequest;
+    private ConnectionContext connectionContext;
     private ConnectionRepo connectionRepo;
-    public MigrationService(Helper helper, MigrationLoader loader, MigrationEngine engine, MigrationLockService migrationLockService, MigrationRepository repository, ConnectionRepo connectionRepo) {
+    private final JdbcTemplate jdbcTemplate;
+    public MigrationService(Helper helper, MigrationLoader loader, MigrationEngine engine, MigrationLockService migrationLockService, MigrationRepository repository, ConnectionContext connectionContext, ConnectionRepo connectionRepo, JdbcTemplate jdbcTemplate) {
         this.helper = helper;
         this.loader = loader;
         this.engine = engine;
         this.migrationLockService = migrationLockService;
         this.repository = repository;
+        this.connectionContext = connectionContext;
         this.connectionRepo = connectionRepo;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
-    public StatusResponse status (){
-        var currentOpt = helper.getCurrentVersion();
+    // RETURNS THE STATUS
+    public StatusResponse status(Long connectionId) {
+
+        if (connectionId == null) {
+            throw new RuntimeException("No active connection selected");
+        }
+
+        var currentOpt = helper.getCurrentVersion(connectionId);
         String current = currentOpt.orElse("None");
 
         try {
-            List<MigrationScript> pending = loader.loadPendingMigrations(currentOpt.orElse(null));
+            List<MigrationScript> pending =
+                    loader.loadPendingMigrations(currentOpt.orElse(null), connectionId);
 
-            StringBuilder sb = new StringBuilder();
-            sb.append("Current Version: ").append(current).append("\n");
-            sb.append("Pending Migrations: ").append(pending.size()).append("\n\n");
+            return new StatusResponse(
+                    current,
+                    pending.size(),
+                    pending
+            );
 
-            StatusResponse statusResponse = new StatusResponse(currentOpt.toString(),pending.size(),pending);
-
-            if (!pending.isEmpty()) {
-                sb.append("Pending:\n");
-                for (MigrationScript script : pending) {
-                    sb.append("  - V").append(script.getVersion())
-                            .append(": ").append(script.getDescription()).append("\n");
-                }
-            }
-
-            return statusResponse;
         } catch (IOException e) {
-//            return "Error loading migrations: " + e.getMessage();
-                return new StatusResponse();
+            throw new RuntimeException("Failed to load migrations", e);
         }
     }
 
@@ -78,25 +80,27 @@ public class MigrationService {
         engine.initialize();
     }
 
-    public List<MigrationScript> listAllPendingMigration() {
-        return loader.listAllPendingMigration();
+    public List<MigrationScript> listAllPendingMigration(Long connectionId) {
+        return loader.listAllPendingMigration(connectionId);
     }
 
-    public MigrationResult migrate(String targetVersion) {
+    //MIGRATE THE MIGRATIONS FILE OR SCRIPTS
+    public MigrationResult migrate(String targetVersion, Long connectionId) {
+
+        if (connectionId == null) {
+            throw new RuntimeException("No active connection selected");
+        }
+
         try {
-            migrationLockService.acquireLock();
-            System.out.println("MIGRATION LOCK IS ACQUIRED! ");
-            var currentOpt = helper.getCurrentVersion();
-            System.out.println("CURRENT VERSION : "+ currentOpt);
-            List<MigrationScript> pending = loader.loadPendingMigrations(currentOpt.orElse(null));
-            for(MigrationScript script : pending){
-                System.out.println("PENDING : " + script);
-            }
-            StringBuilder message = new StringBuilder();
-//            MigrationResult result = new MigrationResult();
+            migrationLockService.acquireLock(connectionId); // 🔥 scoped lock
+
+            var currentOpt = helper.getCurrentVersion(connectionId);
+
+            List<MigrationScript> pending =
+                    loader.loadPendingMigrations(currentOpt.orElse(null), connectionId);
 
             if (pending.isEmpty()) {
-                message.append("✓ No pending migrations");
+                return new MigrationResult("✓ No pending migrations", 0, 0);
             }
 
             int success = 0;
@@ -109,47 +113,63 @@ public class MigrationService {
                         helper.compareVersion(script.getVersion(), targetVersion) > 0) {
                     break;
                 }
-                // MIGRATION START HERE
+
+                long start = System.currentTimeMillis();
+
                 try {
-                    engine.migrateUp(script);
+                    // 🔥 run migration on correct DB
+                    engine.migrateUp(script, connectionId);
                     success++;
                     applied.add(script.getVersion());
 
                 } catch (Exception e) {
+
                     failed++;
 
-                    message.append(String.format(
-                            "✗ Migration failed at version %s\nReason: %s\nApplied: %s",
-                            script.getVersion(),
-                            e.getMessage(),
-                            applied
-                    ));
-                    return new MigrationResult(message.toString(),success,failed);
+                    // 🔥 save failure
+                    repository.saveFailure(
+                            script,
+                            connectionId,
+                            e
+                    );
+
+                    return new MigrationResult(
+                            String.format(
+                                    "✗ Migration failed at %s\nReason: %s\nApplied: %s",
+                                    script.getVersion(),
+                                    e.getMessage(),
+                                    applied
+                            ),
+                            success,
+                            failed
+                    );
                 }
             }
 
-            return new MigrationResult( String.format(
-                    "✓ Migration complete\nApplied: %s\nSuccess: %d, Failed: %d",
-                    applied,
+            return new MigrationResult(
+                    String.format(
+                            "✓ Migration complete\nApplied: %s\nSuccess: %d, Failed: %d",
+                            applied,
+                            success,
+                            failed
+                    ),
                     success,
                     failed
-            ),success,failed);
+            );
 
         } catch (IOException e) {
-            return new MigrationResult("✗ Migration failed: " + e.getMessage(),0,0);
-        }
-        finally {
+            return new MigrationResult("✗ Migration failed: " + e.getMessage(), 0, 0);
+
+        } finally {
             try {
-                migrationLockService.releaseLock();
-            }catch (Exception e){
-                // ignore
-            }
+                migrationLockService.releaseLock(connectionId); // 🔥 scoped unlock
+            } catch (Exception ignored) {}
         }
     }
 
-    public String rollback(@Option(description = "Target version") String targetVersion) {
+    public String rollback(@Option(description = "Target version") String targetVersion,Long connectionId) {
         try {
-            var currentOpt = helper.getCurrentVersion();
+            var currentOpt = helper.getCurrentVersion(connectionId);
             if (currentOpt.isEmpty()) {
                 return "No migrations to rollback";
             }
@@ -192,8 +212,8 @@ public class MigrationService {
         return "✓ Repaired " + failed.size() + " failed migrations";
     }
 
-    public List<Migration> history() {
-        List<Migration> migrations = helper.getMigrationHistory();
+    public List<Migration> history(Long connectionId) {
+        List<Migration> migrations = helper.getMigrationHistory(connectionId);
 
         String[][] data = new String[migrations.size() + 1][5];
         data[0] = new String[]{"Version", "Description", "Executed At", "Time (ms)", "Status"};
@@ -231,9 +251,9 @@ public class MigrationService {
         }
     }
 
-    public String validate() {
+    public String validate(Long connectionId) {
         try {
-            List<Migration> history = helper.getMigrationHistory();
+            List<Migration> history = helper.getMigrationHistory(connectionId);
             int errors = 0;
 
             for (Migration migration : history) {
@@ -318,5 +338,19 @@ public class MigrationService {
         } catch (SQLException e) {
             return new ConnectionResponse(false, e.getMessage(), null);
         }
+    }
+
+    public void activeConnection(String databaseName) {
+        System.out.println(databaseName);
+        String sql = """
+        SELECT connection_id FROM connections WHERE database = ?
+    """;
+
+        Long connection_id = jdbcTemplate.queryForObject(sql, Long.class, databaseName);
+        connectionContext.setCurrentConnectionId(connection_id);
+    }
+
+    public Long getConnectionId() {
+      return connectionContext.getCurrentConnectionId();
     }
 }

@@ -40,122 +40,122 @@ public class MigrationCommands {
 //        return loader.listAllPendingMigration();
 //    }
 
-    @Command(command = "status", description = "Show current migration status")
-    public String status() {
-        var currentOpt = helper.getCurrentVersion();
-        String current = currentOpt.orElse("None");
-
-        try {
-            List<MigrationScript> pending = loader.loadPendingMigrations(currentOpt.orElse(null));
-
-            StringBuilder sb = new StringBuilder();
-            sb.append("Current Version: ").append(current).append("\n");
-            sb.append("Pending Migrations: ").append(pending.size()).append("\n\n");
-
-            if (!pending.isEmpty()) {
-                sb.append("Pending:\n");
-                for (MigrationScript script : pending) {
-                    sb.append("  - V").append(script.getVersion())
-                            .append(": ").append(script.getDescription()).append("\n");
-                }
-            }
-
-            return sb.toString();
-        } catch (IOException e) {
-            return "Error loading migrations: " + e.getMessage();
-        }
-    }
-
-    @Command(command = "migrate", description = "Run pending migrations")
-    public String migrate(@Option(description = "Target version") String targetVersion) {
-
-        try {
-            migrationLockService.acquireLock();
-            System.out.println("MIGRATION LOCK IS ACQUIRED! ");
-            var currentOpt = helper.getCurrentVersion();
-            System.out.println("CURRENT VERSION : "+ currentOpt);
-            List<MigrationScript> pending = loader.loadPendingMigrations(currentOpt.orElse(null));
-            for(MigrationScript script : pending){
-                System.out.println("PENDING : " + script);
-            }
-            if (pending.isEmpty()) {
-                return "✓ No pending migrations";
-            }
-
-            int success = 0;
-            int failed = 0;
-            List<String> applied = new ArrayList<>();
-
-            for (MigrationScript script : pending) {
-
-                if (targetVersion != null &&
-                        helper.compareVersion(script.getVersion(), targetVersion) > 0) {
-                    break;
-                }
-                // MIGRATION START HERE
-                try {
-                    engine.migrateUp(script);
-                    success++;
-                    applied.add(script.getVersion());
-
-                } catch (Exception e) {
-                    failed++;
-
-                    return String.format(
-                            "✗ Migration failed at version %s\nReason: %s\nApplied: %s",
-                            script.getVersion(),
-                            e.getMessage(),
-                            applied
-                    );
-                }
-            }
-
-            return String.format(
-                    "✓ Migration complete\nApplied: %s\nSuccess: %d, Failed: %d",
-                    applied,
-                    success,
-                    failed
-            );
-
-        } catch (IOException e) {
-            return "✗ Migration failed: " + e.getMessage();
-        }
-        finally {
-            try {
-                migrationLockService.releaseLock();
-            }catch (Exception e){
-                // ignore
-            }
-        }
-    }
-
-
-
-    @Command(command = "rollback", description = "Rollback last migration or to specific version")
-    public String rollback(@Option(description = "Target version") String targetVersion) {
-        try {
-            var currentOpt = helper.getCurrentVersion();
-            if (currentOpt.isEmpty()) {
-                return "No migrations to rollback";
-            }
-
-            String current = currentOpt.get();
-            MigrationScript script = loader.loadSpecificVersion(current);
-
-            if (script == null) {
-                return "Could not find migration script for version: " + current;
-            }
-
-            if (engine.migrateDown(script)) {
-                return "✓ Rolled back version " + current;
-            } else {
-                return "✗ Rollback failed";
-            }
-
-        } catch (IOException e) {
-            return "Rollback error: " + e.getMessage();
-        }
-    }
+//    @Command(command = "status", description = "Show current migration status")
+//    public String status() {
+//        var currentOpt = helper.getCurrentVersion();
+//        String current = currentOpt.orElse("None");
+//
+//        try {
+//            List<MigrationScript> pending = loader.loadPendingMigrations(currentOpt.orElse(null));
+//
+//            StringBuilder sb = new StringBuilder();
+//            sb.append("Current Version: ").append(current).append("\n");
+//            sb.append("Pending Migrations: ").append(pending.size()).append("\n\n");
+//
+//            if (!pending.isEmpty()) {
+//                sb.append("Pending:\n");
+//                for (MigrationScript script : pending) {
+//                    sb.append("  - V").append(script.getVersion())
+//                            .append(": ").append(script.getDescription()).append("\n");
+//                }
+//            }
+//
+//            return sb.toString();
+//        } catch (IOException e) {
+//            return "Error loading migrations: " + e.getMessage();
+//        }
+//    }
+//
+//    @Command(command = "migrate", description = "Run pending migrations")
+//    public String migrate(@Option(description = "Target version") String targetVersion) {
+//
+//        try {
+//            migrationLockService.acquireLock();
+//            System.out.println("MIGRATION LOCK IS ACQUIRED! ");
+//            var currentOpt = helper.getCurrentVersion();
+//            System.out.println("CURRENT VERSION : "+ currentOpt);
+//            List<MigrationScript> pending = loader.loadPendingMigrations(currentOpt.orElse(null));
+//            for(MigrationScript script : pending){
+//                System.out.println("PENDING : " + script);
+//            }
+//            if (pending.isEmpty()) {
+//                return "✓ No pending migrations";
+//            }
+//
+//            int success = 0;
+//            int failed = 0;
+//            List<String> applied = new ArrayList<>();
+//
+//            for (MigrationScript script : pending) {
+//
+//                if (targetVersion != null &&
+//                        helper.compareVersion(script.getVersion(), targetVersion) > 0) {
+//                    break;
+//                }
+//                // MIGRATION START HERE
+//                try {
+//                    engine.migrateUp(script);
+//                    success++;
+//                    applied.add(script.getVersion());
+//
+//                } catch (Exception e) {
+//                    failed++;
+//
+//                    return String.format(
+//                            "✗ Migration failed at version %s\nReason: %s\nApplied: %s",
+//                            script.getVersion(),
+//                            e.getMessage(),
+//                            applied
+//                    );
+//                }
+//            }
+//
+//            return String.format(
+//                    "✓ Migration complete\nApplied: %s\nSuccess: %d, Failed: %d",
+//                    applied,
+//                    success,
+//                    failed
+//            );
+//
+//        } catch (IOException e) {
+//            return "✗ Migration failed: " + e.getMessage();
+//        }
+//        finally {
+//            try {
+//                migrationLockService.releaseLock();
+//            }catch (Exception e){
+//                // ignore
+//            }
+//        }
+//    }
+//
+//
+//
+//    @Command(command = "rollback", description = "Rollback last migration or to specific version")
+//    public String rollback(@Option(description = "Target version") String targetVersion) {
+//        try {
+//            var currentOpt = helper.getCurrentVersion();
+//            if (currentOpt.isEmpty()) {
+//                return "No migrations to rollback";
+//            }
+//
+//            String current = currentOpt.get();
+//            MigrationScript script = loader.loadSpecificVersion(current);
+//
+//            if (script == null) {
+//                return "Could not find migration script for version: " + current;
+//            }
+//
+//            if (engine.migrateDown(script)) {
+//                return "✓ Rolled back version " + current;
+//            } else {
+//                return "✗ Rollback failed";
+//            }
+//
+//        } catch (IOException e) {
+//            return "Rollback error: " + e.getMessage();
+//        }
+//    }
 
     @Command(command = "repair", description = "Repair failed migrations")
     public String repair() {
@@ -178,30 +178,30 @@ public class MigrationCommands {
         return "✓ Repaired " + failed.size() + " failed migrations";
     }
 
-    @Command(command = "history", description = "Show migration history")
-    public Table history() {
-        List<Migration> migrations = helper.getMigrationHistory();
-
-        String[][] data = new String[migrations.size() + 1][5];
-        data[0] = new String[]{"Version", "Description", "Executed At", "Time (ms)", "Status"};
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-
-        for (int i = 0; i < migrations.size(); i++) {
-            Migration m = migrations.get(i);
-            data[i + 1] = new String[]{
-                    m.getVersion(),
-                    m.getDescription(),
-                    m.getExecutedAt() != null ? m.getExecutedAt().format(formatter) : "-",
-                    m.getExecutionTime() != null ? m.getExecutionTime().toString() : "-",
-                    m.isSuccess() ? "✓" : "✗"
-            };
-        }
-
-        return new TableBuilder(new ArrayTableModel(data))
-                .addFullBorder(BorderStyle.fancy_light)
-                .build();
-    }
+//    @Command(command = "history", description = "Show migration history")
+//    public Table history() {
+//        List<Migration> migrations = helper.getMigrationHistory();
+//
+//        String[][] data = new String[migrations.size() + 1][5];
+//        data[0] = new String[]{"Version", "Description", "Executed At", "Time (ms)", "Status"};
+//
+//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+//
+//        for (int i = 0; i < migrations.size(); i++) {
+//            Migration m = migrations.get(i);
+//            data[i + 1] = new String[]{
+//                    m.getVersion(),
+//                    m.getDescription(),
+//                    m.getExecutedAt() != null ? m.getExecutedAt().format(formatter) : "-",
+//                    m.getExecutionTime() != null ? m.getExecutionTime().toString() : "-",
+//                    m.isSuccess() ? "✓" : "✗"
+//            };
+//        }
+//
+//        return new TableBuilder(new ArrayTableModel(data))
+//                .addFullBorder(BorderStyle.fancy_light)
+//                .build();
+//    }
 
     @Command(command = "create", description = "Create new migration file")
     public String create(
@@ -218,23 +218,23 @@ public class MigrationCommands {
         }
     }
 
-    @Command(command = "validate", description = "Validate migrations against database")
-    public String validate() {
-        try {
-            List<Migration> history = helper.getMigrationHistory();
-            int errors = 0;
-
-            for (Migration migration : history) {
-                MigrationScript script = loader.loadSpecificVersion(migration.getVersion());
-                if (script != null && !helper.validateChecksum(migration.getVersion(), script.getUpScript())) {
-                    errors++;
-                    System.out.println("Checksum mismatch: " + migration.getVersion());
-                }
-            }
-
-            return errors == 0 ? "✓ All migrations validated" : "✗ " + errors + " checksum errors found";
-        } catch (IOException e) {
-            return "Validation error: " + e.getMessage();
-        }
-    }
+//    @Command(command = "validate", description = "Validate migrations against database")
+//    public String validate() {
+//        try {
+//            List<Migration> history = helper.getMigrationHistory();
+//            int errors = 0;
+//
+//            for (Migration migration : history) {
+//                MigrationScript script = loader.loadSpecificVersion(migration.getVersion());
+//                if (script != null && !helper.validateChecksum(migration.getVersion(), script.getUpScript())) {
+//                    errors++;
+//                    System.out.println("Checksum mismatch: " + migration.getVersion());
+//                }
+//            }
+//
+//            return errors == 0 ? "✓ All migrations validated" : "✗ " + errors + " checksum errors found";
+//        } catch (IOException e) {
+//            return "Validation error: " + e.getMessage();
+//        }
+//    }
 }

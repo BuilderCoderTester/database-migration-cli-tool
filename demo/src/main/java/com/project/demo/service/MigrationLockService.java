@@ -12,11 +12,11 @@ public class MigrationLockService {
         this.repository = repository;
     }
 
-    public void acquireLock() {
+    public void acquireLock(Long connectionId) {
         repository.holdLock(getHostName());
     }
 
-    public void releaseLock() {
+    public void releaseLock(Long connectionId) {
         repository.releaseLock();
     }
 

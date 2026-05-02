@@ -20,5 +20,7 @@ public class SqlExecutor {
                 jdbcTemplate.execute(statement);
             }
         }
+        System.out.println("hello");
+
     }
 }

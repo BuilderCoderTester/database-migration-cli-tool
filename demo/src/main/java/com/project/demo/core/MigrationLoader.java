@@ -1,5 +1,6 @@
 package com.project.demo.core;
 
+import com.project.demo.component.ConnectionContext;
 import com.project.demo.config.MigrationProperties;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.utility.VersionUtils;
@@ -33,12 +34,17 @@ public class MigrationLoader {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public List<MigrationScript> loadPendingMigrations(String currentVersion) throws IOException {
+    public List<MigrationScript> loadPendingMigrations(String currentVersion ,Long connectionId) throws IOException {
+
+        if (connectionId == null) {
+            throw new RuntimeException("No active connection selected");
+        }
 
         List<MigrationScript> versioned = new ArrayList<>();
         List<MigrationScript> repeatables = new ArrayList<>();
 
-        Path path = Paths.get(properties.getPath());
+        Path basePath = Paths.get(properties.getPath());
+        Path path = basePath.resolve("conn_" + connectionId);
 
         if (!Files.exists(path)) {
             Files.createDirectories(path);
@@ -109,7 +115,8 @@ public class MigrationLoader {
         return result;
     }
 
-//    public listloadPendingMigrations
+    @Autowired
+    public ConnectionContext connectionContext;
 
     public MigrationScript loadSpecificVersion(String version) throws IOException {
         Path path = Paths.get(properties.getPath());  // FIXED: use properties
@@ -147,13 +154,24 @@ public class MigrationLoader {
         return new MigrationScript(version, description, upScript, downScript);
     }
 
-    public void createMigrationFile(String version, String description, String upScript, String downScript)
+    /// CREATION OF MIGRATION FILE
+    /// PARAMETERS - VERSION , DESCRIPTION , UP_SCRIPT , DOWN_SCRIPT
+    public void createMigrationFile(String version, String description, String upScript, String downScript )
             throws IOException {
-        Path path = Paths.get(properties.getPath());  // FIXED: use properties
-        Files.createDirectories(path);
+
+        Long connectionId = connectionContext.getCurrentConnectionId();
+
+        if (connectionId == null) {
+            throw new RuntimeException("No active connection. Please connect first.");
+        }
+
+        Path basePath = Paths.get(properties.getPath());
+        Path connectionFolder = basePath.resolve("conn_" + connectionId);
+
+        Files.createDirectories(connectionFolder);
 
         String fileName = String.format("V%s__%s.sql", version, description.replace(" ", "_"));
-        Path filePath = path.resolve(fileName);
+        Path filePath = connectionFolder.resolve(fileName);
 
         StringBuilder content = new StringBuilder();
         content.append("-- Migration: ").append(description).append("\n");
@@ -166,15 +184,16 @@ public class MigrationLoader {
         }
 
         Files.writeString(filePath, content.toString());
+
     }
 
-    public List<MigrationScript> listAllPendingMigration() {
+    public List<MigrationScript> listAllPendingMigration(Long connectionId) {
         try {
             // 1️⃣ Load all migration files from folder
-            List<MigrationScript> allScripts = loadFromFolder();
+            List<MigrationScript> allScripts = loadFromFolder(connectionId);
 
             // 2️⃣ Load executed versions from DB
-            Set<String> executedVersions = loadExecutedVersionsFromDB();
+            Set<String> executedVersions = loadExecutedVersionsFromDB(connectionId);
 
             // 3️⃣ Filter pending scripts
             List<MigrationScript> pending = allScripts.stream()
@@ -204,15 +223,19 @@ public class MigrationLoader {
         }
     }
 
-    private List<MigrationScript> loadFromFolder() throws IOException {
+    private List<MigrationScript> loadFromFolder(Long connectionId) throws IOException {
 
+        if(connectionId == null){
+            throw  new RuntimeException("No active connection is selected.");
+        }
         Path path = Paths.get("migrations");
-        System.out.println("the path is : "+path);
-        if (!Files.exists(path)) {
+        Path connectedPath = path.resolve("conn_" + connectionId);
+        System.out.println("the path is : "+connectedPath);
+        if (!Files.exists(connectedPath)) {
             return List.of();
         }
 
-        return Files.list(path)
+        return Files.list(connectedPath)
                 .filter(p -> p.getFileName().toString().endsWith(".sql"))
                 .map(this::parseFileName)
                 .sorted(Comparator.comparing(MigrationScript::getVersion))
@@ -234,10 +257,12 @@ public class MigrationLoader {
         );
     }
 
-    private Set<String> loadExecutedVersionsFromDB() {
+    private Set<String> loadExecutedVersionsFromDB(Long connectionId) {
 
-        String sql = "SELECT version FROM migration WHERE success = true";
+        String sql = "SELECT version FROM migration WHERE success = true AND connection_id = ?";
 
-        return new HashSet<>(jdbcTemplate.queryForList(sql, String.class));
+        return new HashSet<>(jdbcTemplate.queryForList(sql, String.class,connectionId));
     }
+
+
 }

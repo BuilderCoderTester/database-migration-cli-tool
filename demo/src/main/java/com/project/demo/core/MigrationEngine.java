@@ -43,31 +43,36 @@ public class MigrationEngine {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void migrateUp(MigrationScript script) {
+    public void migrateUp(MigrationScript script ,Long connectionId) {
+
+        if (connectionId == null) {
+            throw new RuntimeException("No active connection selected");
+        }
 
         long startTime = System.currentTimeMillis();
 
-        System.out.println("Applying migration: " + script.getVersion()+" - "+ script.getDescription());
-
+        System.out.println("Applying migration: "
+                + script.getVersion() + " - " + script.getDescription()
+                + " [connectionId=" + connectionId + "]");
         try {
 //            validator.validateBeforeUp(script);
 
             System.out.println("break--after validation");
             if (script.isRepeatable()) {
-                applyRepeatable(script, startTime);
+                applyRepeatable(script, connectionId,startTime);
             } else {
                 System.out.println("HELPER FUNCITON IS RUNNING!");
-                helper.applyVersioned(script, startTime);
+                helper.applyVersioned(script, startTime, connectionId);
             }
 
         } catch (Exception e) {
-            failureService.logFailure(script, e); // Log in separate transaction
+            failureService.logFailure(script, e,connectionId); // Log in separate transaction
             System.out.println("MIGRATION FAILURE FUNCTION CALLED!");
             throw new RuntimeException("Migration failed: " + script.getVersion(), e);
         }
     }
 
-    private void applyRepeatable(MigrationScript script, long start) {
+    private void applyRepeatable(MigrationScript script, long start ,Long connectionId) {
 
         String checksum = helper.calculateChecksum(script.getUpScript());
 
@@ -81,7 +86,7 @@ public class MigrationEngine {
 
             sqlExecutor.executeScript(script.getUpScript());
 
-            helper.saveMigrationRecord(script, System.currentTimeMillis() - start, true);
+            helper.saveMigrationRecord(script, connectionId,System.currentTimeMillis() - start, true);
 
         } else {
             logger.info("Skipping repeatable (no changes): {}", script.getVersion());
@@ -110,31 +115,31 @@ public class MigrationEngine {
         }
     }
 
-    public void retryFailedMigration(String version) {
-
-        Optional<Migration> failed = repository.findById(version);
-
-        if (failed.isEmpty()) {
-            throw new RuntimeException("No failed migration found for version: " + version);
-        }
-
-        Migration m = failed.get();
-
-        if (m.isSuccess()) {
-            throw new RuntimeException("Migration is not failed: " + version);
-        }
-
-        MigrationScript script = new MigrationScript(
-                m.getVersion(),
-                m.getDescription(),
-                m.getScript()
-        );
-
-        // 🔴 Clear dirty BEFORE retry
-        repository.clearDirtyFlag(version);
-
-        // 🔁 Re-run migration
-        migrateUp(script);
-    }
+//    public void retryFailedMigration(String version) {
+//
+//        Optional<Migration> failed = repository.findById(version);
+//
+//        if (failed.isEmpty()) {
+//            throw new RuntimeException("No failed migration found for version: " + version);
+//        }
+//
+//        Migration m = failed.get();
+//
+//        if (m.isSuccess()) {
+//            throw new RuntimeException("Migration is not failed: " + version);
+//        }
+//
+//        MigrationScript script = new MigrationScript(
+//                m.getVersion(),
+//                m.getDescription(),
+//                m.getScript()
+//        );
+//
+//        // 🔴 Clear dirty BEFORE retry
+//        repository.clearDirtyFlag(version);
+//
+//        // 🔁 Re-run migration
+//        migrateUp(script);
+//    }
 
 }

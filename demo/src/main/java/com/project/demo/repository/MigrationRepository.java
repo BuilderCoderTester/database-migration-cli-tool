@@ -2,6 +2,7 @@
 package com.project.demo.repository;
 
 import com.project.demo.model.Migration;
+import com.project.demo.model.MigrationScript;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -49,7 +50,13 @@ public class MigrationRepository {
                      dirty BOOLEAN DEFAULT FALSE,
                      repeatable BOOLEAN DEFAULT FALSE,
                 
-                     name VARCHAR(255)
+                     name VARCHAR(255),
+                     connection_id BIGINT,  -- ✅ correct type
+                
+                         CONSTRAINT fk_connection
+                             FOREIGN KEY (connection_id)
+                             REFERENCES connections(connection_id)
+                             ON DELETE CASCADE
                  );
                 """;
         jdbcTemplate.execute(sql);
@@ -71,12 +78,12 @@ public class MigrationRepository {
     }
 
     @Transactional
-    public void save(Migration migration) {
+    public void save(Migration migration,Long connectionId) {
 
         String sql = """
             INSERT INTO migration ( version, description, script, checksum, 
-                                       executed_at, execution_time, success)
-            VALUES ( ?, ?, ?, ?, ?, ?, ?)
+                                       executed_at, execution_time, success ,connection_id)
+            VALUES ( ?, ?, ?, ?, ?, ?, ? ,?)
             ON CONFLICT (version) DO UPDATE SET
                 success = EXCLUDED.success,
                 execution_time = EXCLUDED.execution_time
@@ -89,13 +96,14 @@ public class MigrationRepository {
                 migration.getChecksum(),
                 migration.getExecutedAt(),
                 migration.getExecutionTime(),
-                migration.isSuccess()
+                migration.isSuccess(),
+                connectionId
         );
     }
 
-    public List<Migration> findAll() {
-        String sql = "SELECT * FROM migration ORDER BY version";
-        return jdbcTemplate.query(sql, new MigrationRowMapper());
+    public List<Migration> findAll(Long connectionId) {
+        String sql = "SELECT * FROM migration WHERE connection_id = ? ORDER BY version";
+        return jdbcTemplate.query(sql, new MigrationRowMapper(),connectionId);
     }
 
     public Optional<Migration> findByVersion(String version) {
@@ -104,9 +112,10 @@ public class MigrationRepository {
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
 
-    public Optional<Migration> findLastSuccessful() {
-        String sql = "SELECT * FROM migration WHERE success = true ORDER BY version DESC LIMIT 1";
-        List<Migration> results = jdbcTemplate.query(sql, new MigrationRowMapper());
+    //FIND THE LAST SUCCESSFUL MIGRATION FILE OR SCRIPT
+    public Optional<Migration> findLastSuccessful(Long connectionId) {
+        String sql = "SELECT * FROM migration WHERE success = true AND connection_id = ? ORDER BY version DESC LIMIT 1";
+        List<Migration> results = jdbcTemplate.query(sql, new MigrationRowMapper(),connectionId);
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
 
@@ -204,6 +213,13 @@ public class MigrationRepository {
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
+    }
+
+    public void saveSuccess(MigrationScript script, Long connectionId, long l) {
+    }
+
+    public void saveFailure(MigrationScript script, Long connectionId, Exception e) {
+
     }
 
     private static class MigrationRowMapper implements RowMapper<Migration> {

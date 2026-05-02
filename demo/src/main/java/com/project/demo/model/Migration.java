@@ -157,4 +157,12 @@ public class Migration {
     public void setName(String name) {
         this.name = name;
     }
+
+    public ConnectionConfig getConnection() {
+        return connection;
+    }
+
+    public void setConnection(ConnectionConfig connection) {
+        this.connection = connection;
+    }
 }
