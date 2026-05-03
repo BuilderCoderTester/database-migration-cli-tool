@@ -2,7 +2,10 @@ package com.project.demo.core;
 
 import com.project.demo.component.ConnectionContext;
 import com.project.demo.config.MigrationProperties;
+import com.project.demo.model.LogLevel;
 import com.project.demo.model.MigrationScript;
+import com.project.demo.repository.MigrationLogRepo;
+import com.project.demo.service.LogService;
 import com.project.demo.utility.VersionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -29,9 +32,11 @@ public class MigrationLoader {
     @Autowired
     private MigrationProperties properties;
     private final JdbcTemplate jdbcTemplate;
+    private final LogService logService;
 
-    public MigrationLoader(JdbcTemplate jdbcTemplate) {
+    public MigrationLoader(JdbcTemplate jdbcTemplate, MigrationLogRepo migrationLogRepo, LogService logService) {
         this.jdbcTemplate = jdbcTemplate;
+        this.logService = logService;
     }
 
     public List<MigrationScript> loadPendingMigrations(String currentVersion ,Long connectionId) throws IOException {
@@ -158,6 +163,7 @@ public class MigrationLoader {
         Long connectionId = connectionContext.getCurrentConnectionId();
 
         if (connectionId == null) {
+            logService.log("No active connection. Please connect first.", LogLevel.ERROR);
             throw new RuntimeException("No active connection. Please connect first.");
         }
 
@@ -180,7 +186,7 @@ public class MigrationLoader {
         }
 
         Files.writeString(filePath, content.toString());
-
+        logService.log((fileName + "Migration Applied."),LogLevel.SUCCESS );
     }
 
     public List<MigrationScript> listAllPendingMigration(Long connectionId) {

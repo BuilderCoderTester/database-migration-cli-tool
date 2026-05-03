@@ -2,7 +2,10 @@ package com.project.demo.Controller;
 
 import com.project.demo.dto.*;
 import com.project.demo.model.Migration;
+import com.project.demo.model.MigrationLogs;
 import com.project.demo.model.MigrationScript;
+import com.project.demo.service.ConnectionService;
+import com.project.demo.service.LogService;
 import com.project.demo.service.MigrationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +21,9 @@ import java.util.Map;
 @CrossOrigin("*")
 public class MigrationController {
 
+    private final LogService logService;
     private final MigrationService migrationService;
-
+    private final ConnectionService connectionService;
     //CREATE CONNECTION
     @PostMapping("/connect")
     public ConnectionResponse connection(
@@ -111,5 +115,21 @@ public class MigrationController {
     @PostMapping("/validate")
     public ApiResponse validate(Long connectionId) {
         return new ApiResponse(true, migrationService.validate(connectionId));
+    }
+
+    //ACTIVITY LOGS - SHOW ALL ACTIVITIES EXECUTED.
+    @GetMapping("/logs")
+    public List<MigrationLogs> getAllActivites(){
+        return logService.getAllActivities();
+    }
+
+    @GetMapping("/info")
+    public ConnectionInfoResponse getInfo(@RequestParam Long connectionId) {
+        System.out.println(connectionId);
+        ConnectionInfoResponse info =  connectionService.getActiveConnectionInfo(connectionId);
+        System.out.println(info.getDatabase());
+        System.out.println(info.getHost());
+        System.out.println(info.getPort());
+        return info;
     }
 }
