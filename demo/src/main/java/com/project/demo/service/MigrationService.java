@@ -1,9 +1,11 @@
 package com.project.demo.service;
 
 import com.project.demo.component.ConnectionContext;
-import com.project.demo.core.MigrationEngine;
-import com.project.demo.core.MigrationLoader;
+import com.project.demo.component.MigrationComponent;
+import com.project.demo.component.MigrationEngine;
+import com.project.demo.component.MigrationLoader;
 import com.project.demo.dto.*;
+import com.project.demo.dto.request.MigrationRequest;
 import com.project.demo.model.ConnectionConfig;
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
@@ -13,20 +15,16 @@ import com.project.demo.utility.Helper;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.shell.command.annotation.Option;
-import org.springframework.shell.table.ArrayTableModel;
-import org.springframework.shell.table.BorderStyle;
-import org.springframework.shell.table.Table;
-import org.springframework.shell.table.TableBuilder;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -40,7 +38,10 @@ public class MigrationService {
     private ConnectionContext connectionContext;
     private ConnectionRepo connectionRepo;
     private final JdbcTemplate jdbcTemplate;
-    public MigrationService(Helper helper, MigrationLoader loader, MigrationEngine engine, MigrationLockService migrationLockService, MigrationRepository repository, ConnectionContext connectionContext, ConnectionRepo connectionRepo, JdbcTemplate jdbcTemplate) {
+    private final MigrationComponent migrationComponent;
+    private final ConnectionService connectionService;
+
+    public MigrationService(Helper helper, MigrationLoader loader, MigrationEngine engine, MigrationLockService migrationLockService, MigrationRepository repository, ConnectionContext connectionContext, ConnectionRepo connectionRepo, JdbcTemplate jdbcTemplate, MigrationComponent migrationComponent, ConnectionService connectionService) {
         this.helper = helper;
         this.loader = loader;
         this.engine = engine;
@@ -49,6 +50,8 @@ public class MigrationService {
         this.connectionContext = connectionContext;
         this.connectionRepo = connectionRepo;
         this.jdbcTemplate = jdbcTemplate;
+        this.migrationComponent = migrationComponent;
+        this.connectionService = connectionService;
     }
 
     // RETURNS THE STATUS
@@ -85,16 +88,24 @@ public class MigrationService {
     }
 
     //MIGRATE THE MIGRATIONS FILE OR SCRIPTS
-    public MigrationResult migrate(String targetVersion, Long connectionId) {
+    public MigrationResult migrate(MigrationRequest migrationRequest) {
+
+        Long connectionId = migrationRequest.getConnectionId();
+        String targetVersion = migrationRequest.getTargetVersion();
+        System.out.println("Connection ID at service: " + connectionId);
+        System.out.println("target version at service: " + targetVersion);
+        StringBuilder lockedBy = null;
 
         if (connectionId == null) {
             throw new RuntimeException("No active connection selected");
         }
 
         try {
-            migrationLockService.acquireLock(connectionId); // 🔥 scoped lock
-
-            var currentOpt = helper.getCurrentVersion(connectionId);
+            //ACQUIRE LOCK
+//             lockedBy = new StringBuilder(migrationLockService.acquireLock(connectionId, targetVersion));
+//             lockedBy = new StringBuilder(migrationLockService.getHostName());
+//            System.out.println("the host at the service : "+lockedBy);
+            var currentOpt = migrationComponent.getCurrentVersion(connectionId);
 
             List<MigrationScript> pending =
                     loader.loadPendingMigrations(currentOpt.orElse(null), connectionId);
@@ -113,8 +124,6 @@ public class MigrationService {
                         helper.compareVersion(script.getVersion(), targetVersion) > 0) {
                     break;
                 }
-
-                long start = System.currentTimeMillis();
 
                 try {
                     // 🔥 run migration on correct DB
@@ -162,12 +171,13 @@ public class MigrationService {
 
         } finally {
             try {
-                migrationLockService.releaseLock(connectionId); // 🔥 scoped unlock
-            } catch (Exception ignored) {}
+                migrationLockService.releaseLock(connectionId, lockedBy); // 🔥 scoped unlock
+            } catch (Exception ignored) {
+            }
         }
     }
 
-    public String rollback(@Option(description = "Target version") String targetVersion,Long connectionId) {
+    public String rollback(@Option(description = "Target version") String targetVersion, Long connectionId) {
         try {
             var currentOpt = helper.getCurrentVersion(connectionId);
             if (currentOpt.isEmpty()) {
@@ -175,12 +185,12 @@ public class MigrationService {
             }
 
             String current = currentOpt.get();
-            MigrationScript script = loader.loadSpecificVersion(current,connectionId);
+            MigrationScript script = loader.loadSpecificVersion(current, connectionId);
 
             if (script == null) {
                 return "Could not find migration script for version: " + current;
             }
-            System.out.println("the script is "+ script.getUpScript());
+            System.out.println("the script is " + script.getUpScript());
             if (engine.migrateDown(script)) {
                 return "✓ Rolled back version " + current;
             } else {
@@ -257,7 +267,7 @@ public class MigrationService {
             int errors = 0;
 
             for (Migration migration : history) {
-                MigrationScript script = loader.loadSpecificVersion(migration.getVersion(),connectionId);
+                MigrationScript script = loader.loadSpecificVersion(migration.getVersion(), connectionId);
                 if (script != null && !helper.validateChecksum(migration.getVersion(), script.getUpScript())) {
                     errors++;
                     System.out.println("Checksum mismatch: " + migration.getVersion());
@@ -270,69 +280,75 @@ public class MigrationService {
         }
     }
 
-    public ConnectionResponse connect(ConnectionRequest connectionRequest) {
+    public ConnectionResponse connect(ConnectionRequest request) {
 
-        String baseUrl = "jdbc:postgresql://"
-                + connectionRequest.getHost() + ":"
-                + connectionRequest.getPort() + "/postgres";
+        String adminUrl = "jdbc:postgresql://"
+                + request.getHost() + ":"
+                + request.getPort() + "/postgres";
+
+        String dbName = request.getDatabase();
+
+        if (!dbName.matches("[a-zA-Z0-9_]+")) {
+            return new ConnectionResponse(false, "Invalid database name", null);
+        }
 
         try {
-            // 1. Connect to default DB
-            DataSource ds = DataSourceBuilder.create()
-                    .url(baseUrl)
-                    .username(connectionRequest.getUsername())
-                    .password(connectionRequest.getPassword())
+            // 🔹 1. Connect to postgres DB
+            DataSource adminDs = DataSourceBuilder.create()
+                    .url(adminUrl)
+                    .username(request.getUsername())
+                    .password(request.getPassword())
                     .build();
 
-            Connection conn = ds.getConnection();
+            // 🔹 2. Create DB (optional)
 
-            // 2. Create DB if not exists
-            String dbName = connectionRequest.getDatabase();
+            try (Connection conn = adminDs.getConnection();
+                 Statement stmt = conn.createStatement()) {
 
-            if (!dbName.matches("[a-zA-Z0-9_]+")) {
-                throw new RuntimeException("Invalid database name");
-            }
+                conn.setAutoCommit(true);
 
-            String sql = "CREATE DATABASE " + dbName;
-
-            try (Statement stmt = conn.createStatement()) {
+                String sql = "CREATE DATABASE \"" + dbName + "\"";
                 stmt.executeUpdate(sql);
+
                 System.out.println("Database created: " + dbName);
+
             } catch (SQLException e) {
-                if (!e.getMessage().contains("already exists")) {
+                // 42P04 = duplicate_database
+                if (!"42P04".equals(e.getSQLState())) {
                     throw e;
                 }
+                System.out.println("Database already exists: " + dbName);
             }
 
-            conn.close();
-
-            // 3. Test connection to new DB
-            String newDbUrl = "jdbc:postgresql://"
-                    + connectionRequest.getHost() + ":"
-                    + connectionRequest.getPort() + "/"
+            // 🔹 3. Test connection to target DB
+            String targetUrl = "jdbc:postgresql://"
+                    + request.getHost() + ":"
+                    + request.getPort() + "/"
                     + dbName;
 
-            DataSource newDs = DataSourceBuilder.create()
-                    .url(newDbUrl)
-                    .username(connectionRequest.getUsername())
-                    .password(connectionRequest.getPassword())
+            DataSource targetDs = DataSourceBuilder.create()
+                    .url(targetUrl)
+                    .username(request.getUsername())
+                    .password(request.getPassword())
                     .build();
 
-            newDs.getConnection().close();
+            try (Connection ignored = targetDs.getConnection()) {
+                // success
+            }
 
-            // 🔥 4. SAVE CONNECTION (THIS IS WHAT YOU WERE MISSING)
+            // 🔹 4. Save config
             ConnectionConfig config = new ConnectionConfig();
-            config.setName(connectionRequest.getName());
-            config.setHost(connectionRequest.getHost());
-            config.setPort(connectionRequest.getPort());
-            config.setDatabase(connectionRequest.getDatabase());
-            config.setUsername(connectionRequest.getUsername());
-            config.setPassword(connectionRequest.getPassword());
-            config.setSchema(connectionRequest.getSchema());
+            config.setName(request.getName());
+            config.setHost(request.getHost());
+            config.setPort(request.getPort());
+            config.setDatabase(dbName);
+            config.setUsername(request.getUsername());
+            config.setPassword(request.getPassword());
+            config.setSchema(request.getSchema());
+            config.setUrl(targetUrl);
 
             ConnectionConfig saved = connectionRepo.save(config);
 
-            // 🔥 5. RETURN ID
             return new ConnectionResponse(true, "Connection successful", saved.getConnectionId());
 
         } catch (SQLException e) {
@@ -340,18 +356,29 @@ public class MigrationService {
         }
     }
 
-    public void activeConnection(String databaseName) {
+    public Connection activeConnection(String databaseName) throws SQLException {
         System.out.println(databaseName);
         String sql = """
-        SELECT connection_id FROM connections WHERE database = ?
-    """;
-
+                    SELECT connection_id FROM connections WHERE database = ?
+                """;
+        String url = """
+                SELECT url from connections where connection_id = ?
+                """;
         Long connection_id = jdbcTemplate.queryForObject(sql, Long.class, databaseName);
         connectionContext.setCurrentConnectionId(connection_id);
+        String dbUrl = jdbcTemplate.queryForObject(url,String.class,connection_id);
+        System.out.println("conneciton url " + dbUrl);
+
+        Connection newConnection = DriverManager.getConnection(
+                dbUrl,
+                "postgres",
+                "sigilotech"
+        );
+        return newConnection;
     }
 
     public Long getConnectionId() {
-      return connectionContext.getCurrentConnectionId();
+        return connectionContext.getCurrentConnectionId();
     }
 
 }

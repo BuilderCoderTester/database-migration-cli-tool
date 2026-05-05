@@ -1,4 +1,6 @@
 # application.yml
+server:
+  port: 8081
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/postgres
@@ -8,7 +10,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update   # 🔥 THIS LINE FIXES YOUR ISSUE
-    show-sql: true       # optional (good for debugging)
+#    show-sql: true       # optional (good for debugging)
   shell:
     interactive:
       enabled: true

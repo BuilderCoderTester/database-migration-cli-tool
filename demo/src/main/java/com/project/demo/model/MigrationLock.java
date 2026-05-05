@@ -1,30 +1,32 @@
 package com.project.demo.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.sql.Time;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "migration_lock")
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class MigrationLock {
+
     @Id
-    private int id;
+    @Column(name = "connection_id")
+    private Long connectionId;
 
-    private Boolean locked;
+    @Column(name = "locked", nullable = false)
+    private boolean locked = false;
 
+    @Column(name = "locked_at")
     private LocalDateTime lockedAt;
 
+    @Column(name = "locked_by")
     private String lockedBy;
 
 }

@@ -2,7 +2,7 @@ package com.project.demo.utility;
 
 import com.project.demo.component.MigrationValidator;
 import com.project.demo.component.SqlExecutor;
-import com.project.demo.core.MigrationLoader;
+import com.project.demo.component.MigrationLoader;
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.repository.MigrationRepository;
@@ -13,7 +13,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
@@ -54,11 +53,9 @@ public class Helper {
         return Long.parseLong(numeric);
     }
 
-    /// version id managebale
+    /// version id manageable
     public void applyVersioned(MigrationScript script, long start, Long connectionId) {
-
         sqlExecutor.executeScript(script.getUpScript());
-        System.out.println("SCRIPT CHECKING IS DONE");
         saveMigrationRecord(script, connectionId,System.currentTimeMillis() - start, false);
     }
 

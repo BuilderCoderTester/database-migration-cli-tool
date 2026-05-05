@@ -1,27 +1,23 @@
 // MigrationEngine.java
-package com.project.demo.core;
+package com.project.demo.component;
 
-import com.project.demo.component.MigrationValidator;
-import com.project.demo.component.SqlExecutor;
+import com.project.demo.model.Dependency;
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
+import com.project.demo.parser.ASTDependencyExtractor;
 import com.project.demo.repository.MigrationRepository;
-import com.project.demo.service.ChecksumService;
+import com.project.demo.service.ConnectionService;
 import com.project.demo.service.MigrationFailureService;
-import com.project.demo.service.MigrationLockService;
 import com.project.demo.utility.Helper;
+import com.project.demo.validator.DependencyValidator;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.SqlOutParameter;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.time.LocalDateTime;
+import java.sql.Connection;
 import java.util.*;
 
 @Component
@@ -36,12 +32,14 @@ public class MigrationEngine {
     private final MigrationValidator validator;
     private final SqlExecutor sqlExecutor;
     private final Helper helper;
+    private final ConnectionService connectionService;
 
     public void initialize() {
         repository.createSchemaHistoryTable();
         logger.info("Schema history table initialized");
     }
 
+    // MIGRATE UP MODULE
     @Transactional(rollbackFor = Exception.class)
     public void migrateUp(MigrationScript script ,Long connectionId) {
 
@@ -55,19 +53,28 @@ public class MigrationEngine {
                 + script.getVersion() + " - " + script.getDescription()
                 + " [connectionId=" + connectionId + "]");
         try {
+            Connection conn = connectionService.getConnection(connectionId);
+//            System.out.println("the conn :"+conn);
+//            System.out.println("the real conneciton " + conn);
+            // has bugs (workings.............)
 //            validator.validateBeforeUp(script);
 
-            System.out.println("break--after validation");
+            // 2. 🔥 AST Dependency Extraction
+//            ASTDependencyExtractor extractor = new ASTDependencyExtractor();
+//            List<Dependency> deps = extractor.extract(script.getUpScript());
+//
+//            DependencyValidator validator = new DependencyValidator();
+//            validator.validate(deps, conn);
+
             if (script.isRepeatable()) {
+                // not done yet (working ............)
                 applyRepeatable(script, connectionId,startTime);
             } else {
-                System.out.println("HELPER FUNCITON IS RUNNING!");
                 helper.applyVersioned(script, startTime, connectionId);
             }
 
         } catch (Exception e) {
             failureService.logFailure(script, e,connectionId); // Log in separate transaction
-            System.out.println("MIGRATION FAILURE FUNCTION CALLED!");
             throw new RuntimeException("Migration failed: " + script.getVersion(), e);
         }
     }

@@ -1,6 +1,5 @@
-package com.project.demo.core;
+package com.project.demo.component;
 
-import com.project.demo.component.ConnectionContext;
 import com.project.demo.config.MigrationProperties;
 import com.project.demo.model.LogLevel;
 import com.project.demo.model.MigrationScript;
@@ -39,6 +38,7 @@ public class MigrationLoader {
         this.logService = logService;
     }
 
+    // LOAD PENDING MIGRATION ON SPECIFIC DATABASE CONNECTION
     public List<MigrationScript> loadPendingMigrations(String currentVersion ,Long connectionId) throws IOException {
 
         if (connectionId == null) {
@@ -61,7 +61,6 @@ public class MigrationLoader {
             for (Path file : stream) {
 
                 String fileName = file.getFileName().toString();
-                System.out.println("CURRENT FILE : " + fileName);
                 Matcher v = VERSIONED_PATTERN.matcher(fileName);
                 Matcher r = REPEATABLE_PATTERN.matcher(fileName);
 
@@ -73,8 +72,6 @@ public class MigrationLoader {
 
                     String version = "V" + v.group(1);
                     String description = v.group(2).replace("_", " ");
-                    System.out.println("VERSION : " + version);
-                    System.out.println("DESCRIPTION : " + description);
 
                     if (currentVersion == null ||
                             VersionUtils.extract(version) > VersionUtils.extract(currentVersion)) {

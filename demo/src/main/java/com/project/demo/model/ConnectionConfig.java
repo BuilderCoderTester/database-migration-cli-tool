@@ -21,4 +21,20 @@ public class ConnectionConfig {
     private String username;
     private String password;
     private String schema;
+    private String url;
+
+    @Override
+    public String toString() {
+        return "ConnectionConfig{" +
+                "connectionId=" + connectionId +
+                ", name='" + name + '\'' +
+                ", host='" + host + '\'' +
+                ", port=" + port +
+                ", database='" + database + '\'' +
+                ", username='" + username + '\'' +
+                ", password='" + password + '\'' +
+                ", schema='" + schema + '\'' +
+                ", url='" + url + '\'' +
+                '}';
+    }
 }

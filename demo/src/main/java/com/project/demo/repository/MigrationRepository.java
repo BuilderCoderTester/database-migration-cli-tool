@@ -81,7 +81,7 @@ public class MigrationRepository {
     public void save(Migration migration,Long connectionId) {
 
         String sql = """
-            INSERT INTO migration ( version, description, script, checksum, 
+            INSERT INTO sub_migration ( version, description, script, checksum, 
                                        executed_at, execution_time, success ,connection_id)
             VALUES ( ?, ?, ?, ?, ?, ?, ? ,?)
             ON CONFLICT (version) DO UPDATE SET
@@ -114,7 +114,7 @@ public class MigrationRepository {
 
     //FIND THE LAST SUCCESSFUL MIGRATION FILE OR SCRIPT
     public Optional<Migration> findLastSuccessful(Long connectionId) {
-        String sql = "SELECT * FROM migration WHERE success = true AND connection_id = ? ORDER BY version DESC LIMIT 1";
+        String sql = "SELECT * FROM sub_migration WHERE success = true AND connection_id = ? ORDER BY version DESC LIMIT 1";
         List<Migration> results = jdbcTemplate.query(sql, new MigrationRowMapper(),connectionId);
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }

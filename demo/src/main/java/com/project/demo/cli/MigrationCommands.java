@@ -1,21 +1,17 @@
 // MigrationCommands.java
 package com.project.demo.cli;
 
-import com.project.demo.core.MigrationEngine;
-import com.project.demo.core.MigrationLoader;
+import com.project.demo.component.MigrationEngine;
+import com.project.demo.component.MigrationLoader;
 import com.project.demo.model.Migration;
-import com.project.demo.model.MigrationScript;
 import com.project.demo.repository.MigrationRepository;
 import com.project.demo.service.MigrationLockService;
 import com.project.demo.utility.Helper;
 import lombok.AllArgsConstructor;
 import org.springframework.shell.command.annotation.Command;
 import org.springframework.shell.command.annotation.Option;
-import org.springframework.shell.table.*;
 
 import java.io.IOException;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 
 @Command(group = "Database Migration")
