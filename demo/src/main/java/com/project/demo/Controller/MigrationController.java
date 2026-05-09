@@ -9,6 +9,7 @@ import com.project.demo.model.MigrationScript;
 import com.project.demo.service.ConnectionService;
 import com.project.demo.service.LogService;
 import com.project.demo.service.MigrationService;
+import com.project.demo.utility.ConnectionHolder;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -45,6 +46,7 @@ public class MigrationController {
         System.out.println("the database name " + databaseName);
         Connection conn =  migrationService.activeConnection(databaseName);
         PreparedStatement pst = conn.prepareStatement("SELECT current_database()");
+        ConnectionHolder.set(conn);
         PreparedStatement pst_1 = conn.prepareStatement("""
                     SELECT schemaname, tablename
                     FROM pg_catalog.pg_tables
@@ -52,7 +54,7 @@ public class MigrationController {
                     ORDER BY schemaname, tablename
                 """);
         ResultSet rs = pst.executeQuery();
-
+        System.out.println("hello guys");
         String connection_querry = """
                 CREATE TABLE IF NOT EXISTS sub_connections (
                     connection_id BIGSERIAL PRIMARY KEY,
@@ -140,7 +142,7 @@ public class MigrationController {
 
     // ✅ RETURNS THE STATUS OF THE MIGRATION TABLE AND FILES
     @GetMapping("/status")
-    public StatusResponse status(@RequestParam Long connectionId) {
+    public StatusResponse status(@RequestParam Long connectionId) throws SQLException {
         return migrationService.status(connectionId);
     }
 

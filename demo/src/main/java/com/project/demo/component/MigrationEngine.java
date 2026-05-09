@@ -8,6 +8,7 @@ import com.project.demo.parser.ASTDependencyExtractor;
 import com.project.demo.repository.MigrationRepository;
 import com.project.demo.service.ConnectionService;
 import com.project.demo.service.MigrationFailureService;
+import com.project.demo.utility.ConnectionHolder;
 import com.project.demo.utility.Helper;
 import com.project.demo.validator.DependencyValidator;
 import lombok.AllArgsConstructor;
@@ -18,6 +19,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.*;
 
 @Component
@@ -53,9 +56,13 @@ public class MigrationEngine {
                 + script.getVersion() + " - " + script.getDescription()
                 + " [connectionId=" + connectionId + "]");
         try {
-            Connection conn = connectionService.getConnection(connectionId);
-//            System.out.println("the conn :"+conn);
-//            System.out.println("the real conneciton " + conn);
+            Connection conn = ConnectionHolder.get();
+            System.out.println("the real conneciton " + conn);
+            PreparedStatement pst = conn.prepareStatement("SELECT current_database()");
+            ResultSet rs = pst.executeQuery();
+            if (rs.next()) {
+                System.out.println("🔥 Connected to: " + rs.getString(1));
+            }
             // has bugs (workings.............)
 //            validator.validateBeforeUp(script);
 
@@ -66,12 +73,12 @@ public class MigrationEngine {
 //            DependencyValidator validator = new DependencyValidator();
 //            validator.validate(deps, conn);
 
-            if (script.isRepeatable()) {
-                // not done yet (working ............)
-                applyRepeatable(script, connectionId,startTime);
-            } else {
-                helper.applyVersioned(script, startTime, connectionId);
-            }
+//            if (script.isRepeatable()) {
+//                // not done yet (working ............)
+//                applyRepeatable(script, connectionId,startTime);
+//            } else {
+                helper.applyVersioned(script, startTime, connectionId,conn);
+//            }
 
         } catch (Exception e) {
             failureService.logFailure(script, e,connectionId); // Log in separate transaction

@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.sql.SQLException;
 import java.util.Optional;
 
 @Component
@@ -16,7 +17,7 @@ public class MigrationComponent {
     private final MigrationRepository migrationRepository;
 
     /// get current version of the schema or scripts
-    public Optional<String> getCurrentVersion(Long connectionId) {
+    public Optional<String> getCurrentVersion(Long connectionId) throws SQLException {
         return migrationRepository.findLastSuccessful(connectionId).map(Migration::getVersion);
     }
 }

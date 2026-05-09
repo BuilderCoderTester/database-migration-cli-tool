@@ -55,7 +55,7 @@ public class MigrationService {
     }
 
     // RETURNS THE STATUS
-    public StatusResponse status(Long connectionId) {
+    public StatusResponse status(Long connectionId) throws SQLException {
 
         if (connectionId == null) {
             throw new RuntimeException("No active connection selected");
@@ -89,6 +89,7 @@ public class MigrationService {
 
     //MIGRATE THE MIGRATIONS FILE OR SCRIPTS
     public MigrationResult migrate(MigrationRequest migrationRequest) {
+
 
         Long connectionId = migrationRequest.getConnectionId();
         String targetVersion = migrationRequest.getTargetVersion();
@@ -169,6 +170,8 @@ public class MigrationService {
         } catch (IOException e) {
             return new MigrationResult("✗ Migration failed: " + e.getMessage(), 0, 0);
 
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         } finally {
             try {
                 migrationLockService.releaseLock(connectionId, lockedBy); // 🔥 scoped unlock
@@ -199,6 +202,8 @@ public class MigrationService {
 
         } catch (IOException e) {
             return "Rollback error: " + e.getMessage();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 

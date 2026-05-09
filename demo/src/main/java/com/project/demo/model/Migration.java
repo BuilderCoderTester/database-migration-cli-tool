@@ -165,4 +165,7 @@ public class Migration {
     public void setConnection(ConnectionConfig connection) {
         this.connection = connection;
     }
+
+    public void setConnectionId(long connectionId) {
+    }
 }

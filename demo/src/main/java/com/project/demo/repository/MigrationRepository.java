@@ -3,6 +3,7 @@ package com.project.demo.repository;
 
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
+import com.project.demo.utility.ConnectionHolder;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -10,8 +11,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -69,41 +69,68 @@ public class MigrationRepository {
                     locked_by VARCHAR(255)
                     );
                 """;
-        try{
+        try {
             jdbcTemplate.execute(check);
             System.out.println("MIGRATION LOCK TABLE IS CREATED! ");
-        }catch (Exception e ){
+        } catch (Exception e) {
             System.out.println("Creation Querry is not working.");
         }
     }
 
     @Transactional
-    public void save(Migration migration,Long connectionId) {
-
+    public void save(Migration migration, Long connectionId) {
+        System.out.println("come-2");
         String sql = """
-            INSERT INTO sub_migration ( version, description, script, checksum, 
-                                       executed_at, execution_time, success ,connection_id)
-            VALUES ( ?, ?, ?, ?, ?, ?, ? ,?)
-            ON CONFLICT (version) DO UPDATE SET
-                success = EXCLUDED.success,
-                execution_time = EXCLUDED.execution_time
-            """;
+                INSERT INTO sub_migration (
+                    version,
+                    description,
+                    script,
+                    checksum,
+                    executed_at,
+                    execution_time,
+                    success,
+                    connection_id
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (version)
+                DO UPDATE SET
+                    success = EXCLUDED.success,
+                    execution_time = EXCLUDED.execution_time
+                """;
 
-        jdbcTemplate.update(sql,
-                migration.getVersion(),
-                migration.getDescription(),
-                migration.getScript(),
-                migration.getChecksum(),
-                migration.getExecutedAt(),
-                migration.getExecutionTime(),
-                migration.isSuccess(),
-                connectionId
-        );
+        Connection conn = ConnectionHolder.get();
+
+        System.out.println("Using connection: " + conn);
+
+        try (PreparedStatement pst = conn.prepareStatement(sql)) {
+
+            pst.setString(1, migration.getVersion());
+            pst.setString(2, migration.getDescription());
+            pst.setString(3, migration.getScript());
+            pst.setString(4, migration.getChecksum());
+
+            if (migration.getExecutedAt() != null) {
+                pst.setTimestamp(5, Timestamp.valueOf(migration.getExecutedAt()));
+            } else {
+                pst.setTimestamp(5, null);
+            }
+
+            pst.setLong(6, migration.getExecutionTime());
+            pst.setBoolean(7, migration.isSuccess());
+            pst.setLong(8, connectionId);
+
+            int rows = pst.executeUpdate();
+
+            System.out.println("Rows affected: " + rows);
+        } catch (SQLException e) {
+            System.out.println("not runnig");
+            throw new RuntimeException(e);
+        }
     }
 
     public List<Migration> findAll(Long connectionId) {
         String sql = "SELECT * FROM migration WHERE connection_id = ? ORDER BY version";
-        return jdbcTemplate.query(sql, new MigrationRowMapper(),connectionId);
+        return jdbcTemplate.query(sql, new MigrationRowMapper(), connectionId);
     }
 
     public Optional<Migration> findByVersion(String version) {
@@ -113,10 +140,57 @@ public class MigrationRepository {
     }
 
     //FIND THE LAST SUCCESSFUL MIGRATION FILE OR SCRIPT
-    public Optional<Migration> findLastSuccessful(Long connectionId) {
-        String sql = "SELECT * FROM sub_migration WHERE success = true AND connection_id = ? ORDER BY version DESC LIMIT 1";
-        List<Migration> results = jdbcTemplate.query(sql, new MigrationRowMapper(),connectionId);
-        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
+    public Optional<Migration> findLastSuccessful(Long connectionId) throws SQLException {
+        String sql = """
+                SELECT * 
+                FROM sub_migration
+                WHERE success = true
+                  AND connection_id = ?
+                ORDER BY version DESC
+                LIMIT 1
+                """;
+
+        Connection conn = ConnectionHolder.get();
+
+        System.out.println("The real connection: " + conn);
+
+        try (
+                PreparedStatement dbPst = conn.prepareStatement("SELECT current_database()");
+                ResultSet dbRs = dbPst.executeQuery()
+        ) {
+
+            if (dbRs.next()) {
+                System.out.println("🔥 Connected to: " + dbRs.getString(1));
+            }
+        }
+
+        try (
+                PreparedStatement pst = conn.prepareStatement(sql)
+        ) {
+
+            pst.setLong(1, connectionId);
+
+            try (ResultSet rs = pst.executeQuery()) {
+
+                if (rs.next()) {
+
+                    Migration migration = new Migration();
+
+                    migration.setVersion(rs.getString("version"));
+                    migration.setDescription(rs.getString("description"));
+                    migration.setScript(rs.getString("script"));
+                    migration.setChecksum(rs.getString("checksum"));
+                    migration.setExecutedAt(rs.getTimestamp("executed_at").toLocalDateTime());
+                    migration.setExecutionTime(rs.getLong("execution_time"));
+                    migration.setSuccess(rs.getBoolean("success"));
+                    migration.setConnectionId(rs.getLong("connection_id"));
+
+                    return Optional.of(migration);
+                }
+            }
+        }
+
+        return Optional.empty();
     }
 
     public List<Migration> findFailedMigrations() {
@@ -125,27 +199,30 @@ public class MigrationRepository {
 
         return jdbcTemplate.query(sql, new MigrationRowMapper());
     }
+
     public void clearDirtyFlag(String version) {
 
         String sql = """
-        UPDATE migrations
-        SET dirty = false
-        WHERE version = ?
-    """;
+                    UPDATE migrations
+                    SET dirty = false
+                    WHERE version = ?
+                """;
 
         jdbcTemplate.update(sql, version);
     }
+
     public void markAsRepaired(String version) {
 
         String sql = """
-        UPDATE migrations
-        SET success = false,
-            dirty = false
-        WHERE version = ?
-    """;
+                    UPDATE migrations
+                    SET success = false,
+                        dirty = false
+                    WHERE version = ?
+                """;
 
         jdbcTemplate.update(sql, version);
     }
+
     @Transactional
     public void deleteByVersion(String version) {
         String sql = "DELETE FROM migration WHERE version = ?";
@@ -179,10 +256,10 @@ public class MigrationRepository {
     @Transactional
     public boolean existsByDirtyTrue() {
         String sql = "SELECT COUNT(*) FROM migration ;";
-        Integer count= 0;
+        Integer count = 0;
         try {
-             count = jdbcTemplate.queryForObject(sql, Integer.class);
-        }catch (Exception e){
+            count = jdbcTemplate.queryForObject(sql, Integer.class);
+        } catch (Exception e) {
             System.out.println("exception");
         }
         return count != null && count > 0;
@@ -198,10 +275,10 @@ public class MigrationRepository {
     public Optional<Migration> findTopByOrderByExecutedAtDesc() {
 
         String sql = """
-            SELECT * FROM migration
-            ORDER BY executed_at DESC
-            LIMIT 1;
-        """;
+                    SELECT * FROM migration
+                    ORDER BY executed_at DESC
+                    LIMIT 1;
+                """;
 
         try {
             Migration migration = jdbcTemplate.queryForObject(

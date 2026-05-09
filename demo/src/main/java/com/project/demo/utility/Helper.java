@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.List;
@@ -54,7 +56,8 @@ public class Helper {
     }
 
     /// version id manageable
-    public void applyVersioned(MigrationScript script, long start, Long connectionId) {
+    public void applyVersioned(MigrationScript script, long start, Long connectionId, Connection connection) {
+        System.out.println("come");
         sqlExecutor.executeScript(script.getUpScript());
         saveMigrationRecord(script, connectionId,System.currentTimeMillis() - start, false);
     }
@@ -77,7 +80,7 @@ public class Helper {
         m.setDirty(false);
         m.setRepeatable(repeatable);
         m.setName(script.getName());
-
+        System.out.println("come -1");
         repository.save(m,connectionId);
     }
 
@@ -93,7 +96,7 @@ public class Helper {
     }
 
     /// get current version of the schema or scripts
-    public Optional<String> getCurrentVersion(Long connectionId) {
+    public Optional<String> getCurrentVersion(Long connectionId) throws SQLException {
         return repository.findLastSuccessful(connectionId).map(Migration::getVersion);
     }
 
