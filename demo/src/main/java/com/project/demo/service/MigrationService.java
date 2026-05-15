@@ -12,6 +12,7 @@ import com.project.demo.model.MigrationScript;
 import com.project.demo.repository.ConnectionRepo;
 import com.project.demo.repository.MigrationRepository;
 import com.project.demo.utility.Helper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.shell.command.annotation.Option;
@@ -35,33 +36,34 @@ public class MigrationService {
     private final MigrationEngine engine;
     private final MigrationLockService migrationLockService;
     private final MigrationRepository repository;
-    private ConnectionContext connectionContext;
-    private ConnectionRepo connectionRepo;
+    private final ConnectionContext connectionContext;
+    private final ConnectionRepo connectionRepo;
     private final JdbcTemplate jdbcTemplate;
-    private final MigrationComponent migrationComponent;
-    private final ConnectionService connectionService;
-
-    public MigrationService(Helper helper, MigrationLoader loader, MigrationEngine engine, MigrationLockService migrationLockService, MigrationRepository repository, ConnectionContext connectionContext, ConnectionRepo connectionRepo, JdbcTemplate jdbcTemplate, MigrationComponent migrationComponent, ConnectionService connectionService) {
+    @Autowired
+    private final ConnectionRequest connectionRequest;
+    public MigrationService(
+            Helper helper,
+            ConnectionContext connectionContext,
+            MigrationLoader loader, MigrationEngine engine, MigrationLockService migrationLockService, MigrationRepository repository, ConnectionRepo connectionRepo, JdbcTemplate jdbcTemplate,  ConnectionRequest connectionRequest) {
         this.helper = helper;
         this.loader = loader;
         this.engine = engine;
         this.migrationLockService = migrationLockService;
         this.repository = repository;
-        this.connectionContext = connectionContext;
         this.connectionRepo = connectionRepo;
         this.jdbcTemplate = jdbcTemplate;
-        this.migrationComponent = migrationComponent;
-        this.connectionService = connectionService;
+        this.connectionRequest = connectionRequest;
+        this.connectionContext = connectionContext;
     }
 
     // RETURNS THE STATUS
-    public StatusResponse status(Long connectionId) {
+    public StatusResponse status(Long connectionId) throws SQLException {
 
         if (connectionId == null) {
             throw new RuntimeException("No active connection selected");
         }
 
-        var currentOpt = helper.getCurrentVersion(connectionId);
+        var currentOpt = helper.getCurrentVersion(connectionId,connectionRequest.getDatabase());
         String current = currentOpt.orElse("None");
 
         try {
@@ -105,8 +107,11 @@ public class MigrationService {
 //             lockedBy = new StringBuilder(migrationLockService.acquireLock(connectionId, targetVersion));
 //             lockedBy = new StringBuilder(migrationLockService.getHostName());
 //            System.out.println("the host at the service : "+lockedBy);
-            var currentOpt = migrationComponent.getCurrentVersion(connectionId);
 
+            System.out.println("get current verison runnign ");
+            System.out.println(connectionRequest.getDatabase());
+            var currentOpt = helper.getCurrentVersion(connectionId,"Madar");
+            System.out.println("get current verison is completed");
             List<MigrationScript> pending =
                     loader.loadPendingMigrations(currentOpt.orElse(null), connectionId);
 
@@ -169,6 +174,8 @@ public class MigrationService {
         } catch (IOException e) {
             return new MigrationResult("✗ Migration failed: " + e.getMessage(), 0, 0);
 
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         } finally {
             try {
                 migrationLockService.releaseLock(connectionId, lockedBy); // 🔥 scoped unlock
@@ -179,7 +186,7 @@ public class MigrationService {
 
     public String rollback(@Option(description = "Target version") String targetVersion, Long connectionId) {
         try {
-            var currentOpt = helper.getCurrentVersion(connectionId);
+            var currentOpt = helper.getCurrentVersion(connectionId,connectionRequest.getDatabase());
             if (currentOpt.isEmpty()) {
                 return "No migrations to rollback";
             }
@@ -199,6 +206,8 @@ public class MigrationService {
 
         } catch (IOException e) {
             return "Rollback error: " + e.getMessage();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 

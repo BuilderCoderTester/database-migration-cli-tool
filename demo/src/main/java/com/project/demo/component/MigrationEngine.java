@@ -53,7 +53,7 @@ public class MigrationEngine {
                 + script.getVersion() + " - " + script.getDescription()
                 + " [connectionId=" + connectionId + "]");
         try {
-            Connection conn = connectionService.getConnection(connectionId);
+//            Connection conn = connectionService.getConnection(connectionId);
 //            System.out.println("the conn :"+conn);
 //            System.out.println("the real conneciton " + conn);
             // has bugs (workings.............)

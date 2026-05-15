@@ -3,6 +3,7 @@ package com.project.demo.repository;
 
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
+import com.project.demo.service.MigrationService;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -10,6 +11,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -20,6 +23,7 @@ import java.util.Optional;
 public class MigrationRepository {
 
     private final JdbcTemplate jdbcTemplate;
+
 
     public MigrationRepository(DataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
@@ -113,10 +117,36 @@ public class MigrationRepository {
     }
 
     //FIND THE LAST SUCCESSFUL MIGRATION FILE OR SCRIPT
-    public Optional<Migration> findLastSuccessful(Long connectionId) {
-        String sql = "SELECT * FROM sub_migration WHERE success = true AND connection_id = ? ORDER BY version DESC LIMIT 1";
-        List<Migration> results = jdbcTemplate.query(sql, new MigrationRowMapper(),connectionId);
-        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
+    public Optional<Migration> findLastSuccessful(Long connectionId, Connection connection) throws SQLException {
+
+        String sql = """
+        SELECT *
+        FROM sub_migration
+        WHERE success = true
+        AND connection_id = ?
+        ORDER BY version DESC
+        LIMIT 1
+        """;
+
+        // Debug current DB
+        PreparedStatement debugStmt = connection.prepareStatement("SELECT current_database()");
+        ResultSet debugRs = debugStmt.executeQuery();
+
+        if (debugRs.next()) {
+            System.out.println("🔥 Connected to: " + debugRs.getString(1));
+        }
+
+        PreparedStatement stmt = connection.prepareStatement(sql);
+        stmt.setLong(1, connectionId);
+
+        ResultSet rs = stmt.executeQuery();
+
+        if (rs.next()) {
+            Migration migration = new MigrationRowMapper().mapRow(rs, 1);
+            return Optional.of(migration);
+        }
+
+        return Optional.empty();
     }
 
     public List<Migration> findFailedMigrations() {

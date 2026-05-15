@@ -1,17 +1,22 @@
 package com.project.demo.utility;
 
-import com.project.demo.component.MigrationValidator;
-import com.project.demo.component.SqlExecutor;
-import com.project.demo.component.MigrationLoader;
+import com.project.demo.component.*;
+import com.project.demo.dto.ConnectionRequest;
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.repository.MigrationRepository;
+import com.project.demo.service.MigrationService;
 import lombok.AllArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.List;
@@ -24,9 +29,8 @@ public class Helper {
     private final SqlExecutor sqlExecutor;
     private final MigrationRepository repository;
     private final MigrationValidator validator;
-    private final MigrationLoader migrationLoader;
-
-
+    private final JdbcTemplate jdbcTemplate;
+    private final ConnectionContext connectionContext;
     /// compare the scripts version
     public int compareVersion(String v1, String v2) {
 
@@ -54,9 +58,12 @@ public class Helper {
     }
 
     /// version id manageable
-    public void applyVersioned(MigrationScript script, long start, Long connectionId) {
+    public void applyVersioned(MigrationScript script, long start, Long connectionId) throws SQLException {
+        System.out.println("cominng to the office baby");
         sqlExecutor.executeScript(script.getUpScript());
-        saveMigrationRecord(script, connectionId,System.currentTimeMillis() - start, false);
+        Connection connection = activeConnection("Madar");
+        PreparedStatement prepare = connection.prepareStatement("SELECT current_database() ");
+        saveMigrationRecord(script, connectionId,System.currentTimeMillis() - start, false,);
     }
 
     /// SAVE THE MIGRATION RECORDS
@@ -93,10 +100,37 @@ public class Helper {
     }
 
     /// get current version of the schema or scripts
-    public Optional<String> getCurrentVersion(Long connectionId) {
-        return repository.findLastSuccessful(connectionId).map(Migration::getVersion);
+    public Optional<String> getCurrentVersion(Long connectionId,String databaseName) throws SQLException {
+        System.out.println("cmiing baby"+ databaseName);
+        Connection connection = activeConnection(databaseName);
+        return repository.findLastSuccessful(connectionId,connection).map(Migration::getVersion);
     }
 
+    /// get current version of the schema or scripts
+//    public Optional<String> getCurrentVersion(Long connectionId,String databaseName) throws SQLException {
+//        Connection connection =activeConnection(databaseName);
+//        return migrationRepository.findLastSuccessful(connectionId,connection).map(Migration::getVersion);
+//    }
+    public Connection activeConnection(String databaseName) throws SQLException {
+        System.out.println("the database is : "+ databaseName);
+        String sql = """
+                    SELECT connection_id FROM connections WHERE database = ?
+                """;
+        String url = """
+                SELECT url from connections where connection_id = ?
+                """;
+        Long connection_id = jdbcTemplate.queryForObject(sql, Long.class, databaseName);
+        connectionContext.setCurrentConnectionId(connection_id);
+        String dbUrl = jdbcTemplate.queryForObject(url,String.class,connection_id);
+        System.out.println("conneciton url " + dbUrl);
+
+        Connection newConnection = DriverManager.getConnection(
+                dbUrl,
+                "postgres",
+                "sigilotech"
+        );
+        return newConnection;
+    }
     /// history of migration records
     public List<Migration> getMigrationHistory(Long connectionId) {
         return repository.findAll(connectionId);
@@ -117,14 +151,14 @@ public class Helper {
     }
 
     /// pending migration request
-    public int getPendingCount(Long connectionId) {
-        try {
-            String currentVersion = getCurrentVersion(connectionId).orElse(null);
-            return migrationLoader.loadPendingMigrations(currentVersion,connectionId).size();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to fetch pending migrations", e);
-        }
-    }
+//    public int getPendingCount(Long connectionId) {
+//        try {
+//            String currentVersion = getCurrentVersion(connectionId).orElse(null);
+//            return migrationLoader.loadPendingMigrations(currentVersion,connectionId).size();
+//        } catch (Exception e) {
+//            throw new RuntimeException("Failed to fetch pending migrations", e);
+//        }
+//    }
 
 
 }

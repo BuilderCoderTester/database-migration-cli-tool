@@ -140,7 +140,7 @@ public class MigrationController {
 
     // ✅ RETURNS THE STATUS OF THE MIGRATION TABLE AND FILES
     @GetMapping("/status")
-    public StatusResponse status(@RequestParam Long connectionId) {
+    public StatusResponse status(@RequestParam Long connectionId) throws SQLException {
         return migrationService.status(connectionId);
     }
 
