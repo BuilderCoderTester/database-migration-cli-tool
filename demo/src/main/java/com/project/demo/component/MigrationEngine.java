@@ -41,7 +41,7 @@ public class MigrationEngine {
 
     // MIGRATE UP MODULE
     @Transactional(rollbackFor = Exception.class)
-    public void migrateUp(MigrationScript script ,Long connectionId) {
+    public void migrateUp(MigrationScript script, Long connectionId) {
 
         if (connectionId == null) {
             throw new RuntimeException("No active connection selected");
@@ -53,33 +53,34 @@ public class MigrationEngine {
                 + script.getVersion() + " - " + script.getDescription()
                 + " [connectionId=" + connectionId + "]");
         try {
-//            Connection conn = connectionService.getConnection(connectionId);
+            Connection conn = helper.activeConnection("Madar");
 //            System.out.println("the conn :"+conn);
 //            System.out.println("the real conneciton " + conn);
             // has bugs (workings.............)
 //            validator.validateBeforeUp(script);
 
             // 2. 🔥 AST Dependency Extraction
-//            ASTDependencyExtractor extractor = new ASTDependencyExtractor();
-//            List<Dependency> deps = extractor.extract(script.getUpScript());
-//
-//            DependencyValidator validator = new DependencyValidator();
-//            validator.validate(deps, conn);
+            ASTDependencyExtractor extractor = new ASTDependencyExtractor();
+            List<Dependency> deps = extractor.extract(script.getUpScript());
+            System.out.println("the deps = " + deps);
+            // only checked for CREATE not for otheres
+            DependencyValidator validator = new DependencyValidator();
+            validator.validate(deps, conn);
 
             if (script.isRepeatable()) {
                 // not done yet (working ............)
-                applyRepeatable(script, connectionId,startTime);
+                applyRepeatable(script, connectionId, startTime);
             } else {
                 helper.applyVersioned(script, startTime, connectionId);
             }
 
         } catch (Exception e) {
-            failureService.logFailure(script, e,connectionId); // Log in separate transaction
+            failureService.logFailure(script, e, connectionId); // Log in separate transaction
             throw new RuntimeException("Migration failed: " + script.getVersion(), e);
         }
     }
 
-    private void applyRepeatable(MigrationScript script, long start ,Long connectionId) {
+    private void applyRepeatable(MigrationScript script, long start, Long connectionId) {
 
         String checksum = helper.calculateChecksum(script.getUpScript());
 

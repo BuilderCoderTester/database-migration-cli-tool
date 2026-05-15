@@ -9,7 +9,8 @@ import net.sf.jsqlparser.statement.update.Update;
 import net.sf.jsqlparser.statement.insert.Insert;
 import net.sf.jsqlparser.statement.alter.Alter;
 import net.sf.jsqlparser.schema.Table;
-
+import net.sf.jsqlparser.statement.create.table.CreateTable;
+import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import java.util.*;
 
 public class ASTDependencyExtractor {
@@ -17,6 +18,38 @@ public class ASTDependencyExtractor {
     public List<Dependency> extract(String sql) throws Exception {
         Statement stmt = CCJSqlParserUtil.parse(sql);
         List<Dependency> deps = new ArrayList<>();
+
+        if (stmt instanceof CreateTable createTable) {
+
+            if (createTable.getIndexes() != null) {
+
+                createTable.getIndexes().forEach(index -> {
+
+                    if ("FOREIGN KEY".equalsIgnoreCase(index.getType())) {
+
+                        String fk = index.toString();
+
+                        // Example:
+                        // FOREIGN KEY (user_id) REFERENCES users(id)
+
+                        if (fk.contains("REFERENCES")) {
+
+                            String refPart = fk.split("REFERENCES")[1].trim();
+
+                            String refTable = refPart.substring(0, refPart.indexOf("(")).trim();
+
+                            deps.add(new Dependency(
+                                    DependencyType.TABLE,
+                                    refTable,
+                                    null,
+                                    null,
+                                    null
+                            ));
+                        }
+                    }
+                });
+            }
+        }
 
         if (stmt instanceof Select select) {
             extractFromSelect(select, deps);
