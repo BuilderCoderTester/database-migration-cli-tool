@@ -91,9 +91,9 @@ public class MigrationEngine {
 
             logger.info("Running repeatable: {}", script.getVersion());
 
-            sqlExecutor.executeScript(script.getUpScript());
+//            sqlExecutor.executeScript(script.getUpScript());
 
-            helper.saveMigrationRecord(script, connectionId,System.currentTimeMillis() - start, true);
+//            helper.saveMigrationRecord(script, connectionId,System.currentTimeMillis() - start, true);
 
         } else {
             logger.info("Skipping repeatable (no changes): {}", script.getVersion());

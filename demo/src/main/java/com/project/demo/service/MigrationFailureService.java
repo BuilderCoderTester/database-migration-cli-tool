@@ -47,7 +47,7 @@ public class MigrationFailureService {
         int retry = existing.map(Migration::getRetryCount).orElse(0);
         migration.setRetryCount(retry + 1);
 
-        repository.save(migration,connectionId);
+//        repository.save(migration,connectionId);
     }
 
     // ✅ Utility method moved here

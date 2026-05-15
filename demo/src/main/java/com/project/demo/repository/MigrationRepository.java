@@ -82,27 +82,64 @@ public class MigrationRepository {
     }
 
     @Transactional
-    public void save(Migration migration,Long connectionId) {
-
+    public void save(Migration migration,
+                     Long connectionId,
+                     Connection connection) throws SQLException {
+        System.out.println("yes comming yes baby");
         String sql = """
-            INSERT INTO sub_migration ( version, description, script, checksum, 
-                                       executed_at, execution_time, success ,connection_id)
-            VALUES ( ?, ?, ?, ?, ?, ?, ? ,?)
-            ON CONFLICT (version) DO UPDATE SET
-                success = EXCLUDED.success,
-                execution_time = EXCLUDED.execution_time
-            """;
+        INSERT INTO sub_migration (
+            version,
+            description,
+            script,
+            checksum,
+            executed_at,
+            execution_time,
+            success,
+            connection_id
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT (version)
+        DO UPDATE SET
+            success = EXCLUDED.success,
+            execution_time = EXCLUDED.execution_time
+        """;
 
-        jdbcTemplate.update(sql,
-                migration.getVersion(),
-                migration.getDescription(),
-                migration.getScript(),
-                migration.getChecksum(),
-                migration.getExecutedAt(),
-                migration.getExecutionTime(),
-                migration.isSuccess(),
-                connectionId
-        );
+        // Debug current DB
+        try (
+                PreparedStatement debugStmt =
+                        connection.prepareStatement("SELECT current_database()");
+
+                ResultSet debugRs = debugStmt.executeQuery()
+        ) {
+
+            if (debugRs.next()) {
+                System.out.println("🔥 Connected DB: " + debugRs.getString(1));
+            }
+        }
+
+        // Main insert/update
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+            stmt.setString(1, migration.getVersion());
+            stmt.setString(2, migration.getDescription());
+            stmt.setString(3, migration.getScript());
+            stmt.setString(4, migration.getChecksum());
+
+            if (migration.getExecutedAt() != null) {
+                stmt.setTimestamp(
+                        5,
+                        java.sql.Timestamp.valueOf(migration.getExecutedAt())
+                );
+            } else {
+                stmt.setTimestamp(5, null);
+            }
+
+            stmt.setLong(6, migration.getExecutionTime());
+            stmt.setBoolean(7, migration.isSuccess());
+            stmt.setLong(8, connectionId);
+
+            stmt.executeUpdate();
+        }
     }
 
     public List<Migration> findAll(Long connectionId) {

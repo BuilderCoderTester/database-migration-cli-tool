@@ -60,16 +60,17 @@ public class Helper {
     /// version id manageable
     public void applyVersioned(MigrationScript script, long start, Long connectionId) throws SQLException {
         System.out.println("cominng to the office baby");
-        sqlExecutor.executeScript(script.getUpScript());
         Connection connection = activeConnection("Madar");
-        PreparedStatement prepare = connection.prepareStatement("SELECT current_database() ");
-        saveMigrationRecord(script, connectionId,System.currentTimeMillis() - start, false,);
+
+        sqlExecutor.executeScript(script.getUpScript(),connection);
+        System.out.println("hehe he ami sei checl je kaj kori");
+        saveMigrationRecord(script, connectionId,System.currentTimeMillis() - start, false,connection);
     }
 
     /// SAVE THE MIGRATION RECORDS
     public void saveMigrationRecord(MigrationScript script,Long connectionId,
                                     long executionTime,
-                                    boolean repeatable) {
+                                    boolean repeatable,Connection connection) throws SQLException {
 
         Migration m = new Migration(
                 script.getVersion(),
@@ -85,7 +86,7 @@ public class Helper {
         m.setRepeatable(repeatable);
         m.setName(script.getName());
 
-        repository.save(m,connectionId);
+        repository.save(m,connectionId ,connection);
     }
 
     /// SFA checksum
