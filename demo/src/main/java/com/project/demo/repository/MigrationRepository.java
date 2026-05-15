@@ -1,6 +1,7 @@
 // MigrationRepository.java
 package com.project.demo.repository;
 
+import com.project.demo.model.ConnectionConfig;
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.service.MigrationService;
@@ -11,11 +12,9 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -118,7 +117,8 @@ public class MigrationRepository {
         }
 
         // Main insert/update
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt =
+                     connection.prepareStatement(sql)) {
 
             stmt.setString(1, migration.getVersion());
             stmt.setString(2, migration.getDescription());
@@ -126,25 +126,135 @@ public class MigrationRepository {
             stmt.setString(4, migration.getChecksum());
 
             if (migration.getExecutedAt() != null) {
+
                 stmt.setTimestamp(
                         5,
-                        java.sql.Timestamp.valueOf(migration.getExecutedAt())
+                        java.sql.Timestamp.valueOf(
+                                migration.getExecutedAt()
+                        )
                 );
+
             } else {
-                stmt.setTimestamp(5, null);
+
+                stmt.setNull(5, java.sql.Types.TIMESTAMP);
             }
 
-            stmt.setLong(6, migration.getExecutionTime());
+            if (migration.getExecutionTime() != null) {
+
+                stmt.setLong(
+                        6,
+                        migration.getExecutionTime()
+                );
+
+            } else {
+
+                stmt.setNull(6, java.sql.Types.BIGINT);
+            }
+
             stmt.setBoolean(7, migration.isSuccess());
+
             stmt.setLong(8, connectionId);
 
+            System.out.println("Executing insert...");
+
             stmt.executeUpdate();
+
+            System.out.println("Insert success");
+
+        } catch (Exception e) {
+
+            System.out.println("Insert failed");
+
+            e.printStackTrace();
         }
     }
 
-    public List<Migration> findAll(Long connectionId) {
-        String sql = "SELECT * FROM migration WHERE connection_id = ? ORDER BY version";
-        return jdbcTemplate.query(sql, new MigrationRowMapper(),connectionId);
+    public List<Migration> findAll(Long connectionId,
+                                   Connection connection)
+            throws SQLException {
+
+        System.out.println("heehe " + connectionId);
+
+        String sql = """
+    SELECT *
+    FROM sub_migration
+    WHERE connection_id = ?
+    """;
+
+        List<Migration> migrations = new ArrayList<>();
+
+        try (PreparedStatement stmt =
+                     connection.prepareStatement(sql)) {
+
+            stmt.setLong(1, connectionId);
+
+            System.out.println("Executing query...");
+
+            try (ResultSet rs = stmt.executeQuery()) {
+
+                while (rs.next()) {
+
+                    System.out.println("---------------");
+
+                    System.out.println(
+                            "Version = " +
+                                    rs.getString("version")
+                    );
+
+                    Migration migration = new Migration();
+
+                    migration.setVersion(
+                            rs.getString("version")
+                    );
+
+                    migration.setDescription(
+                            rs.getString("description")
+                    );
+
+                    migration.setScript(
+                            rs.getString("script")
+                    );
+
+                    migration.setChecksum(
+                            rs.getString("checksum")
+                    );
+
+                    Timestamp executedAt =
+                            rs.getTimestamp("executed_at");
+
+                    if (executedAt != null) {
+                        migration.setExecutedAt(
+                                executedAt.toLocalDateTime()
+                        );
+                    }
+
+                    migration.setExecutionTime(
+                            rs.getLong("execution_time")
+                    );
+
+                    migration.setSuccess(
+                            rs.getBoolean("success")
+                    );
+
+                    ConnectionConfig connObj = new ConnectionConfig();
+
+                    connObj.setConnectionId(
+                            rs.getLong("connection_id")
+                    );
+
+                    migration.setConnection(connObj);
+
+                    // ADD TO LIST
+                    migrations.add(migration);
+                }
+            }
+        }
+
+        System.out.println(
+                "migration count = " + migrations.size()
+        );
+
+        return migrations;
     }
 
     public Optional<Migration> findByVersion(String version) {

@@ -85,8 +85,9 @@ public class MigrationService {
         engine.initialize();
     }
 
-    public List<MigrationScript> listAllPendingMigration(Long connectionId) {
-        return loader.listAllPendingMigration(connectionId);
+    public List<MigrationScript> listAllPendingMigration(Long connectionId) throws SQLException {
+        Connection connection = activeConnection("Madar");
+        return loader.listAllPendingMigration(connectionId,connection);
     }
 
     //MIGRATE THE MIGRATIONS FILE OR SCRIPTS
@@ -231,9 +232,11 @@ public class MigrationService {
         return "✓ Repaired " + failed.size() + " failed migrations";
     }
 
-    public List<Migration> history(Long connectionId) {
+    public List<Migration> history(Long connectionId) throws SQLException {
         List<Migration> migrations = helper.getMigrationHistory(connectionId);
-
+        System.out.println("successfull-1");
+        // Count of migration history records
+        System.out.println("Total migration history count: " + migrations.size());
         String[][] data = new String[migrations.size() + 1][5];
         data[0] = new String[]{"Version", "Description", "Executed At", "Time (ms)", "Status"};
 
@@ -249,10 +252,6 @@ public class MigrationService {
                     m.isSuccess() ? "✓" : "✗"
             };
         }
-
-//        return new TableBuilder(new ArrayTableModel(data))
-//                .addFullBorder(BorderStyle.fancy_light)
-//                .build();
         return migrations;
     }
 
@@ -284,7 +283,7 @@ public class MigrationService {
             }
 
             return errors == 0 ? "✓ All migrations validated" : "✗ " + errors + " checksum errors found";
-        } catch (IOException e) {
+        } catch (IOException | SQLException e) {
             return "Validation error: " + e.getMessage();
         }
     }

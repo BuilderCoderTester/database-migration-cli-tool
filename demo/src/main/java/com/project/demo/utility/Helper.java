@@ -133,8 +133,10 @@ public class Helper {
         return newConnection;
     }
     /// history of migration records
-    public List<Migration> getMigrationHistory(Long connectionId) {
-        return repository.findAll(connectionId);
+    public List<Migration> getMigrationHistory(Long connectionId) throws SQLException {
+        Connection connection = activeConnection("Madar");
+        System.out.println("cpoem");
+        return repository.findAll(connectionId,connection);
     }
 
     ///  checksum validation

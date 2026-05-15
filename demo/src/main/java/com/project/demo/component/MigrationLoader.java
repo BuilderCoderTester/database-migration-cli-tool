@@ -12,6 +12,10 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -186,13 +190,13 @@ public class MigrationLoader {
         logService.log((fileName + "Migration Applied."),LogLevel.SUCCESS );
     }
 
-    public List<MigrationScript> listAllPendingMigration(Long connectionId) {
+    public List<MigrationScript> listAllPendingMigration(Long connectionId,Connection connection) {
         try {
             // 1️⃣ Load all migration files from folder
             List<MigrationScript> allScripts = loadFromFolder(connectionId);
 
             // 2️⃣ Load executed versions from DB
-            Set<String> executedVersions = loadExecutedVersionsFromDB(connectionId);
+            Set<String> executedVersions = loadExecutedVersionsFromDB(connectionId,connection);
 
             // 3️⃣ Filter pending scripts
             List<MigrationScript> pending = allScripts.stream()
@@ -203,7 +207,7 @@ public class MigrationLoader {
             if (pending.isEmpty()) {
                 return Collections.emptyList();
             }
-
+            System.out.println("hthe pendng afetre applier "+Arrays.toString(pending.toArray()));
             StringBuilder sb = new StringBuilder("⏳ Pending Migrations:\n");
 
             for (MigrationScript script : pending) {
@@ -256,11 +260,42 @@ public class MigrationLoader {
         );
     }
 
-    private Set<String> loadExecutedVersionsFromDB(Long connectionId) {
+    private Set<String> loadExecutedVersionsFromDB(
+            Long connectionId,
+            Connection connection
+    ) throws SQLException {
 
-        String sql = "SELECT version FROM migration WHERE success = true AND connection_id = ?";
+        String sql = """
+            SELECT version
+            FROM sub_migration
+            WHERE success = true
+            AND connection_id = ?
+            """;
 
-        return new HashSet<>(jdbcTemplate.queryForList(sql, String.class,connectionId));
+        Set<String> versions = new HashSet<>();
+
+        try (PreparedStatement stmt =
+                     connection.prepareStatement(sql)) {
+
+            stmt.setLong(1, connectionId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+
+                while (rs.next()) {
+
+                    String version =
+                            rs.getString("version");
+
+                    System.out.println(
+                            "Executed Version = " + version
+                    );
+
+                    versions.add(version);
+                }
+            }
+        }
+
+        return versions;
     }
 
 

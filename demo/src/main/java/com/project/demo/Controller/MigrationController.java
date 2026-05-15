@@ -134,7 +134,7 @@ public class MigrationController {
 
     // ✅ RETURNS PENDING MIGRATION COMPLETE
     @GetMapping("/pending")
-    public List<MigrationScript> list(@RequestParam Long connectionId) {
+    public List<MigrationScript> list(@RequestParam Long connectionId) throws SQLException {
         return migrationService.listAllPendingMigration(connectionId);
     }
 
@@ -171,7 +171,7 @@ public class MigrationController {
 
     // ✅ HISTORY
     @GetMapping("/history")
-    public List<Migration> history(@RequestParam Long connectionId) {
+    public List<Migration> history(@RequestParam Long connectionId) throws SQLException {
         return migrationService.history(connectionId);
     }
 
