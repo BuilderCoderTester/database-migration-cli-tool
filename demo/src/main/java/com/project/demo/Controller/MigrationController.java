@@ -28,7 +28,7 @@ public class MigrationController {
     private final LogService logService;
     private final MigrationService migrationService;
     private final ConnectionService connectionService;
-    private final JdbcTemplate jdbcTemplate;
+
     //CREATE CONNECTION
     @PostMapping("/connect")
     public ConnectionResponse connection(
@@ -42,8 +42,8 @@ public class MigrationController {
     @PostMapping("/set-active")
     public ApiResponse setActive(@RequestBody Map<String, String> req) throws SQLException {
         String databaseName = req.get("database");
-        System.out.println("the database name " + databaseName);
         Connection conn =  migrationService.activeConnection(databaseName);
+
         PreparedStatement pst = conn.prepareStatement("SELECT current_database()");
         PreparedStatement pst_1 = conn.prepareStatement("""
                     SELECT schemaname, tablename

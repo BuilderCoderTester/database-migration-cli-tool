@@ -133,7 +133,7 @@ public class MigrationService {
 
                 try {
                     // 🔥 run migration on correct DB
-                    engine.migrateUp(script, connectionId);
+                    engine.migrateUp(script, connectionId,connectionContext.getCurrentDatabase());
                     success++;
                     applied.add(script.getVersion());
 
@@ -187,19 +187,21 @@ public class MigrationService {
 
     public String rollback(@Option(description = "Target version") String targetVersion, Long connectionId) {
         try {
-            var currentOpt = helper.getCurrentVersion(connectionId,connectionRequest.getDatabase());
+            System.out.println("the databse = "+ connectionContext.getCurrentDatabase());
+            var currentOpt = helper.getCurrentVersion(connectionId,connectionContext.getCurrentDatabase());
             if (currentOpt.isEmpty()) {
                 return "No migrations to rollback";
             }
-
+            System.out.println("atleast coming");
             String current = currentOpt.get();
             MigrationScript script = loader.loadSpecificVersion(current, connectionId);
 
             if (script == null) {
                 return "Could not find migration script for version: " + current;
             }
-            System.out.println("the script is " + script.getUpScript());
-            if (engine.migrateDown(script)) {
+            System.out.println("the script is " + script.getDownScript());
+            if (engine.migrateDown(script,connectionContext.getCurrentDatabase())) {
+                System.out.println("yes it is working ");
                 return "✓ Rolled back version " + current;
             } else {
                 return "✗ Rollback failed";
@@ -374,6 +376,7 @@ public class MigrationService {
                 """;
         Long connection_id = jdbcTemplate.queryForObject(sql, Long.class, databaseName);
         connectionContext.setCurrentConnectionId(connection_id);
+        connectionContext.setCurrentDatabase(databaseName);
         String dbUrl = jdbcTemplate.queryForObject(url,String.class,connection_id);
         System.out.println("conneciton url " + dbUrl);
 
