@@ -61,7 +61,8 @@ public class MigrationEngine {
             ASTDependencyExtractor extractor = new ASTDependencyExtractor();
             List<Dependency> deps = extractor.extract(script.getUpScript());
             System.out.println("the deps = " + deps);
-            // only checked for CREATE not for otheres
+
+            // only checked for CREATE not for others
             DependencyValidator validator = new DependencyValidator();
             validator.validate(deps, conn);
 

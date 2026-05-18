@@ -27,6 +27,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -115,9 +116,10 @@ public class MigrationService {
             List<MigrationScript> pending =
                     loader.loadPendingMigrations(currentOpt.orElse(null), connectionId);
 
+            for(MigrationScript sc :pending){
+                System.out.println("Script "+ sc.getVersion());
+            }
             if (pending.isEmpty()) {
-                System.out.println("get current verison is completed");
-
                 return new MigrationResult("✓ No pending migrations", 0, 0);
             }
 
