@@ -7,8 +7,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,8 +29,9 @@ public class MigrationRepair {
         private DatabaseOperation databaseOperation;
     }
 
-    public MigrationService migrationService;
-
+    private final MigrationLoader loader;
+    private final ConnectionContext connectionContext;
+    private final JdbcTemplate jdbcTemplate;
     // Starts the flow
     public MigrationScript migrationRepairFlow(MigrationScript migrationScript) throws Exception {
         AnalysisResult result_1 = versionExtraction(migrationScript);
@@ -109,7 +114,7 @@ public class MigrationRepair {
     private MigrationScript searchTable(String operation, String tableName) throws Exception {
         long connectionId = 21;
         List<MigrationScript> pendingScript =
-                migrationService.listAllPendingMigration(connectionId);
+                listAllPendingMigration(connectionId);
 
         try {
             for (MigrationScript script : pendingScript) {
@@ -158,5 +163,35 @@ public class MigrationRepair {
         analysisResult.setDatabaseOperation(DatabaseOperation.valueOf(requiredOperation));
         analysisResult.setTableName(result.getTableName());
         return analysisResult;
+    }
+
+
+    //Extra required fucntion
+    public List<MigrationScript> listAllPendingMigration(Long connectionId) throws SQLException {
+        Connection connection = activeConnection("Madar");
+        return loader.listAllPendingMigration(connectionId,connection);
+    }
+
+
+    public Connection activeConnection(String databaseName) throws SQLException {
+        System.out.println(databaseName);
+        String sql = """
+                    SELECT connection_id FROM connections WHERE database = ?
+                """;
+        String url = """
+                SELECT url from connections where connection_id = ?
+                """;
+        Long connection_id = jdbcTemplate.queryForObject(sql, Long.class, databaseName);
+        connectionContext.setCurrentConnectionId(connection_id);
+        connectionContext.setCurrentDatabase(databaseName);
+        String dbUrl = jdbcTemplate.queryForObject(url,String.class,connection_id);
+        System.out.println("conneciton url " + dbUrl);
+
+        Connection newConnection = DriverManager.getConnection(
+                dbUrl,
+                "postgres",
+                "sigilotech"
+        );
+        return newConnection;
     }
 }

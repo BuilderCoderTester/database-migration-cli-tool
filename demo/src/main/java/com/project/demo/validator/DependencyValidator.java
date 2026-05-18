@@ -1,6 +1,8 @@
 package com.project.demo.validator;
 
+import com.project.demo.dto.MigrationScriptStatus;
 import com.project.demo.enumuration.DependencyType;
+import com.project.demo.enumuration.Status;
 import com.project.demo.model.Dependency;
 
 import java.sql.Connection;
@@ -10,37 +12,59 @@ import java.util.List;
 
 public class DependencyValidator {
 
-    public void validate(List<Dependency> deps, Connection conn) throws Exception {
+    public MigrationScriptStatus validate(List<Dependency> deps,
+                                          Connection conn) throws Exception {
+        MigrationScriptStatus status = new MigrationScriptStatus();
 
         for (Dependency dep : deps) {
 
+
             switch (dep.getType()) {
 
-                case TABLE -> validateTable(dep, conn);
+                case TABLE:
+                    status = validateTable(dep, conn);
+                    break;
 
-                case COLUMN -> validateColumn(dep, conn);
+                case COLUMN:
+                    validateColumn(dep, conn);
+                    break;
 
-                case FOREIGN_KEY -> validateForeignKey(dep, conn);
+                case FOREIGN_KEY:
+                    validateForeignKey(dep, conn);
+                    break;
 
-                case INDEX -> validateIndex(dep, conn);
+                case INDEX:
+                    validateIndex(dep, conn);
+                    break;
 
-                case VERSION -> {
-                    // optional (handled elsewhere usually)
-                }
+                case VERSION:
+                    continue;
 
-                default -> throw new RuntimeException("Unknown dependency type: " + dep.getType());
+                default:
+                    throw new RuntimeException(
+                            "Unknown dependency type: " + dep.getType()
+                    );
             }
+
         }
+        return status;
     }
 
     // =========================
     // 🔍 TABLE VALIDATION
     // =========================
-    private void validateTable(Dependency dep, Connection conn) throws SQLException {
+    private MigrationScriptStatus validateTable(Dependency dep, Connection conn) throws SQLException {
         if (!tableExists(conn, dep.getTable())) {
+
             System.out.println("The table is not present.");
-            throw new RuntimeException("❌ Missing table: " + dep.getTable());
+
+            return new MigrationScriptStatus(
+                    Status.FAILURE,
+                    "❌ Missing table: " + dep.getTable()
+            );
         }
+
+        return new MigrationScriptStatus(Status.PASSED, "Function Not Working");
     }
 
     // =========================

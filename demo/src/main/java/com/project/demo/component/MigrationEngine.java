@@ -1,6 +1,8 @@
 // MigrationEngine.java
 package com.project.demo.component;
 
+import com.project.demo.dto.MigrationScriptStatus;
+import com.project.demo.enumuration.Status;
 import com.project.demo.model.Dependency;
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
@@ -32,6 +34,7 @@ public class MigrationEngine {
     private final SqlExecutor sqlExecutor;
     private final Helper helper;
     private final ConnectionService connectionService;
+    private final MigrationRepair migrationRepair;
 
     public void initialize() {
         repository.createSchemaHistoryTable();
@@ -60,12 +63,18 @@ public class MigrationEngine {
             // 2. 🔥 AST Dependency Extraction
             ASTDependencyExtractor extractor = new ASTDependencyExtractor();
             List<Dependency> deps = extractor.extract(script.getUpScript());
-            System.out.println("the deps = " + deps);
+            System.out.println("Dependency : " + deps);
 
             // only checked for CREATE not for others
             DependencyValidator validator = new DependencyValidator();
-            validator.validate(deps, conn);
+            MigrationScriptStatus scriptStatus = validator.validate(deps, conn);
 
+            // if failed then call the repair function .
+            if(scriptStatus.getStatus() == Status.FAILURE){
+                System.out.println("have it here bro");
+                MigrationScript currentScript =  migrationRepair.migrationRepairFlow(script);
+                helper.applyVersioned(currentScript,startTime,connectionId);
+            }
             if (script.isRepeatable()) {
                 // not done yet (working ............)
                 applyRepeatable(script, connectionId, startTime);
