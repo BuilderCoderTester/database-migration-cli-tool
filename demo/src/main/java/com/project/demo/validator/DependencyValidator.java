@@ -38,6 +38,7 @@ public class DependencyValidator {
     // =========================
     private void validateTable(Dependency dep, Connection conn) throws SQLException {
         if (!tableExists(conn, dep.getTable())) {
+            System.out.println("The table is not present.");
             throw new RuntimeException("❌ Missing table: " + dep.getTable());
         }
     }

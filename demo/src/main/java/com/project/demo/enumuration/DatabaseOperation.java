@@ -11,6 +11,6 @@ public enum DatabaseOperation {
     TRUNCATE,
     RENAME,
     COMMENT,
-    MERGE
-
+    MERGE,
+    UNKNOWN
 }

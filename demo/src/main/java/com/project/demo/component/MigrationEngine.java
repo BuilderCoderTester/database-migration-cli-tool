@@ -41,7 +41,7 @@ public class MigrationEngine {
     // MIGRATE UP MODULE
     @Transactional(rollbackFor = Exception.class)
     public void migrateUp(MigrationScript script, Long connectionId,String currentDatabase) {
-
+        System.out.println("reach point -1 ");
         if (connectionId == null) {
             throw new RuntimeException("No active connection selected");
         }

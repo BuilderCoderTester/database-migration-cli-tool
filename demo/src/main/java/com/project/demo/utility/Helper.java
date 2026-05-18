@@ -102,18 +102,11 @@ public class Helper {
 
     /// get current version of the schema or scripts
     public Optional<String> getCurrentVersion(Long connectionId,String databaseName) throws SQLException {
-        System.out.println("cmiing baby"+ databaseName);
         Connection connection = activeConnection(databaseName);
         return repository.findLastSuccessful(connectionId,connection).map(Migration::getVersion);
     }
 
-    /// get current version of the schema or scripts
-//    public Optional<String> getCurrentVersion(Long connectionId,String databaseName) throws SQLException {
-//        Connection connection =activeConnection(databaseName);
-//        return migrationRepository.findLastSuccessful(connectionId,connection).map(Migration::getVersion);
-//    }
     public Connection activeConnection(String databaseName) throws SQLException {
-        System.out.println("the database is : "+ databaseName);
         String sql = """
                     SELECT connection_id FROM connections WHERE database = ?
                 """;
@@ -123,7 +116,6 @@ public class Helper {
         Long connection_id = jdbcTemplate.queryForObject(sql, Long.class, databaseName);
         connectionContext.setCurrentConnectionId(connection_id);
         String dbUrl = jdbcTemplate.queryForObject(url,String.class,connection_id);
-        System.out.println("conneciton url " + dbUrl);
 
         Connection newConnection = DriverManager.getConnection(
                 dbUrl,
@@ -133,9 +125,8 @@ public class Helper {
         return newConnection;
     }
     /// history of migration records
-    public List<Migration> getMigrationHistory(Long connectionId) throws SQLException {
-        Connection connection = activeConnection("Madar");
-        System.out.println("cpoem");
+    public List<Migration> getMigrationHistory(Long connectionId,String currentDatabase) throws SQLException {
+        Connection connection = activeConnection(currentDatabase);
         return repository.findAll(connectionId,connection);
     }
 

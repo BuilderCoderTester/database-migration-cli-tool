@@ -162,7 +162,6 @@ public class MigrationLoader {
             throws IOException {
 
         Long connectionId = connectionContext.getCurrentConnectionId();
-
         if (connectionId == null) {
             logService.log("No active connection. Please connect first.", LogLevel.ERROR);
             throw new RuntimeException("No active connection. Please connect first.");
@@ -207,7 +206,6 @@ public class MigrationLoader {
             if (pending.isEmpty()) {
                 return Collections.emptyList();
             }
-            System.out.println("hthe pendng afetre applier "+Arrays.toString(pending.toArray()));
             StringBuilder sb = new StringBuilder("⏳ Pending Migrations:\n");
 
             for (MigrationScript script : pending) {
@@ -215,13 +213,10 @@ public class MigrationLoader {
                         script.getVersion(),
                         script.getDescription()));
             }
-            for(int i = 0;i<pending.size();i++){
-                System.out.println("the pendingare : " + pending.get(i));
-            }
+
             return pending;
 
         } catch (Exception e) {
-//            return "❌ Error fetching pending migrations: " + e.getMessage();
             return Collections.emptyList();
         }
     }
@@ -233,7 +228,6 @@ public class MigrationLoader {
         }
         Path path = Paths.get("migrations");
         Path connectedPath = path.resolve("conn_" + connectionId);
-        System.out.println("the path is : "+connectedPath);
         if (!Files.exists(connectedPath)) {
             return List.of();
         }
@@ -250,9 +244,6 @@ public class MigrationLoader {
         String name = file.getFileName().toString(); // V1__init.sql
 
         String[] parts = name.replace(".sql", "").split("__");
-        for(String c:parts){
-            System.out.println("the scripts : " + c);
-        }
 
         return new MigrationScript(
                 parts[0],  // version

@@ -147,10 +147,9 @@ public class MigrationController {
     // ✅ MIGRATE
     @PostMapping("/migrate")
     public MigrationResult migrate(@RequestParam Long connectionId) {
-        System.out.println("yes baby");
         MigrationRequest migrationRequest = new MigrationRequest();
         migrationRequest.setConnectionId(connectionId);
-        migrationRequest.setOperation(DatabaseOperation.CREATE);
+
         return migrationService.migrate(migrationRequest);
     }
 

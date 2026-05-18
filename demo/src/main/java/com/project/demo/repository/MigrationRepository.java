@@ -84,7 +84,6 @@ public class MigrationRepository {
     public void save(Migration migration,
                      Long connectionId,
                      Connection connection) throws SQLException {
-        System.out.println("yes comming yes baby");
         String sql = """
         INSERT INTO sub_migration (
             version,
@@ -172,8 +171,6 @@ public class MigrationRepository {
     public List<Migration> findAll(Long connectionId,
                                    Connection connection)
             throws SQLException {
-
-        System.out.println("heehe " + connectionId);
 
         String sql = """
     SELECT *

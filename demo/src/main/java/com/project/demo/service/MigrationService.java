@@ -6,6 +6,7 @@ import com.project.demo.component.MigrationEngine;
 import com.project.demo.component.MigrationLoader;
 import com.project.demo.dto.*;
 import com.project.demo.dto.request.MigrationRequest;
+import com.project.demo.enumuration.DatabaseOperation;
 import com.project.demo.model.ConnectionConfig;
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
@@ -96,7 +97,7 @@ public class MigrationService {
         Long connectionId = migrationRequest.getConnectionId();
         String targetVersion = migrationRequest.getTargetVersion();
         System.out.println("Connection ID at service: " + connectionId);
-        System.out.println("target version at service: " + targetVersion);
+
         StringBuilder lockedBy = null;
 
         if (connectionId == null) {
@@ -109,14 +110,14 @@ public class MigrationService {
 //             lockedBy = new StringBuilder(migrationLockService.getHostName());
 //            System.out.println("the host at the service : "+lockedBy);
 
-            System.out.println("get current verison runnign ");
-            System.out.println(connectionRequest.getDatabase());
-            var currentOpt = helper.getCurrentVersion(connectionId,"Madar");
-            System.out.println("get current verison is completed");
+            var currentOpt = helper.getCurrentVersion(connectionId,connectionContext.getCurrentDatabase());
+            System.out.println("the currentOPT " + currentOpt);
             List<MigrationScript> pending =
                     loader.loadPendingMigrations(currentOpt.orElse(null), connectionId);
 
             if (pending.isEmpty()) {
+                System.out.println("get current verison is completed");
+
                 return new MigrationResult("✓ No pending migrations", 0, 0);
             }
 
@@ -125,7 +126,8 @@ public class MigrationService {
             List<String> applied = new ArrayList<>();
 
             for (MigrationScript script : pending) {
-
+                migrationRequest.setOperation(detectOperation(script.getDescription()));
+                System.out.println("Migration script operation " + migrationRequest.getOperation());
                 if (targetVersion != null &&
                         helper.compareVersion(script.getVersion(), targetVersion) > 0) {
                     break;
@@ -184,7 +186,43 @@ public class MigrationService {
             }
         }
     }
+    public DatabaseOperation detectOperation(String sql) {
+        System.out.println(sql);
+        String cleaned = sql.lines()
+                .map(String::trim)
+                .filter(line ->
+                        !line.isBlank() &&
+                                !line.startsWith("--"))
+                .findFirst()
+                .orElse("")
+                .toUpperCase();
 
+        if (cleaned.startsWith("CREATE")) {
+            return DatabaseOperation.CREATE;
+        }
+
+        if (cleaned.startsWith("ALTER")) {
+            return DatabaseOperation.ALTER;
+        }
+
+        if (cleaned.startsWith("DROP")) {
+            return DatabaseOperation.DROP;
+        }
+
+        if (cleaned.startsWith("INSERT")) {
+            return DatabaseOperation.INSERT;
+        }
+
+        if (cleaned.startsWith("UPDATE")) {
+            return DatabaseOperation.UPDATE;
+        }
+
+        if (cleaned.startsWith("DELETE")) {
+            return DatabaseOperation.DELETE;
+        }
+
+        return DatabaseOperation.UNKNOWN;
+    }
     public String rollback(@Option(description = "Target version") String targetVersion, Long connectionId) {
         try {
             System.out.println("the databse = "+ connectionContext.getCurrentDatabase());
@@ -235,8 +273,7 @@ public class MigrationService {
     }
 
     public List<Migration> history(Long connectionId) throws SQLException {
-        List<Migration> migrations = helper.getMigrationHistory(connectionId);
-        System.out.println("successfull-1");
+        List<Migration> migrations = helper.getMigrationHistory(connectionId,connectionContext.getCurrentDatabase());
         // Count of migration history records
         System.out.println("Total migration history count: " + migrations.size());
         String[][] data = new String[migrations.size() + 1][5];
@@ -273,7 +310,7 @@ public class MigrationService {
 
     public String validate(Long connectionId) {
         try {
-            List<Migration> history = helper.getMigrationHistory(connectionId);
+            List<Migration> history = helper.getMigrationHistory(connectionId,connectionContext.getCurrentDatabase());
             int errors = 0;
 
             for (Migration migration : history) {
