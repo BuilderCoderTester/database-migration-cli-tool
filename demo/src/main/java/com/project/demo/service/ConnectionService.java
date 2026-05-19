@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 
 @Service
 public class ConnectionService {
@@ -30,6 +31,7 @@ public class ConnectionService {
     // this send the actual connection
     public Connection getConnection(Long connectionId) {
         System.out.println("the conneciton id at conenciton service:"+connectionId);
+        PreparedStatement pst = conn.prepareStatement("SELECT current_database()");
         ConnectionConfig config = connectionRepository.findById(connectionId)
                 .orElseThrow(() -> new RuntimeException("No active connection"));
         System.out.println(config);
