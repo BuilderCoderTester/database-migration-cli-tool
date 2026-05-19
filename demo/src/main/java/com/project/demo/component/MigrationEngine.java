@@ -73,6 +73,7 @@ public class MigrationEngine {
             if(scriptStatus.getStatus() == Status.FAILURE){
                 System.out.println("have it here bro");
                 MigrationScript currentScript =  migrationRepair.migrationRepairFlow(script);
+                System.out.println("The required script is "+ currentScript.toString());
                 helper.applyVersioned(currentScript,startTime,connectionId);
             }
             if (script.isRepeatable()) {
