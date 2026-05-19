@@ -10,9 +10,11 @@ import lombok.Setter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,14 +36,22 @@ public class MigrationRepair {
     private final JdbcTemplate jdbcTemplate;
     // Starts the flow
     public MigrationScript migrationRepairFlow(MigrationScript migrationScript) throws Exception {
+
         AnalysisResult result_1 = versionExtraction(migrationScript);
+        System.out.println("Function one run -1");
+
         AnalysisResult result_2 = sendTheOppositeOperation(result_1);
+        System.out.println("Function one run -2");
+
         MigrationScript script = findTheRequiredScript(result_2);
+        System.out.println("Function one run -3");
+
         return script;
     }
     // Extract the Table name and the Operation ---- First to be called
     public AnalysisResult versionExtraction(MigrationScript migrationScript) {
         String des = migrationScript.getDescription();
+
         if (des == null || des.isBlank()) return null;
 
         des = des.trim();
@@ -107,7 +117,8 @@ public class MigrationRepair {
         String tableName = analysisResult.getTableName();
 
         MigrationScript value = searchTable(operation, tableName);
-        return null;
+
+        return value;
     }
 
     // Search the migration folder for listing pending migration  --- 4th to be called.
@@ -118,6 +129,7 @@ public class MigrationRepair {
 
         try {
             for (MigrationScript script : pendingScript) {
+                System.out.println("up script : " + script.getUpScript());
                 String description = script.getDescription();
                 String formatted = description.replace("_", " ").toLowerCase();
                 if (formatted.contains(operation.toLowerCase())
@@ -167,9 +179,28 @@ public class MigrationRepair {
 
 
     //Extra required fucntion
-    public List<MigrationScript> listAllPendingMigration(Long connectionId) throws SQLException {
+    public List<MigrationScript> listAllPendingMigration(Long connectionId)
+            throws SQLException, IOException {
+
         Connection connection = activeConnection("Madar");
-        return loader.listAllPendingMigration(connectionId,connection);
+
+        List<MigrationScript> list =
+                loader.listAllPendingMigration(connectionId, connection);
+        System.out.println("reach -point -4");
+
+        List<MigrationScript> pendingMigration = new ArrayList<>();
+
+        for (MigrationScript script : list) {
+
+            pendingMigration.addAll(
+                    loader.loadPendingMigrations(
+                            script.getVersion(),
+                            connectionId
+                    )
+            );
+        }
+
+        return pendingMigration;
     }
 
 
