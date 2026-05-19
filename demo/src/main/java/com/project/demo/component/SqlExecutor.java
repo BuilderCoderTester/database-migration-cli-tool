@@ -17,13 +17,13 @@ public class SqlExecutor {
     private final CommonService helper;
 
 
-    public void executeScript(String script, Connection connection) throws SQLException, SQLException {
+    public void executeScript(String script, Connection connection,String currentDatabase) throws SQLException, SQLException {
 
-        System.out.println("here 1");
-
+        System.out.println("The database in executeScript = "+ currentDatabase);
+        System.out.println("the script in execute script is "+ script);
         for (String statement : helper.splitSql(script)) {
 
-            System.out.println("here 2");
+            System.out.println("here 2"  +statement);
 
             if (!statement.isBlank()) {
 

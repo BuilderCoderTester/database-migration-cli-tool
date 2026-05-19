@@ -60,9 +60,9 @@ public class Helper {
     /// version id manageable
     public void applyVersioned(MigrationScript script, long start, Long connectionId) throws SQLException {
         System.out.println("cominng to the office baby");
-        Connection connection = activeConnection("Madar");
+        Connection connection = activeConnection(connectionContext.getCurrentDatabase());
 
-        sqlExecutor.executeScript(script.getUpScript(),connection);
+        sqlExecutor.executeScript(script.getUpScript(),connection,connectionContext.getCurrentDatabase());
         System.out.println("hehe he ami sei checl je kaj kori");
         saveMigrationRecord(script, connectionId,System.currentTimeMillis() - start, false,connection);
     }

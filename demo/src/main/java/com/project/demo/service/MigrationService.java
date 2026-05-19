@@ -88,7 +88,7 @@ public class MigrationService {
     }
 
     public List<MigrationScript> listAllPendingMigration(Long connectionId) throws SQLException {
-        Connection connection = activeConnection("Madar");
+        Connection connection = activeConnection(connectionContext.getCurrentDatabase());
         return loader.listAllPendingMigration(connectionId,connection);
     }
 

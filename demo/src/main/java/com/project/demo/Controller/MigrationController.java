@@ -2,19 +2,15 @@ package com.project.demo.Controller;
 
 import com.project.demo.dto.*;
 import com.project.demo.dto.request.MigrationRequest;
-import com.project.demo.enumuration.DatabaseOperation;
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationLogs;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.service.ConnectionService;
 import com.project.demo.service.LogService;
 import com.project.demo.service.MigrationService;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
-import javax.xml.transform.Result;
 import java.sql.*;
 import java.util.List;
 import java.util.Map;
@@ -92,12 +88,8 @@ public class MigrationController {
                      repeatable BOOLEAN DEFAULT FALSE,
                 
                      name VARCHAR(255),
-                     connection_id BIGINT,  -- ✅ correct type
+                     connection_id BIGINT  -- ✅ correct type
                 
-                         CONSTRAINT fk_connection
-                             FOREIGN KEY (connection_id)
-                             REFERENCES sub_connections(connection_id)
-                             ON DELETE CASCADE
                  );
                 """;
         if (rs.next()) {
@@ -147,12 +139,20 @@ public class MigrationController {
     // ✅ MIGRATE
     @PostMapping("/migrate")
     public MigrationResult migrate(@RequestParam Long connectionId) {
+
         MigrationRequest migrationRequest = new MigrationRequest();
         migrationRequest.setConnectionId(connectionId);
 
         return migrationService.migrate(migrationRequest);
     }
 
+    @PostMapping("/rollback-verison")
+    // not yet implemented. do it later ,
+    public ApiResponse rollbackByVersion(@RequestParam(required = true) String targetVersion , @RequestParam Long connectionId ){
+        System.out.println("the connection " + connectionId);
+        return new ApiResponse(true, migrationService.rollback(targetVersion,connectionId));
+
+    }
     // ✅ ROLLBACK
     @PostMapping("/rollback")
     public ApiResponse rollback(

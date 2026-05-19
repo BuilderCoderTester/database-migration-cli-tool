@@ -335,7 +335,7 @@ public class MigrationRepository {
 
     @Transactional
     public Optional<Migration> findById(String version) {
-        String sql = "SELECT * FROM migration WHERE version = ?";
+        String sql = "SELECT * FROM sub_migration WHERE version = ?";
 
         try {
             Migration migration = jdbcTemplate.queryForObject(
