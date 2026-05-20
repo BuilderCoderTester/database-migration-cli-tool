@@ -38,7 +38,7 @@ public class MigrationController {
     @PostMapping("/set-active")
     public ApiResponse setActive(@RequestBody Map<String, String> req) throws SQLException {
         String databaseName = req.get("database");
-        Connection conn =  migrationService.activeConnection(databaseName);
+        Connection conn = migrationService.activeConnection(databaseName);
 
         PreparedStatement pst = conn.prepareStatement("SELECT current_database()");
         PreparedStatement pst_1 = conn.prepareStatement("""
@@ -92,6 +92,23 @@ public class MigrationController {
                 
                  );
                 """;
+        String migration_lock = """
+                CREATE TABLE IF NOT EXISTS migration_lock (
+                
+                    connection_id BIGINT PRIMARY KEY,
+                
+                    locked BOOLEAN NOT NULL DEFAULT FALSE,
+                
+                    locked_at TIMESTAMP,
+                
+                    locked_by VARCHAR(255),
+                
+                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                
+                    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+                """;
+
         if (rs.next()) {
             System.out.println("🔥 Connected to: " + rs.getString(1));
         }
@@ -99,6 +116,7 @@ public class MigrationController {
 
         stmt.execute(connection_querry);
         stmt.execute(migration_querry);
+        stmt.execute(migration_lock);
         ResultSet rst_1 = pst_1.executeQuery();
         while (rst_1.next()) {
             String schema = rst_1.getString("schemaname");
@@ -106,7 +124,8 @@ public class MigrationController {
 
             System.out.println(schema + " → " + table);
         }
-        return new ApiResponse(true,"Connection is established");
+
+        return new ApiResponse(true, "Connection is established");
     }
 
     // ✅ INIT THE MIGRATION DATABASE
@@ -118,7 +137,7 @@ public class MigrationController {
 
     // RETURNS THE DATABASE CONNECTION ID
     @GetMapping("/get-connection")
-    public Long sendConnectionId(){
+    public Long sendConnectionId() {
         Long id = migrationService.getConnectionId();
         System.out.println(id);
         return id;
@@ -138,7 +157,7 @@ public class MigrationController {
 
     // ✅ MIGRATE
     @PostMapping("/migrate")
-    public MigrationResult migrate(@RequestParam Long connectionId) {
+    public MigrationResult migrate(@RequestParam Long connectionId) throws SQLException {
 
         MigrationRequest migrationRequest = new MigrationRequest();
         migrationRequest.setConnectionId(connectionId);
@@ -148,18 +167,19 @@ public class MigrationController {
 
     @PostMapping("/rollback-verison")
     // not yet implemented. do it later ,
-    public ApiResponse rollbackByVersion(@RequestParam(required = true) String targetVersion , @RequestParam Long connectionId ){
+    public ApiResponse rollbackByVersion(@RequestParam(required = true) String targetVersion, @RequestParam Long connectionId) {
         System.out.println("the connection " + connectionId);
-        return new ApiResponse(true, migrationService.rollback(targetVersion,connectionId));
+        return new ApiResponse(true, migrationService.rollback(targetVersion, connectionId));
 
     }
+
     // ✅ ROLLBACK
     @PostMapping("/rollback")
     public ApiResponse rollback(
-            @RequestParam(required = false) String targetVersion , @RequestParam Long connectionId
+            @RequestParam(required = false) String targetVersion, @RequestParam Long connectionId
     ) {
         System.out.println("the connection " + connectionId);
-        return new ApiResponse(true, migrationService.rollback(targetVersion,connectionId));
+        return new ApiResponse(true, migrationService.rollback(targetVersion, connectionId));
     }
 
     // ✅ REPAIR
@@ -194,14 +214,14 @@ public class MigrationController {
 
     //ACTIVITY LOGS - SHOW ALL ACTIVITIES EXECUTED.
     @GetMapping("/logs")
-    public List<MigrationLogs> getAllActivites(){
+    public List<MigrationLogs> getAllActivites() {
         return logService.getAllActivities();
     }
 
     @GetMapping("/info")
     public ConnectionInfoResponse getInfo(@RequestParam Long connectionId) {
         System.out.println(connectionId);
-        ConnectionInfoResponse info =  connectionService.getActiveConnectionInfo(connectionId);
+        ConnectionInfoResponse info = connectionService.getActiveConnectionInfo(connectionId);
         System.out.println(info.getDatabase());
         System.out.println(info.getHost());
         System.out.println(info.getPort());

@@ -29,27 +29,27 @@ public class ConnectionService {
         );
     }
     // this send the actual connection
-    public Connection getConnection(Long connectionId) {
-        System.out.println("the conneciton id at conenciton service:"+connectionId);
-        PreparedStatement pst = conn.prepareStatement("SELECT current_database()");
-        ConnectionConfig config = connectionRepository.findById(connectionId)
-                .orElseThrow(() -> new RuntimeException("No active connection"));
-        System.out.println(config);
-        try {
-            String url = "jdbc:mysql://" + config.getHost() + ":" + config.getPort()
-                    + "/" + config.getDatabase();
-
-            Connection connection =  DriverManager.getConnection(
-                    url,
-                    config.getUsername(),
-                    config.getPassword()
-            );
-            if (connection == null || !connection.isValid(5)) {
-                throw new RuntimeException("Connection is not valid");
-            }
-            return connection;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create DB connection", e);
-        }
-    }
+//    public Connection getConnection(Long connectionId) {
+//        System.out.println("the conneciton id at conenciton service:"+connectionId);
+//        PreparedStatement pst = conn.prepareStatement("SELECT current_database()");
+//        ConnectionConfig config = connectionRepository.findById(connectionId)
+//                .orElseThrow(() -> new RuntimeException("No active connection"));
+//        System.out.println(config);
+//        try {
+//            String url = "jdbc:mysql://" + config.getHost() + ":" + config.getPort()
+//                    + "/" + config.getDatabase();
+//
+//            Connection connection =  DriverManager.getConnection(
+//                    url,
+//                    config.getUsername(),
+//                    config.getPassword()
+//            );
+//            if (connection == null || !connection.isValid(5)) {
+//                throw new RuntimeException("Connection is not valid");
+//            }
+//            return connection;
+//        } catch (Exception e) {
+//            throw new RuntimeException("Failed to create DB connection", e);
+//        }
+//    }
 }

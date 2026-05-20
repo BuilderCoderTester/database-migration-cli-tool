@@ -1,47 +1,90 @@
 package com.project.demo.repository;
 
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Timestamp;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 @Repository
 public class MigrationLockRepository {
 
-    private final JdbcTemplate jdbcTemplate;
-
-    public MigrationLockRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
-
-    @Transactional
-    public int acquireLock(Long connectionId, String lockedBy, Timestamp timeout) {
-
-        String sql = """
-        UPDATE migration_lock
-        SET locked = true,
-            locked_at = CURRENT_TIMESTAMP,
-            locked_by = ?
-        WHERE connection_id = ?
-          AND (locked = false OR locked_at < ?)
-    """;
-
-        return jdbcTemplate.update(sql, lockedBy, connectionId, timeout);
-    }
-
-    @Transactional
-    public int releaseLock(Long connectionId, String lockedBy) {
+    /**
+     * REAL DATABASE LOCK
+     * <p>
+     * This method blocks other transactions
+     * trying to acquire the same lock row.
+     *
+     * @return
+     */
+    public boolean acquireLock(Connection connection,
+                               Long connectionId) throws SQLException {
 
         String sql = """
-        UPDATE migration_lock
-        SET locked = false,
-            locked_at = NULL,
-            locked_by = NULL
-        WHERE connection_id = ?
-          AND locked_by = ?
-    """;
+                SELECT connection_id
+                FROM migration_lock
+                WHERE connection_id = ?
+                FOR UPDATE
+                """;
 
-        return jdbcTemplate.update(sql, connectionId, lockedBy);
+        try (PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
+
+            statement.setLong(1, connectionId);
+
+            statement.executeQuery();
+        }
+        return false;
+    }
+
+    /**
+     * OPTIONAL METADATA UPDATE
+     */
+    public void markLocked(Connection connection,
+                           Long connectionId,
+                           String lockedBy) throws SQLException {
+
+        String sql = """
+                UPDATE migration_lock
+                SET locked = true,
+                    locked_at = CURRENT_TIMESTAMP,
+                    locked_by = ?
+                WHERE connection_id = ?
+                """;
+
+        try (PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
+
+            statement.setString(1, lockedBy);
+            statement.setLong(2, connectionId);
+
+            statement.executeUpdate();
+        }
+    }
+
+    /**
+     * OPTIONAL RELEASE METADATA
+     *
+     * @return
+     */
+    public boolean releaseLock(Connection connection,
+                               Long connectionId) throws SQLException {
+
+        String sql = """
+                UPDATE migration_lock
+                SET locked = false,
+                    locked_at = NULL,
+                    locked_by = NULL
+                WHERE connection_id = ?
+                """;
+
+        try (PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
+
+            statement.setLong(1, connectionId);
+
+            statement.executeUpdate();
+        }
+        return false;
     }
 }

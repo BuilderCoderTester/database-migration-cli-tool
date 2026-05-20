@@ -43,10 +43,11 @@ public class MigrationService {
     private final JdbcTemplate jdbcTemplate;
     @Autowired
     private final ConnectionRequest connectionRequest;
+
     public MigrationService(
             Helper helper,
             ConnectionContext connectionContext,
-            MigrationLoader loader, MigrationEngine engine, MigrationLockService migrationLockService, MigrationRepository repository, ConnectionRepo connectionRepo, JdbcTemplate jdbcTemplate,  ConnectionRequest connectionRequest) {
+            MigrationLoader loader, MigrationEngine engine, MigrationLockService migrationLockService, MigrationRepository repository, ConnectionRepo connectionRepo, JdbcTemplate jdbcTemplate, ConnectionRequest connectionRequest) {
         this.helper = helper;
         this.loader = loader;
         this.engine = engine;
@@ -65,7 +66,7 @@ public class MigrationService {
             throw new RuntimeException("No active connection selected");
         }
 
-        var currentOpt = helper.getCurrentVersion(connectionId,connectionRequest.getDatabase());
+        var currentOpt = helper.getCurrentVersion(connectionId, connectionRequest.getDatabase());
         String current = currentOpt.orElse("None");
 
         try {
@@ -89,12 +90,13 @@ public class MigrationService {
 
     public List<MigrationScript> listAllPendingMigration(Long connectionId) throws SQLException {
         Connection connection = activeConnection(connectionContext.getCurrentDatabase());
-        return loader.listAllPendingMigration(connectionId,connection);
+        return loader.listAllPendingMigration(connectionId, connection);
     }
 
     //MIGRATE THE MIGRATIONS FILE OR SCRIPTS
-    public MigrationResult migrate(MigrationRequest migrationRequest) {
+    public MigrationResult migrate(MigrationRequest migrationRequest) throws SQLException {
 
+        // Database validation checking
         Long connectionId = migrationRequest.getConnectionId();
         String targetVersion = migrationRequest.getTargetVersion();
         System.out.println("Connection ID at service: " + connectionId);
@@ -104,20 +106,20 @@ public class MigrationService {
         if (connectionId == null) {
             throw new RuntimeException("No active connection selected");
         }
+        Connection connection = activeConnection(connectionContext.getCurrentDatabase());
+        connection.setAutoCommit(false);
 
         try {
             //ACQUIRE LOCK
-//             lockedBy = new StringBuilder(migrationLockService.acquireLock(connectionId, targetVersion));
-//             lockedBy = new StringBuilder(migrationLockService.getHostName());
-//            System.out.println("the host at the service : "+lockedBy);
+            migrationLockService.acquireLock(connection, connectionId);
 
-            var currentOpt = helper.getCurrentVersion(connectionId,connectionContext.getCurrentDatabase());
+            var currentOpt = helper.getCurrentVersion(connectionId, connectionContext.getCurrentDatabase());
             System.out.println("the currentOPT " + currentOpt);
             List<MigrationScript> pending =
                     loader.loadPendingMigrations(currentOpt.orElse(null), connectionId);
 
-            for(MigrationScript sc :pending){
-                System.out.println("Script "+ sc.getVersion());
+            for (MigrationScript sc : pending) {
+                System.out.println("Script " + sc.getVersion());
             }
             if (pending.isEmpty()) {
                 return new MigrationResult("✓ No pending migrations", 0, 0);
@@ -137,7 +139,7 @@ public class MigrationService {
 
                 try {
                     // 🔥 run migration on correct DB
-                    engine.migrateUp(script, connectionId,connectionContext.getCurrentDatabase());
+                    engine.migrateUp(script, connectionId, connectionContext.getCurrentDatabase());
                     success++;
                     applied.add(script.getVersion());
 
@@ -183,11 +185,13 @@ public class MigrationService {
             throw new RuntimeException(e);
         } finally {
             try {
-                migrationLockService.releaseLock(connectionId, lockedBy); // 🔥 scoped unlock
+                migrationLockService.releaseLock(connection, connectionId, lockedBy); // 🔥 scoped unlock
+                connection.commit();
             } catch (Exception ignored) {
             }
         }
     }
+
     public DatabaseOperation detectOperation(String sql) {
         System.out.println(sql);
         String cleaned = sql.lines()
@@ -225,10 +229,11 @@ public class MigrationService {
 
         return DatabaseOperation.UNKNOWN;
     }
+
     public String rollback(@Option(description = "Target version") String targetVersion, Long connectionId) {
         try {
-            System.out.println("the databse = "+ connectionContext.getCurrentDatabase());
-            var currentOpt = helper.getCurrentVersion(connectionId,connectionContext.getCurrentDatabase());
+            System.out.println("the databse = " + connectionContext.getCurrentDatabase());
+            var currentOpt = helper.getCurrentVersion(connectionId, connectionContext.getCurrentDatabase());
             if (currentOpt.isEmpty()) {
                 return "No migrations to rollback";
             }
@@ -240,7 +245,7 @@ public class MigrationService {
                 return "Could not find migration script for version: " + current;
             }
             System.out.println("the script is " + script.getDownScript());
-            if (engine.migrateDown(script,connectionContext.getCurrentDatabase())) {
+            if (engine.migrateDown(script, connectionContext.getCurrentDatabase())) {
                 System.out.println("yes it is working ");
                 return "✓ Rolled back version " + current;
             } else {
@@ -275,7 +280,7 @@ public class MigrationService {
     }
 
     public List<Migration> history(Long connectionId) throws SQLException {
-        List<Migration> migrations = helper.getMigrationHistory(connectionId,connectionContext.getCurrentDatabase());
+        List<Migration> migrations = helper.getMigrationHistory(connectionId, connectionContext.getCurrentDatabase());
         // Count of migration history records
         System.out.println("Total migration history count: " + migrations.size());
         String[][] data = new String[migrations.size() + 1][5];
@@ -312,7 +317,7 @@ public class MigrationService {
 
     public String validate(Long connectionId) {
         try {
-            List<Migration> history = helper.getMigrationHistory(connectionId,connectionContext.getCurrentDatabase());
+            List<Migration> history = helper.getMigrationHistory(connectionId, connectionContext.getCurrentDatabase());
             int errors = 0;
 
             for (Migration migration : history) {
@@ -416,7 +421,7 @@ public class MigrationService {
         Long connection_id = jdbcTemplate.queryForObject(sql, Long.class, databaseName);
         connectionContext.setCurrentConnectionId(connection_id);
         connectionContext.setCurrentDatabase(databaseName);
-        String dbUrl = jdbcTemplate.queryForObject(url,String.class,connection_id);
+        String dbUrl = jdbcTemplate.queryForObject(url, String.class, connection_id);
         System.out.println("conneciton url " + dbUrl);
 
         Connection newConnection = DriverManager.getConnection(

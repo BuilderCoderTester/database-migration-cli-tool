@@ -1,8 +1,12 @@
 package com.project.demo.service;
 
 import com.project.demo.repository.MigrationLockRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.beans.Transient;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -18,7 +22,8 @@ public class MigrationLockService {
     }
 
     // LOCK HOLDING OPERATION
-    public String acquireLock(Long connectionId, String targetVersion) {
+    @Transactional
+    public String acquireLock(Connection connection, Long connectionId) throws SQLException {
 
         String lockedBy = getHostName() + "-" + UUID.randomUUID();
 
@@ -26,9 +31,9 @@ public class MigrationLockService {
                 LocalDateTime.now().minusMinutes(10)
         );
 
-        int updated = lockRepository.acquireLock(connectionId, lockedBy, timeout);
+        boolean updated = lockRepository.acquireLock(connection,connectionId);
 
-        if (updated == 0) {
+        if (updated) {
             throw new RuntimeException(
                     "Another migration is already running on this database (connectionId="
                             + connectionId + ")"
@@ -37,7 +42,6 @@ public class MigrationLockService {
 
         System.out.println(
                 "LOCK ACQUIRED | DB=" + connectionId +
-                        " | version=" + targetVersion +
                         " | by=" + lockedBy
         );
 
@@ -45,11 +49,11 @@ public class MigrationLockService {
     }
 
     // LOCK RELEASE OPERATION
-    public void releaseLock(Long connectionId, StringBuilder lockedBy) {
+    public void releaseLock(Connection connection , Long connectionId, StringBuilder lockedBy) throws Exception{
 
-        int updated = lockRepository.releaseLock(connectionId, String.valueOf(lockedBy));
+        boolean updated = lockRepository.releaseLock(connection,connectionId);
 
-        if (updated == 0) {
+        if (updated) {
             throw new RuntimeException(
                     "Failed to release lock. It may be owned by another process."
             );
