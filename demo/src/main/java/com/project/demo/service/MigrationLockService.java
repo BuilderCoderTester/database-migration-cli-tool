@@ -5,9 +5,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.beans.Transient;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -32,7 +30,8 @@ public class MigrationLockService {
         );
 
         boolean updated = lockRepository.acquireLock(connection,connectionId);
-
+        lockRepository.markLocked(connection,connectionId,lockedBy);
+        setLockTimeout(connection);
         if (updated) {
             throw new RuntimeException(
                     "Another migration is already running on this database (connectionId="
@@ -47,7 +46,17 @@ public class MigrationLockService {
 
         return lockedBy;
     }
+    public void setLockTimeout(Connection connection)
+            throws SQLException {
 
+        try (PreparedStatement statement =
+                     connection.prepareStatement(
+                             "SET lock_timeout = '30s'"
+                     )) {
+
+            statement.execute();
+        }
+    }
     // LOCK RELEASE OPERATION
     public void releaseLock(Connection connection , Long connectionId, StringBuilder lockedBy) throws Exception{
 
@@ -63,7 +72,73 @@ public class MigrationLockService {
                 "LOCK RELEASED | DB=" + connectionId + " | by=" + lockedBy
         );
     }
+    public boolean isLockStale(Connection connection)
+            throws SQLException {
 
+        String sql = """
+            SELECT heartbeat_at
+            FROM migration_lock
+            WHERE id = 1
+            """;
+
+        try (PreparedStatement statement =
+                     connection.prepareStatement(sql);
+
+             ResultSet rs = statement.executeQuery()) {
+
+            if (rs.next()) {
+
+                Timestamp heartbeat =
+                        rs.getTimestamp("heartbeat_at");
+
+                if (heartbeat == null) {
+                    return false;
+                }
+
+                long diff =
+                        System.currentTimeMillis()
+                                - heartbeat.getTime();
+
+                // stale after 60 seconds
+                return diff > 60000;
+            }
+        }
+
+        return false;
+    }
+    public void clearStaleLock(Connection connection)
+            throws SQLException {
+
+        String sql = """
+            UPDATE migration_lock
+            SET locked = false,
+                locked_by = NULL,
+                locked_at = NULL,
+                heartbeat_at = NULL
+            WHERE id = 1
+            """;
+
+        try (PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
+
+            statement.executeUpdate();
+        }
+    }
+    public void updateHeartbeat(Connection connection)
+            throws SQLException {
+
+        String sql = """
+            UPDATE migration_lock
+            SET heartbeat_at = CURRENT_TIMESTAMP
+            WHERE id = 1
+            """;
+
+        try (PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
+
+            statement.executeUpdate();
+        }
+    }
     // GET CURRENT HOST
     public String getHostName() {
         try {

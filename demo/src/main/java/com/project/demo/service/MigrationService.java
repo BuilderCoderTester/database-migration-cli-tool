@@ -111,8 +111,14 @@ public class MigrationService {
 
         try {
             //ACQUIRE LOCK
-            migrationLockService.acquireLock(connection, connectionId);
+            if (migrationLockService.isLockStale(connection)) {
 
+                System.out.println("WARNING: stale migration lock detected");
+
+                migrationLockService.clearStaleLock(connection);
+            }
+            migrationLockService.acquireLock(connection, connectionId);
+            migrationLockService.updateHeartbeat(connection);
             var currentOpt = helper.getCurrentVersion(connectionId, connectionContext.getCurrentDatabase());
             System.out.println("the currentOPT " + currentOpt);
             List<MigrationScript> pending =

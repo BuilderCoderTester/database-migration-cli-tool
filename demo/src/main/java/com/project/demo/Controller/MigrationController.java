@@ -105,7 +105,11 @@ public class MigrationController {
                 
                     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 
-                    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                
+                    heartbeat_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                
+                    last_completed_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 );
                 """;
 

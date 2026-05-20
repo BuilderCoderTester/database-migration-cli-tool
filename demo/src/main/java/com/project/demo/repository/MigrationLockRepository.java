@@ -48,7 +48,8 @@ public class MigrationLockRepository {
                 UPDATE migration_lock
                 SET locked = true,
                     locked_at = CURRENT_TIMESTAMP,
-                    locked_by = ?
+                    locked_by = ?,
+                    heartbeat_at = CURRENT_TIMESTAMP
                 WHERE connection_id = ?
                 """;
 
@@ -74,7 +75,9 @@ public class MigrationLockRepository {
                 UPDATE migration_lock
                 SET locked = false,
                     locked_at = NULL,
-                    locked_by = NULL
+                    locked_by = NULL,
+                    heartbeat_at = NULL,
+                    last_completed_at = CURRENT_TIMESTAMP
                 WHERE connection_id = ?
                 """;
 
