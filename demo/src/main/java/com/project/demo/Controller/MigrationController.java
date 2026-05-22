@@ -109,7 +109,7 @@ public class MigrationController {
                 
                     heartbeat_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 
-                    last_completed_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    last_completed_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
                 """;
 
@@ -149,19 +149,19 @@ public class MigrationController {
 
     // ✅ RETURNS PENDING MIGRATION COMPLETE
     @GetMapping("/pending")
-    public List<MigrationScript> list(@RequestParam Long connectionId) throws SQLException {
+    public List<MigrationScript> list(@RequestParam("connectionId") Long connectionId) throws SQLException {
         return migrationService.listAllPendingMigration(connectionId);
     }
 
     // ✅ RETURNS THE STATUS OF THE MIGRATION TABLE AND FILES
     @GetMapping("/status")
-    public StatusResponse status(@RequestParam Long connectionId) throws SQLException {
+    public StatusResponse status(@RequestParam("connectionId") Long connectionId) throws SQLException {
         return migrationService.status(connectionId);
     }
 
     // ✅ MIGRATE
     @PostMapping("/migrate")
-    public MigrationResult migrate(@RequestParam Long connectionId) throws SQLException {
+    public MigrationResult migrate(@RequestParam("connectionId") Long connectionId) throws SQLException {
 
         MigrationRequest migrationRequest = new MigrationRequest();
         migrationRequest.setConnectionId(connectionId);
@@ -171,7 +171,7 @@ public class MigrationController {
 
     @PostMapping("/rollback-verison")
     // not yet implemented. do it later ,
-    public ApiResponse rollbackByVersion(@RequestParam(required = true) String targetVersion, @RequestParam Long connectionId) {
+    public ApiResponse rollbackByVersion(@RequestParam(required = true) String targetVersion, @RequestParam("connectionId") Long connectionId) {
         System.out.println("the connection " + connectionId);
         return new ApiResponse(true, migrationService.rollback(targetVersion, connectionId));
 
@@ -180,7 +180,7 @@ public class MigrationController {
     // ✅ ROLLBACK
     @PostMapping("/rollback")
     public ApiResponse rollback(
-            @RequestParam(required = false) String targetVersion, @RequestParam Long connectionId
+            @RequestParam(required = false) String targetVersion, @RequestParam("connectionId") Long connectionId
     ) {
         System.out.println("the connection " + connectionId);
         return new ApiResponse(true, migrationService.rollback(targetVersion, connectionId));
@@ -194,7 +194,7 @@ public class MigrationController {
 
     // ✅ HISTORY
     @GetMapping("/history")
-    public List<Migration> history(@RequestParam Long connectionId) throws SQLException {
+    public List<Migration> history(@RequestParam("connectionId") Long connectionId) throws SQLException {
         return migrationService.history(connectionId);
     }
 
@@ -212,7 +212,7 @@ public class MigrationController {
 
     // ✅ VALIDATE
     @PostMapping("/validate")
-    public ApiResponse validate(Long connectionId) {
+    public ApiResponse validate(@RequestParam("connectionId") Long connectionId) {
         return new ApiResponse(true, migrationService.validate(connectionId));
     }
 
@@ -223,7 +223,7 @@ public class MigrationController {
     }
 
     @GetMapping("/info")
-    public ConnectionInfoResponse getInfo(@RequestParam Long connectionId) {
+    public ConnectionInfoResponse getInfo(@RequestParam("connectionId") Long connectionId) {
         System.out.println(connectionId);
         ConnectionInfoResponse info = connectionService.getActiveConnectionInfo(connectionId);
         System.out.println(info.getDatabase());
