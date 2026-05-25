@@ -1,0 +1,23 @@
+# application.yml
+server:
+  port: 8081
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: sigilotech
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update   # 🔥 THIS LINE FIXES YOUR ISSUE
+#    show-sql: true       # optional (good for debugging)
+  shell:
+    interactive:
+      enabled: true
+    history:
+      enabled: true
+
+migration:
+  path: ./migrations
+  table: schema_history
+  validate-on-migrate: true
