@@ -295,7 +295,7 @@ public class MigrationRepository {
 
     public List<Migration> findFailedMigrations() {
 
-        String sql = "SELECT * FROM migrations WHERE success = false";
+        String sql = "SELECT * FROM sub_migrations WHERE success = false";
 
         return jdbcTemplate.query(sql, new MigrationRowMapper());
     }

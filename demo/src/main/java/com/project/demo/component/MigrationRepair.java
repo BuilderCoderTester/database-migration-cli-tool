@@ -15,6 +15,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,7 +36,7 @@ public class MigrationRepair {
     private final ConnectionContext connectionContext;
     private final JdbcTemplate jdbcTemplate;
     // Starts the flow
-    public MigrationScript migrationRepairFlow(MigrationScript migrationScript) throws Exception {
+    public MigrationScript migrationRepairFlow(MigrationScript migrationScript,long connectionId) throws Exception {
 
         AnalysisResult result_1 = versionExtraction(migrationScript);
         System.out.println("Function one run -1");
@@ -43,7 +44,7 @@ public class MigrationRepair {
         AnalysisResult result_2 = sendTheOppositeOperation(result_1);
         System.out.println("Function one run -2");
 
-        MigrationScript script = findTheRequiredScript(result_2);
+        MigrationScript script = findTheRequiredScript(result_2,connectionId ,connectionContext.getCurrentDatabase());
         System.out.println("Function one run -3");
 
         return script;
@@ -111,31 +112,37 @@ public class MigrationRepair {
     }
 
     //Find the required script W.R.T database operation and table name  ---- 3rd to be called
-    public MigrationScript findTheRequiredScript(AnalysisResult analysisResult) throws Exception {
+    public MigrationScript findTheRequiredScript(AnalysisResult analysisResult , long connectionId ,String databaseName) throws Exception {
 
         String operation = String.valueOf(analysisResult.getDatabaseOperation());
         String tableName = analysisResult.getTableName();
 
-        MigrationScript value = searchTable(operation, tableName);
+        MigrationScript value = searchTable(operation, tableName ,connectionId,databaseName);
 
         return value;
     }
 
     // Search the migration folder for listing pending migration  --- 4th to be called.
-    private MigrationScript searchTable(String operation, String tableName) throws Exception {
-        long connectionId = 21;
+    private MigrationScript searchTable(String operation, String tableName , long connectionId , String databaseName) throws Exception {
         List<MigrationScript> pendingScript =
-                listAllPendingMigration(connectionId);
+                listAllPendingMigration(connectionId,databaseName);
 
         try {
             for (MigrationScript script : pendingScript) {
                 System.out.println("up script : " + script.getUpScript());
                 String description = script.getDescription();
                 String formatted = description.replace("_", " ").toLowerCase();
+                System.out.println("chicago -1 " + description);
+                System.out.println("chicago -1 " + operation);
                 if (formatted.contains(operation.toLowerCase())
                         && formatted.contains(tableName.toLowerCase())) {
+                    System.out.println("chicago -2 ");
+
                     return script;
                 }
+//                else {
+//                    return script;
+//                }
             }
         } catch (Exception e) {
             throw new RuntimeException("OPERATION IS NOT COMPLETED !!!!");
@@ -179,10 +186,10 @@ public class MigrationRepair {
 
 
     //Extra required fucntion
-    public List<MigrationScript> listAllPendingMigration(Long connectionId)
+    public List<MigrationScript> listAllPendingMigration(Long connectionId ,String databaseName)
             throws SQLException, IOException {
 
-        Connection connection = activeConnection("Madar");
+        Connection connection = activeConnection(databaseName);
 
         List<MigrationScript> list =
                 loader.listAllPendingMigration(connectionId, connection);
@@ -194,7 +201,7 @@ public class MigrationRepair {
 
             pendingMigration.addAll(
                     loader.loadPendingMigrations(
-                            script.getVersion(),
+                            Collections.singleton(script.getVersion()),
                             connectionId
                     )
             );

@@ -26,6 +26,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class MigrationService {
@@ -63,15 +64,23 @@ public class MigrationService {
             throw new RuntimeException("No active connection selected");
         }
 
-        var currentOpt = helper.getCurrentVersion(connectionId, connectionRequest.getDatabase());
-        String current = currentOpt.orElse("None");
-
+//        var currentOpt = helper.getCurrentVersion(connectionId, connectionRequest.getDatabase());
+//        String current = currentOpt.orElse("None");
+        Set<String> executedVersions =
+                helper.getExecutedVersions(
+                        connectionId,
+                        connectionContext.getCurrentDatabase()
+                );
         try {
+//            List<MigrationScript> pending =
+//                    loader.loadPendingMigrations(currentOpt.orElse(null), connectionId);
             List<MigrationScript> pending =
-                    loader.loadPendingMigrations(currentOpt.orElse(null), connectionId);
-
+                    loader.loadPendingMigrations(
+                            executedVersions,
+                            connectionId
+                    );
             return new StatusResponse(
-                    current,
+                    executedVersions.toString(),
                     pending.size(),
                     pending
             );
@@ -116,10 +125,21 @@ public class MigrationService {
             }
             migrationLockService.acquireLock(connection, connectionId);
             migrationLockService.updateHeartbeat(connection);
-            var currentOpt = helper.getCurrentVersion(connectionId, connectionContext.getCurrentDatabase());
-            System.out.println("the currentOPT " + currentOpt);
+//            var currentOpt = helper.getCurrentVersion(connectionId, connectionContext.getCurrentDatabase());
+            Set<String> executedVersions =
+                    helper.getExecutedVersions(
+                            connectionId,
+                            connectionContext.getCurrentDatabase()
+                    );
+
+//            System.out.println("the currentOPT " + currentOpt);
+//            List<MigrationScript> pending =
+//                    loader.loadPendingMigrations(currentOpt.orElse(null), connectionId);
             List<MigrationScript> pending =
-                    loader.loadPendingMigrations(currentOpt.orElse(null), connectionId);
+                    loader.loadPendingMigrations(
+                            executedVersions,
+                            connectionId
+                    );
 
             for (MigrationScript sc : pending) {
                 System.out.println("Script " + sc.getVersion());

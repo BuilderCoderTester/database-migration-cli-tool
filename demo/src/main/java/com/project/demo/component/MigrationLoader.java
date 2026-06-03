@@ -5,6 +5,7 @@ import com.project.demo.model.LogLevel;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.repository.MigrationLogRepo;
 import com.project.demo.service.LogService;
+import com.project.demo.utility.Helper;
 import com.project.demo.utility.VersionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -36,14 +37,15 @@ public class MigrationLoader {
     private MigrationProperties properties;
     private final JdbcTemplate jdbcTemplate;
     private final LogService logService;
-
-    public MigrationLoader(JdbcTemplate jdbcTemplate, MigrationLogRepo migrationLogRepo, LogService logService) {
+    private final Helper helper;
+    public MigrationLoader(JdbcTemplate jdbcTemplate, MigrationLogRepo migrationLogRepo, LogService logService, Helper helper) {
         this.jdbcTemplate = jdbcTemplate;
         this.logService = logService;
+        this.helper = helper;
     }
 
     // LOAD PENDING MIGRATION ON SPECIFIC DATABASE CONNECTION
-    public List<MigrationScript> loadPendingMigrations(String currentVersion ,Long connectionId) throws IOException {
+    public List<MigrationScript> loadPendingMigrations( Set<String> executedVersions ,Long connectionId) throws IOException {
 
         if (connectionId == null) {
             throw new RuntimeException("No active connection selected");
@@ -77,15 +79,32 @@ public class MigrationLoader {
                     String version = "V" + v.group(1);
                     String description = v.group(2).replace("_", " ");
 
-                    if (currentVersion == null ||
-                            VersionUtils.extract(version) > VersionUtils.extract(currentVersion)) {
+//                    if (currentVersion == null ||
+//                            VersionUtils.extract(version) > VersionUtils.extract(currentVersion)) {
+//
+//                        MigrationScript script = parseScript(version, description, content);
+//                        script.setFileName(fileName);
+//                        script.setRepeatable(false);
+//
+//                        versioned.add(script);
+//                    }
 
-                        MigrationScript script = parseScript(version, description, content);
+                     executedVersions =
+                            helper.getExecutedVersions(
+                                    connectionId,
+                                    connectionContext.getCurrentDatabase()
+                            );
+                    if (!executedVersions.contains(version)) {
+
+                        MigrationScript script =
+                                parseScript(version, description, content);
+
                         script.setFileName(fileName);
                         script.setRepeatable(false);
 
                         versioned.add(script);
                     }
+
                 }
 
                 // ========================
@@ -103,6 +122,8 @@ public class MigrationLoader {
                     repeatables.add(script);
                 }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
 
         // 🔥 sort versioned (numeric safe)

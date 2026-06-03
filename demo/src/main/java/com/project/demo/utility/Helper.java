@@ -13,14 +13,9 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 import java.time.LocalDateTime;
-import java.util.HexFormat;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @AllArgsConstructor
 @Component
@@ -61,7 +56,7 @@ public class Helper {
     public void applyVersioned(MigrationScript script, long start, Long connectionId) throws SQLException {
         System.out.println("cominng to the office baby");
         Connection connection = activeConnection(connectionContext.getCurrentDatabase());
-
+        System.out.println("current databse = "+connectionContext.getCurrentDatabase());
         sqlExecutor.executeScript(script.getUpScript(),connection,connectionContext.getCurrentDatabase());
         System.out.println("hehe he ami sei checl je kaj kori");
         saveMigrationRecord(script, connectionId,System.currentTimeMillis() - start, false,connection);
@@ -106,6 +101,31 @@ public class Helper {
         return repository.findLastSuccessful(connectionId,connection).map(Migration::getVersion);
     }
 
+    public Set<String> getExecutedVersions(
+            Long connectionId,
+            String databaseName
+    ) throws SQLException {
+
+        Set<String> versions = new HashSet<>();
+
+        String sql = """
+        SELECT version
+        FROM sub_migration
+        """;
+
+        try (
+                Connection conn = activeConnection(connectionContext.getCurrentDatabase());
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                ResultSet rs = stmt.executeQuery()
+        ) {
+
+            while (rs.next()) {
+                versions.add(rs.getString("version"));
+            }
+        }
+
+        return versions;
+    }
     public Connection activeConnection(String databaseName) throws SQLException {
         String sql = """
                     SELECT connection_id FROM connections WHERE database = ?
