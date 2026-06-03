@@ -8,10 +8,12 @@ import com.project.demo.model.MigrationScript;
 import com.project.demo.service.ConnectionService;
 import com.project.demo.service.LogService;
 import com.project.demo.service.MigrationService;
+import com.project.demo.service.MigrationTableService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +26,7 @@ public class MigrationController {
     private final LogService logService;
     private final MigrationService migrationService;
     private final ConnectionService connectionService;
-
+    private final MigrationTableService migrationTableService;
     //CREATE CONNECTION
     @PostMapping("/connect")
     public ConnectionResponse connection(
@@ -162,7 +164,7 @@ public class MigrationController {
     // ✅ MIGRATE
     @PostMapping("/migrate")
     public MigrationResult migrate(@RequestParam("connectionId") Long connectionId) throws SQLException {
-
+        System.out.println("come byt");
         MigrationRequest migrationRequest = new MigrationRequest();
         migrationRequest.setConnectionId(connectionId);
 
@@ -230,5 +232,21 @@ public class MigrationController {
         System.out.println(info.getHost());
         System.out.println(info.getPort());
         return info;
+    }
+
+    @GetMapping("/tables")
+    public List<String> getTables(@RequestParam("connectionId") Long connectionId) throws SQLException {
+       return migrationService.getTables(connectionId);
+    }
+
+    @GetMapping("/tables/{tableName}")
+    public TableInfoDTO getTableInfo(
+            @RequestParam Long connectionId,
+            @PathVariable String tableName
+    ) throws SQLException {
+        return migrationService.getTableInfo(
+                connectionId,
+                tableName
+        );
     }
 }

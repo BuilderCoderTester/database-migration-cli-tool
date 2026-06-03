@@ -34,6 +34,7 @@ public class SqlExecutor {
 
                     preparedStatement.execute();
                 }
+                System.out.println("e bhai kaj korhcce");
             }
         }
     }

@@ -22,7 +22,7 @@ public class MigrationLockService {
     // LOCK HOLDING OPERATION
     @Transactional
     public String acquireLock(Connection connection, Long connectionId) throws SQLException {
-
+        System.out.println("debvug pout -1");
         String lockedBy = getHostName() + "-" + UUID.randomUUID();
 
         Timestamp timeout = Timestamp.valueOf(
@@ -74,11 +74,11 @@ public class MigrationLockService {
     }
     public boolean isLockStale(Connection connection)
             throws SQLException {
-
+        System.out.println("reach point -2 here heartbeat");
         String sql = """
             SELECT heartbeat_at
             FROM migration_lock
-            WHERE id = 1
+            WHERE connection_id = 1
             """;
 
         try (PreparedStatement statement =
@@ -130,7 +130,7 @@ public class MigrationLockService {
         String sql = """
             UPDATE migration_lock
             SET heartbeat_at = CURRENT_TIMESTAMP
-            WHERE id = 1
+            WHERE connection_id = 1
             """;
 
         try (PreparedStatement statement =

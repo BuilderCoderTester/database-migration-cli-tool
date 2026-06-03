@@ -21,10 +21,7 @@ import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -442,4 +439,107 @@ public class MigrationService {
         return connectionContext.getCurrentConnectionId();
     }
 
+
+
+    public List<String> getTables(Long connectionId) throws SQLException {
+        Connection conn = activeConnection( connectionContext.getCurrentDatabase());
+
+        List<String> tables = new ArrayList<>();
+        String sql = """
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+        ORDER BY table_name
+        """;
+
+        try (
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                ResultSet rs = stmt.executeQuery()
+        ) {
+
+            while (rs.next()) {
+                tables.add(rs.getString("table_name"));
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println(Arrays.asList(tables));
+        return tables;
+    }
+
+    public TableInfoDTO getTableInfo(Long connectionId, String tableName) throws SQLException {
+
+        Connection connection =
+                activeConnection(connectionContext.getCurrentDatabase());
+
+        try {
+
+            // Row count
+            Long rowCount = 0L;
+
+            String countSql =
+                    "SELECT COUNT(*) FROM " + tableName;
+
+            try (PreparedStatement stmt =
+                         connection.prepareStatement(countSql);
+                 ResultSet rs = stmt.executeQuery()) {
+
+                if (rs.next()) {
+                    rowCount = rs.getLong(1);
+                }
+            }
+
+            // Column information
+            List<ColumnInfoDTO> columns = new ArrayList<>();
+
+            String columnSql = """
+                SELECT
+                    column_name,
+                    data_type,
+                    is_nullable
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = ?
+                ORDER BY ordinal_position
+                """;
+
+            try (PreparedStatement stmt =
+                         connection.prepareStatement(columnSql)) {
+
+                stmt.setString(1, tableName);
+
+                try (ResultSet rs = stmt.executeQuery()) {
+
+                    while (rs.next()) {
+
+                        columns.add(
+                                new ColumnInfoDTO(
+                                        rs.getString("column_name"),
+                                        rs.getString("data_type"),
+                                        "YES".equals(
+                                                rs.getString("is_nullable")
+                                        ),
+                                        false
+                                )
+                        );
+                    }
+                }
+            }
+            return new TableInfoDTO(
+                    tableName,
+                    "public",
+                    rowCount,
+                    columns.size(),
+                    columns
+            );
+
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                    "Failed to load table information for "
+                            + tableName,
+                    e
+            );
+        }
+    }
 }
