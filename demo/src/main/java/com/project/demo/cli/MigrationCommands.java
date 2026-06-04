@@ -153,26 +153,26 @@ public class MigrationCommands {
 //        }
 //    }
 
-    @Command(command = "repair", description = "Repair failed migrations")
-    public String repair() {
-
-        List<Migration> failed = repository.findFailedMigrations();
-
-        if (failed.isEmpty()) {
-            return "✓ No failed migrations";
-        }
-
-        for (Migration m : failed) {
-
-            // 🔧 mark as not dirty
-            repository.clearDirtyFlag(m.getVersion());
-
-            // optional: mark as repaired
-            repository.markAsRepaired(m.getVersion());
-        }
-
-        return "✓ Repaired " + failed.size() + " failed migrations";
-    }
+//    @Command(command = "repair", description = "Repair failed migrations")
+//    public String repair() {
+//
+//        List<Migration> failed = repository.findFailedMigrations();
+//
+//        if (failed.isEmpty()) {
+//            return "✓ No failed migrations";
+//        }
+//
+//        for (Migration m : failed) {
+//
+//            // 🔧 mark as not dirty
+//            repository.clearDirtyFlag(m.getVersion());
+//
+//            // optional: mark as repaired
+//            repository.markAsRepaired(m.getVersion());
+//        }
+//
+//        return "✓ Repaired " + failed.size() + " failed migrations";
+//    }
 
 //    @Command(command = "history", description = "Show migration history")
 //    public Table history() {
