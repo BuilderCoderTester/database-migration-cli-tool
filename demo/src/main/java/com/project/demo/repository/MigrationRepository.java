@@ -1,6 +1,8 @@
 // MigrationRepository.java
 package com.project.demo.repository;
 
+import com.project.demo.component.SqlExecutor;
+import com.project.demo.config.MigrationProperties;
 import com.project.demo.model.ConnectionConfig;
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
@@ -12,17 +14,27 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Repository
 public class MigrationRepository {
 
     private final JdbcTemplate jdbcTemplate;
-
+    private static final Pattern VERSIONED_PATTERN =
+            Pattern.compile("V(\\d+)__([\\w_]+)\\.sql");
+    private MigrationProperties properties;
+    private SqlExecutor sqlExecutor;
 
     public MigrationRepository(DataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
@@ -293,11 +305,66 @@ public class MigrationRepository {
         return Optional.empty();
     }
 
-    public List<Migration> findFailedMigrations() {
+    public MigrationScript findFailedMigrations(String versionId, Long connectionId) {
 
-        String sql = "SELECT * FROM sub_migrations WHERE success = false";
+        try {
 
-        return jdbcTemplate.query(sql, new MigrationRowMapper());
+            Path basePath = Paths.get(properties.getPath());
+            Path path = basePath.resolve("conn_" + connectionId);
+
+            if (!Files.exists(path)) {
+                return null;
+            }
+
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(path, "*.sql")) {
+
+                for (Path file : stream) {
+
+                    String fileName = file.getFileName().toString();
+                    Matcher v = VERSIONED_PATTERN.matcher(fileName);
+
+                    if (v.matches()) {
+
+                        String version = "V" + v.group(1);
+
+                        if (version.equals(versionId)) {
+
+                            String description =
+                                    v.group(2).replace("_", " ");
+
+                            String content =
+                                    Files.readString(file);
+
+                            MigrationScript script =
+                                    parseScript(version, description, content);
+
+                            script.setFileName(fileName);
+                            script.setRepeatable(false);
+
+                            return script;
+                        }
+                    }
+                }
+            }
+
+            return null;
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load migration: " + versionId, e);
+        }
+    }
+
+    private MigrationScript parseScript(String version, String description, String content) {
+        String upScript = content;
+        String downScript = null;
+        // Support for -- DOWN marker to separate up/down scripts
+        int downIndex = content.indexOf("-- DOWN");
+        if (downIndex != -1) {
+            upScript = content.substring(0, downIndex).trim();
+            downScript = content.substring(downIndex + 7).trim();
+        }
+
+        return new MigrationScript(version, description, upScript, downScript);
     }
     public void clearDirtyFlag(String version) {
 
@@ -309,16 +376,9 @@ public class MigrationRepository {
 
         jdbcTemplate.update(sql, version);
     }
-    public void markAsRepaired(String version) {
+    public void markAsRepaired(String version ,MigrationScript script,Connection conn,String databaseName) throws SQLException {
 
-        String sql = """
-        UPDATE migrations
-        SET success = false,
-            dirty = false
-        WHERE version = ?
-    """;
-
-        jdbcTemplate.update(sql, version);
+        sqlExecutor.executeScript(script.getUpScript(),conn,databaseName);
     }
     @Transactional
     public void deleteByVersion(String version) {

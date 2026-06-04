@@ -12,6 +12,7 @@ import com.project.demo.service.MigrationTableService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.sql.*;
 import java.util.Arrays;
 import java.util.List;
@@ -190,8 +191,8 @@ public class MigrationController {
 
     // ✅ REPAIR
     @PostMapping("/repair")
-    public ApiResponse repair() {
-        return new ApiResponse(true, migrationService.repair());
+    public ApiResponse repair(@RequestParam("connectionId") Long connectionId , String versionId) throws SQLException, IOException {
+        return new ApiResponse(true, migrationService.repair(connectionId,versionId));
     }
 
     // ✅ HISTORY

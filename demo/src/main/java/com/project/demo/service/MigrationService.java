@@ -23,10 +23,7 @@ import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.*;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class MigrationService {
@@ -282,24 +279,16 @@ public class MigrationService {
         }
     }
 
-    public String repair() {
+    public String repair(long connectionId , String versionId) throws SQLException, IOException {
+        Connection conn = activeConnection(connectionContext.getCurrentDatabase());
+        System.out.println("Migration script version " + versionId+"start finding .");
+        MigrationScript script = repository.findFailedMigrations(versionId,connectionId);
+        System.out.println("Migration script version " + versionId+"end finding .");
 
-        List<Migration> failed = repository.findFailedMigrations();
+        System.out.println("Migration script version " + versionId+"start repairing .");
+        repository.markAsRepaired(versionId,script,conn,connectionContext.getCurrentDatabase());
 
-        if (failed.isEmpty()) {
-            return "✓ No failed migrations";
-        }
-
-        for (Migration m : failed) {
-
-            // 🔧 mark as not dirty
-            repository.clearDirtyFlag(m.getVersion());
-
-            // optional: mark as repaired
-            repository.markAsRepaired(m.getVersion());
-        }
-
-        return "✓ Repaired " + failed.size() + " failed migrations";
+        return "✓ Repaired " + versionId + " failed migrations";
     }
 
     public List<Migration> history(Long connectionId) throws SQLException {
