@@ -490,23 +490,32 @@ public class MigrationService {
 
     public TableInfoDTO getTableInfo(Long connectionId, String tableName) throws SQLException {
 
+        System.out.println("=== getTableInfo START ===");
+        System.out.println("Connection Id: " + connectionId);
+        System.out.println("Table Name: " + tableName);
+
         Connection connection =
                 activeConnection(connectionContext.getCurrentDatabase());
+
+        System.out.println("Connection obtained: " + (connection != null));
 
         try {
 
             // Row count
             Long rowCount = 0L;
 
-            String countSql =
-                    "SELECT COUNT(*) FROM " + tableName;
+            String countSql = "SELECT COUNT(*) FROM " + tableName;
 
-            try (PreparedStatement stmt =
-                         connection.prepareStatement(countSql);
+            System.out.println("Executing Count Query: " + countSql);
+
+            try (PreparedStatement stmt = connection.prepareStatement(countSql);
                  ResultSet rs = stmt.executeQuery()) {
 
                 if (rs.next()) {
                     rowCount = rs.getLong(1);
+                    System.out.println("Row Count: " + rowCount);
+                } else {
+                    System.out.println("No result returned from COUNT query");
                 }
             }
 
@@ -514,15 +523,17 @@ public class MigrationService {
             List<ColumnInfoDTO> columns = new ArrayList<>();
 
             String columnSql = """
-                SELECT
-                    column_name,
-                    data_type,
-                    is_nullable
-                FROM information_schema.columns
-                WHERE table_schema = 'public'
-                  AND table_name = ?
-                ORDER BY ordinal_position
-                """;
+            SELECT
+                column_name,
+                data_type,
+                is_nullable
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = ?
+            ORDER BY ordinal_position
+            """;
+
+            System.out.println("Executing Column Query for table: " + tableName);
 
             try (PreparedStatement stmt =
                          connection.prepareStatement(columnSql)) {
@@ -531,22 +542,42 @@ public class MigrationService {
 
                 try (ResultSet rs = stmt.executeQuery()) {
 
+                    int columnCounter = 0;
+
                     while (rs.next()) {
+
+                        String columnName = rs.getString("column_name");
+                        String dataType = rs.getString("data_type");
+                        String nullable = rs.getString("is_nullable");
+
+                        System.out.println(
+                                "Column Found -> Name: " + columnName +
+                                        ", Type: " + dataType +
+                                        ", Nullable: " + nullable
+                        );
 
                         columns.add(
                                 new ColumnInfoDTO(
-                                        rs.getString("column_name"),
-                                        rs.getString("data_type"),
-                                        "YES".equals(
-                                                rs.getString("is_nullable")
-                                        ),
+                                        columnName,
+                                        dataType,
+                                        "YES".equals(nullable),
                                         false
                                 )
                         );
+
+                        columnCounter++;
                     }
+
+                    System.out.println("Total Columns Found: " + columnCounter);
                 }
             }
-            return new TableInfoDTO(
+
+            System.out.println("Preparing DTO...");
+            System.out.println("Table Name: " + tableName);
+            System.out.println("Row Count: " + rowCount);
+            System.out.println("Column Count: " + columns.size());
+
+            TableInfoDTO dto = new TableInfoDTO(
                     tableName,
                     "public",
                     rowCount,
@@ -554,10 +585,20 @@ public class MigrationService {
                     columns
             );
 
+            System.out.println("DTO Created Successfully");
+            System.out.println(dto);
+            System.out.println("=== getTableInfo END ===");
+
+            return dto;
+
         } catch (SQLException e) {
+
+            System.out.println("ERROR OCCURRED");
+            System.out.println("Message: " + e.getMessage());
+            e.printStackTrace();
+
             throw new RuntimeException(
-                    "Failed to load table information for "
-                            + tableName,
+                    "Failed to load table information for " + tableName,
                     e
             );
         }

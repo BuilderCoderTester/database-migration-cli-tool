@@ -56,7 +56,7 @@ public class DependencyValidator {
     private MigrationScriptStatus validateTable(Dependency dep, Connection conn) throws SQLException {
         if (!tableExists(conn, dep.getTable())) {
 
-            System.out.println("The table is not present.");
+            System.out.println("The table is not present."  + dep.getTable());
 
             return new MigrationScriptStatus(
                     Status.FAILURE,

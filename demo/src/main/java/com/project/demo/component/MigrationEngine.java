@@ -68,7 +68,7 @@ public class MigrationEngine {
             // only checked for CREATE not for others
             DependencyValidator validator = new DependencyValidator();
             MigrationScriptStatus scriptStatus = validator.validate(deps, conn);
-
+            System.out.println("Status = " + scriptStatus.getTableName());
             // if failed then call the repair function .
             if(scriptStatus.getStatus() == Status.FAILURE){
                 System.out.println("have it here bro");

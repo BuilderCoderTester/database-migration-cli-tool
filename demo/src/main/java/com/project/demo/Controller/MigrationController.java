@@ -239,7 +239,7 @@ public class MigrationController {
        return migrationService.getTables(connectionId);
     }
 
-    @GetMapping("/tables/{tableName}")
+    @GetMapping("/table/{tableName}")
     public TableInfoDTO getTableInfo(
             @RequestParam Long connectionId,
             @PathVariable String tableName
