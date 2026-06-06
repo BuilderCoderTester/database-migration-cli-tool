@@ -242,7 +242,7 @@ public class MigrationLoader {
         }
     }
 
-    private List<MigrationScript> loadFromFolder(Long connectionId) throws IOException {
+    public List<MigrationScript> loadFromFolder(Long connectionId) throws IOException {
 
         if(connectionId == null){
             throw  new RuntimeException("No active connection is selected.");

@@ -15,13 +15,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -36,8 +40,10 @@ public class MigrationRepository {
     private MigrationProperties properties;
     private SqlExecutor sqlExecutor;
 
-    public MigrationRepository(DataSource dataSource) {
+    public MigrationRepository(DataSource dataSource, MigrationProperties properties, SqlExecutor sqlExecutor) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
+        this.properties = properties;
+        this.sqlExecutor = sqlExecutor;
     }
 
     public void createSchemaHistoryTable() {
@@ -376,9 +382,41 @@ public class MigrationRepository {
 
         jdbcTemplate.update(sql, version);
     }
-    public void markAsRepaired(String version ,MigrationScript script,Connection conn,String databaseName) throws SQLException {
+    public void markAsRepaired(String version ,MigrationScript script,Connection conn,String databaseName,long connectionId) throws SQLException {
 
         sqlExecutor.executeScript(script.getUpScript(),conn,databaseName);
+        saveMigrationRecord(script, connectionId,System.currentTimeMillis(), false,conn);
+
+    }
+    public void saveMigrationRecord(MigrationScript script,Long connectionId,
+                                    long executionTime,
+                                    boolean repeatable,Connection connection) throws SQLException {
+
+        Migration m = new Migration(
+                script.getVersion(),
+                script.getDescription(),
+                script.getUpScript()
+        );
+
+        m.setChecksum(calculateChecksum(script.getUpScript()));
+        m.setExecutedAt(LocalDateTime.now());
+        m.setExecutionTime(executionTime);
+        m.setSuccess(true);
+        m.setDirty(false);
+        m.setRepeatable(repeatable);
+        m.setName(script.getName());
+
+        save(m,connectionId ,connection);
+    }
+    /// SFA checksum
+    public String calculateChecksum(String content) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(content.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-256 not available", e);
+        }
     }
     @Transactional
     public void deleteByVersion(String version) {

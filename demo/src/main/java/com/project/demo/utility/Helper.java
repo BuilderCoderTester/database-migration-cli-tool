@@ -6,6 +6,7 @@ import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.repository.MigrationRepository;
 import com.project.demo.service.MigrationService;
+import jakarta.transaction.Status;
 import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -61,7 +62,25 @@ public class Helper {
         System.out.println("hehe he ami sei checl je kaj kori");
         saveMigrationRecord(script, connectionId,System.currentTimeMillis() - start, false,connection);
     }
+    public void updateMigrationStatus(String version, Long connectionId,
+                                      com.project.demo.enumuration.Status status, long executionTime) throws SQLException {
+        String sql = """
+            UPDATE sub_migration
+            SET status = ?, execution_time = ?, installed_on = NOW()
+            WHERE version = ? AND connection_id = ?
+            """;
 
+        try (Connection connection =activeConnection(connectionContext.getCurrentDatabase());
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, status.name());
+            statement.setLong(2, executionTime);
+            statement.setString(3, version);
+            statement.setLong(4, connectionId);
+
+            statement.executeUpdate();
+        }
+    }
     /// SAVE THE MIGRATION RECORDS
     public void saveMigrationRecord(MigrationScript script,Long connectionId,
                                     long executionTime,
@@ -174,5 +193,37 @@ public class Helper {
 //        }
 //    }
 
+    public String extractTableName(String sql) {
 
+        if (sql == null || sql.isBlank()) {
+            return null;
+        }
+
+        String normalized =
+                sql.trim()
+                        .replaceAll("\\s+", " ")
+                        .toUpperCase();
+
+        if (normalized.startsWith("CREATE TABLE")) {
+            return normalized.split(" ")[2];
+        }
+
+        if (normalized.startsWith("INSERT INTO")) {
+            return normalized.split(" ")[2];
+        }
+
+        if (normalized.startsWith("ALTER TABLE")) {
+            return normalized.split(" ")[2];
+        }
+
+        if (normalized.startsWith("UPDATE")) {
+            return normalized.split(" ")[1];
+        }
+
+        if (normalized.startsWith("DELETE FROM")) {
+            return normalized.split(" ")[2];
+        }
+
+        return null;
+    }
 }

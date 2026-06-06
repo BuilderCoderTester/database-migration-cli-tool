@@ -1,0 +1,12 @@
+-- Migration: insert_into_persona
+-- Version: 009
+
+-- Write your UP SQL here
+INSERT INTO persona
+VALUES(1,'Anurag');
+
+-- DOWN
+
+-- Write your DOWN SQL here
+DELETE FROM persona
+WHERE ID = 1;

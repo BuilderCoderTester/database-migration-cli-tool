@@ -16,10 +16,13 @@ import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.util.*;
 
 @Component
@@ -43,7 +46,7 @@ public class MigrationEngine {
 
     // MIGRATE UP MODULE
     @Transactional(rollbackFor = Exception.class)
-    public void migrateUp(MigrationScript script, Long connectionId,String currentDatabase) {
+    public void migrateUp(MigrationScript script, Long connectionId,String currentDatabase) throws SQLException {
         System.out.println("reach point -1 ");
         if (connectionId == null) {
             throw new RuntimeException("No active connection selected");
@@ -54,8 +57,10 @@ public class MigrationEngine {
         System.out.println("Applying migration: "
                 + script.getVersion() + " - " + script.getDescription()
                 + " [connectionId=" + connectionId + "]");
+
         try {
             Connection conn = helper.activeConnection(currentDatabase);
+//            helper.saveMigrationRecord(script, connectionId, System.currentTimeMillis() - startTime, false,conn);
 
             // has bugs (workings.............)
 //            validator.validateBeforeUp(script);
@@ -82,7 +87,9 @@ public class MigrationEngine {
             } else {
                 helper.applyVersioned(script, startTime, connectionId);
             }
-
+            // 2. ✅ UPDATE TO SUCCESS
+//            helper.updateMigrationStatus(script.getVersion(), connectionId, Status.PASSED,
+//                    System.currentTimeMillis() - startTime);
         } catch (Exception e) {
             failureService.logFailure(script, e, connectionId); // Log in separate transaction
             throw new RuntimeException("Migration failed: " + script.getVersion(), e);

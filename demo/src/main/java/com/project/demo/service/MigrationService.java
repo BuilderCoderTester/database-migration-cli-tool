@@ -13,6 +13,7 @@ import com.project.demo.model.MigrationScript;
 import com.project.demo.repository.ConnectionRepo;
 import com.project.demo.repository.MigrationRepository;
 import com.project.demo.utility.Helper;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -250,35 +251,131 @@ public class MigrationService {
         return DatabaseOperation.UNKNOWN;
     }
 
-    public String rollback(@Option(description = "Target version") String targetVersion, Long connectionId) {
+    @Transactional
+    public String rollback(String targetVersion,Long connectionId) {
+
         try {
-            System.out.println("the databse = " + connectionContext.getCurrentDatabase());
-            var currentOpt = helper.getCurrentVersion(connectionId, connectionContext.getCurrentDatabase());
-            if (currentOpt.isEmpty()) {
-                return "No migrations to rollback";
-            }
-            System.out.println("atleast coming");
-            String current = currentOpt.get();
-            MigrationScript script = loader.loadSpecificVersion(current, connectionId);
 
-            if (script == null) {
-                return "Could not find migration script for version: " + current;
-            }
-            System.out.println("the script is " + script.getDownScript());
-            if (engine.migrateDown(script, connectionContext.getCurrentDatabase())) {
-                System.out.println("yes it is working ");
-                return "✓ Rolled back version " + current;
-            } else {
-                return "✗ Rollback failed";
+            String database =
+                    connectionContext.getCurrentDatabase();
+            System.out.println("hte database is rollback "+database);
+            List<Migration> history =
+                    helper.getMigrationHistory(
+                            connectionId,
+                            database);
+            System.out.println(Arrays.asList(history));
+            List<MigrationScript> allScripts =
+                    history.stream()
+                            .map(migration -> {
+                                try {
+                                    return loader.loadSpecificVersion(
+                                            migration.getVersion(),
+                                            connectionId);
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            })
+                            .filter(Objects::nonNull)
+                            .toList();
+            System.out.println("the all script s"+allScripts);
+            List<MigrationScript> createScripts =
+                    allScripts.stream()
+                            .filter(script ->
+                                    script.getUpScript()
+                                            .trim()
+                                            .toUpperCase()
+                                            .contains("CREATE TABLE"))
+                            .toList();
+            System.out.println("the create scrupts are "+createScripts);
+            for (MigrationScript createScript : createScripts) {
+
+                String tableName =
+                        helper.extractTableName(
+                                createScript.getUpScript());
+
+                System.out.println(
+                        "Processing table : " + tableName);
+
+                List<MigrationScript> dependentScripts =
+                        allScripts.stream()
+                                .filter(script -> script != createScript)
+                                .filter(script -> {
+
+                                    String table =
+                                            helper.extractTableName(
+                                                    script.getUpScript());
+
+                                    return table != null
+                                            && table.equalsIgnoreCase(tableName);
+                                })
+                                .toList();
+
+                // rollback dependents first
+                for (MigrationScript dependent : dependentScripts) {
+
+                    System.out.println(
+                            "Rolling back dependent : "
+                                    + dependent.getVersion());
+
+                    boolean success =
+                            engine.migrateDown(
+                                    dependent,
+                                    database);
+
+                    if (!success) {
+                        return "Failed rollback of "
+                                + dependent.getVersion();
+                    }
+                }
+
+                // rollback create table last
+                System.out.println(
+                        "Rolling back create script : "
+                                + createScript.getVersion());
+
+                boolean success =
+                        engine.migrateDown(
+                                createScript,
+                                database);
+
+                if (!success) {
+                    return "Failed rollback of "
+                            + createScript.getVersion();
+                }
             }
 
-        } catch (IOException e) {
-            return "Rollback error: " + e.getMessage();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+            return "Rollback completed successfully";
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+            return "Rollback error : "
+                    + e.getMessage();
         }
     }
 
+
+    public List<MigrationScript> mapToMigrationScripts(List<Migration> migrations) {
+
+        return migrations.stream()
+                .map(migration -> {
+
+                    MigrationScript script = new MigrationScript();
+
+                    script.setVersion(migration.getVersion());
+                    script.setDescription(migration.getDescription());
+
+                    // The migration table only stores the UP script
+                    script.setUpScript(migration.getScript());
+
+                    script.setRepeatable(migration.isRepeatable());
+                    script.setName(migration.getName());
+                    script.setConnection(migration.getConnection());
+
+                    return script;
+                })
+                .toList();
+    }
     public String repair(long connectionId , String versionId) throws SQLException, IOException {
         Connection conn = activeConnection(connectionContext.getCurrentDatabase());
         System.out.println("Migration script version " + versionId+"start finding .");
@@ -286,7 +383,7 @@ public class MigrationService {
         System.out.println("Migration script version " + versionId+"end finding .");
 
         System.out.println("Migration script version " + versionId+"start repairing .");
-        repository.markAsRepaired(versionId,script,conn,connectionContext.getCurrentDatabase());
+        repository.markAsRepaired(versionId,script,conn,connectionContext.getCurrentDatabase(),connectionId);
 
         return "✓ Repaired " + versionId + " failed migrations";
     }
@@ -590,6 +687,24 @@ public class MigrationService {
                     "Failed to load table information for " + tableName,
                     e
             );
+        }
+    }
+
+    public void delete(long connectionId, String versionId) throws SQLException {
+        String sql = "DELETE FROM sub_migration WHERE version = ? AND connection_id = ?";
+
+        try (Connection connection = activeConnection(connectionContext.getCurrentDatabase());
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            System.out.println("Version = " + versionId);
+            System.out.println("Connection Id = " + connectionId);
+            statement.setString(1, versionId);
+            statement.setLong(2, connectionId);
+
+            int rowsAffected = statement.executeUpdate();
+
+            if (rowsAffected == 0) {
+                throw new RuntimeException("Migration not found for version: " + versionId);
+            }
         }
     }
 }
