@@ -33,7 +33,7 @@ public class MigrationEngine {
 
     private final MigrationRepository repository;
     private final MigrationFailureService failureService;
-    private final MigrationValidator validator;
+    private final MigrationValidator migrationValidator;
     private final SqlExecutor sqlExecutor;
     private final Helper helper;
     private final ConnectionService connectionService;
@@ -63,7 +63,6 @@ public class MigrationEngine {
 //            helper.saveMigrationRecord(script, connectionId, System.currentTimeMillis() - startTime, false,conn);
 
             // has bugs (workings.............)
-//            validator.validateBeforeUp(script);
 
             // 2. 🔥 AST Dependency Extraction
             ASTDependencyExtractor extractor = new ASTDependencyExtractor();
@@ -94,6 +93,10 @@ public class MigrationEngine {
             failureService.logFailure(script, e, connectionId); // Log in separate transaction
             throw new RuntimeException("Migration failed: " + script.getVersion(), e);
         }
+    }
+
+    public void validateScript(MigrationScript script , Connection conn){
+        migrationValidator.validateBeforeUp(script,conn);
     }
 
     private void applyRepeatable(MigrationScript script, long start, Long connectionId) {

@@ -7,6 +7,10 @@ import com.project.demo.service.ChecksumService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Savepoint;
+import java.sql.Statement;
 import java.util.Optional;
 
 @Component
@@ -15,50 +19,92 @@ public class MigrationValidator {
     private final MigrationRepository repository;
     private final ChecksumService checksumService;
 
-    public void validateBeforeUp(MigrationScript script) {
+//    public void validateBeforeUp(MigrationScript script) {
+//
+//        if (!repository.existsByDirtyTrue()) {
+//            throw new RuntimeException("Database is in DIRTY state. Resolve before continuing.");
+//        }
+////        repository.findById(script.getVersion()).ifPresent(existing -> {
+////            String newChecksum = checksumService.calculate(script.getUpScript());
+////            System.out.println("VERSION " + script.getVersion() + " " + " CHECKSUM " + newChecksum);
+//
+//            // the string equal function is not returning anything **BUG**
+////            System.out.println("EXISTING : " + newChecksum.equals(existing.getChecksum().toString()));
+//
+////            if (!Boolean.parseBoolean(existing.getChecksum())) {
+////                throw new RuntimeException("Checksum mismatch for version: " + script.getVersion());
+////            }
+////            throw new RuntimeException("Migration already applied: " + script.getVersion());
+////        });
+////        Optional<Migration> lastMigration =
+////                repository.findTopByOrderByExecutedAtDesc();
+////        if(lastMigration.isEmpty()){
+////            System.out.println("LAST MIGRATION PRESENT : " + true);
+////        }
+////
+////        if (lastMigration.isPresent()) {
+////
+////            long last = extractVersionNumber(lastMigration.get().getVersion());
+////            long current = extractVersionNumber(script.getVersion());
+////
+////            if (current <= last) {
+////                throw new RuntimeException(
+////                        "Out-of-order migration. Current: " + script.getVersion() +
+////                                ", Last applied: " + lastMigration.get().getVersion()
+////                );
+////            }
+////
+////            // Optional strict sequence enforcement
+////            if (current != last + 1) {
+////                throw new RuntimeException(
+////                        "Missing migration(s). Expected: V" + (last + 1) +
+////                                " but found: " + script.getVersion()
+////                );
+////            }
+////        }
+//    }
 
-        if (!repository.existsByDirtyTrue()) {
-            throw new RuntimeException("Database is in DIRTY state. Resolve before continuing.");
+public void validateBeforeUp(MigrationScript script, Connection conn) {
+
+    Savepoint savepoint = null;
+
+    try {
+        boolean originalAutoCommit = conn.getAutoCommit();
+
+        conn.setAutoCommit(false);
+
+        savepoint = conn.setSavepoint("VALIDATION_POINT");
+
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(script.getUpScript());
         }
-//        repository.findById(script.getVersion()).ifPresent(existing -> {
-//            String newChecksum = checksumService.calculate(script.getUpScript());
-//            System.out.println("VERSION " + script.getVersion() + " " + " CHECKSUM " + newChecksum);
 
-            // the string equal function is not returning anything **BUG**
-//            System.out.println("EXISTING : " + newChecksum.equals(existing.getChecksum().toString()));
+        conn.rollback(savepoint);
 
-//            if (!Boolean.parseBoolean(existing.getChecksum())) {
-//                throw new RuntimeException("Checksum mismatch for version: " + script.getVersion());
-//            }
-//            throw new RuntimeException("Migration already applied: " + script.getVersion());
-//        });
-//        Optional<Migration> lastMigration =
-//                repository.findTopByOrderByExecutedAtDesc();
-//        if(lastMigration.isEmpty()){
-//            System.out.println("LAST MIGRATION PRESENT : " + true);
-//        }
-//
-//        if (lastMigration.isPresent()) {
-//
-//            long last = extractVersionNumber(lastMigration.get().getVersion());
-//            long current = extractVersionNumber(script.getVersion());
-//
-//            if (current <= last) {
-//                throw new RuntimeException(
-//                        "Out-of-order migration. Current: " + script.getVersion() +
-//                                ", Last applied: " + lastMigration.get().getVersion()
-//                );
-//            }
-//
-//            // Optional strict sequence enforcement
-//            if (current != last + 1) {
-//                throw new RuntimeException(
-//                        "Missing migration(s). Expected: V" + (last + 1) +
-//                                " but found: " + script.getVersion()
-//                );
-//            }
-//        }
+        conn.setAutoCommit(originalAutoCommit);
+
+        System.out.println("Syntax validation passed for "
+                + script.getVersion());
+
+    } catch (SQLException e) {
+
+        try {
+            if (savepoint != null) {
+                conn.rollback(savepoint);
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+
+        throw new RuntimeException(
+                "Syntax validation failed for "
+                        + script.getVersion()
+                        + " : "
+                        + e.getMessage(),
+                e
+        );
     }
+}
 
     public boolean validateDirtyDb() {
         if (repository.existsByDirtyTrue()) {

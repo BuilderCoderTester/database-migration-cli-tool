@@ -707,4 +707,29 @@ public class MigrationService {
             }
         }
     }
+
+
+    public String validateScript(Long connectionId, String versionId) throws IOException, SQLException {
+        try {
+
+            MigrationScript loadScript =
+                    loader.loadSpecificVersion(versionId, connectionId);
+
+            if (loadScript == null) {
+                return "Migration script not found: " + versionId;
+            }
+
+            Connection conn =
+                    activeConnection(connectionContext.getCurrentDatabase());
+
+            engine.validateScript(loadScript, conn);
+
+            return "Validation successful. No SQL syntax errors found.";
+
+        } catch (Exception e) {
+
+            return "Validation failed. The SQL script contains errors: "
+                    + e.getMessage();
+        }
+    }
 }

@@ -38,10 +38,11 @@ public class MigrationQueryController {
         return migrationService.history(connectionId);
     }
 
-    @PostMapping("/validate")
-    public ApiResponse validate(@RequestParam("connectionId") Long connectionId) {
-        return new ApiResponse(true, migrationService.validate(connectionId));
-    }
+    //No longer needed here
+//    @PostMapping("/validate")
+//    public ApiResponse validate(@RequestParam("connectionId") Long connectionId) {
+//        return new ApiResponse(true, migrationService.validate(connectionId));
+//    }
 
     @GetMapping("/get-connection")
     public Long sendConnectionId() {

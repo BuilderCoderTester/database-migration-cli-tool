@@ -43,4 +43,10 @@ public class MigrationExecutionController {
             @RequestParam String versionId) throws SQLException, IOException {
         return new ApiResponse(true, migrationService.repair(connectionId, versionId));
     }
+
+    @PostMapping("/validate")
+    public ApiResponse validate( @RequestParam("connectionId") Long connectionId,
+                                 @RequestParam String versionId)throws SQLException, IOException {
+        return new ApiResponse(true, migrationService.validateScript(connectionId, versionId));
+    }
 }
