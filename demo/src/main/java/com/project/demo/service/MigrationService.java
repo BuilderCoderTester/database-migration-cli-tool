@@ -424,24 +424,29 @@ public class MigrationService {
         }
     }
 
-    public String validate(Long connectionId) {
-        try {
-            List<Migration> history = helper.getMigrationHistory(connectionId, connectionContext.getCurrentDatabase());
-            int errors = 0;
+    public String validate(Long connectionId, String versionId) {
+    try {
 
-            for (Migration migration : history) {
-                MigrationScript script = loader.loadSpecificVersion(migration.getVersion(), connectionId);
-                if (script != null && !helper.validateChecksum(migration.getVersion(), script.getUpScript())) {
-                    errors++;
-                    System.out.println("Checksum mismatch: " + migration.getVersion());
-                }
-            }
+        MigrationScript script =
+                loader.loadSpecificVersion(versionId, connectionId);
 
-            return errors == 0 ? "✓ All migrations validated" : "✗ " + errors + " checksum errors found";
-        } catch (IOException | SQLException e) {
-            return "Validation error: " + e.getMessage();
+        if (script == null) {
+            return "Migration " + versionId + " not found";
         }
+
+        boolean valid =
+                helper.validateChecksum(
+                        versionId,
+                        script.getUpScript());
+
+        return valid
+                ? "✓ Migration " + versionId + " is valid"
+                : "✗ Checksum mismatch for " + versionId;
+
+    } catch (IOException e) {
+        return "Validation error: " + e.getMessage();
     }
+}
 
     public ConnectionResponse connect(ConnectionRequest request) {
 
