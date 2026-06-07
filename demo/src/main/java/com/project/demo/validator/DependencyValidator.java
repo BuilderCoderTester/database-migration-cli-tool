@@ -4,12 +4,14 @@ import com.project.demo.dto.MigrationScriptStatus;
 import com.project.demo.enumuration.DependencyType;
 import com.project.demo.enumuration.Status;
 import com.project.demo.model.Dependency;
+import org.springframework.stereotype.Component;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
+@Component
 public class DependencyValidator {
 
     public MigrationScriptStatus validate(List<Dependency> deps,
