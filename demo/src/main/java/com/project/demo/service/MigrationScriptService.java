@@ -1,6 +1,7 @@
 package com.project.demo.service;
 
 import com.project.demo.component.MigrationLoader;
+import com.project.demo.model.MigrationScript;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.command.annotation.Option;
 import org.springframework.stereotype.Service;
@@ -27,4 +28,15 @@ public class MigrationScriptService {
         }
     }
 
+    public String update(String version, long connectionId) throws IOException {
+        MigrationScript migrationScript = loader.loadSpecificVersion(version, connectionId);
+        create(version, migrationScript.getDescription(), migrationScript.getUpScript(), migrationScript.getDownScript());
+        return String.format("✓ Updated migration V%s__%s.sql", version);
+
+    }
+
+    public MigrationScript viewScript(String version , long coonnectionId) throws IOException {
+        MigrationScript script = loader.loadSpecificVersion(version ,coonnectionId);
+        return  script;
+    }
 }

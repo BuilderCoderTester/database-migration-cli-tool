@@ -170,8 +170,9 @@ public class Helper {
     }
 
     ///  checksum validation
-    public boolean validateChecksum(String version, String script) {
-        Optional<Migration> existing = repository.findByVersion(version);
+    public boolean validateChecksum(String version, String script) throws SQLException {
+        Connection connection = activeConnection(connectionContext.getCurrentDatabase());
+        Optional<Migration> existing = repository.findByVersion(version,connection);
         if (existing.isEmpty()) return true;
 
         String currentChecksum = calculateChecksum(script);

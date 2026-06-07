@@ -272,15 +272,29 @@ public class MigrationRepository {
         return migrations;
     }
 
-    public Optional<Migration> findByVersion(String version) {
-    String sql = "SELECT * FROM sub_migration WHERE version = ?";
-    List<Migration> results =
-            jdbcTemplate.query(sql, new MigrationRowMapper(), version);
+    public Optional<Migration> findByVersion(String version, Connection connection) throws SQLException {
+        String sql = "SELECT * FROM sub_migration WHERE version = ?";
 
-    return results.isEmpty()
-            ? Optional.empty()
-            : Optional.of(results.get(0));
-}
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, version);
+
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    Migration migration = new Migration();
+
+                    migration.setVersion(rs.getString("version"));
+                    migration.setDescription(rs.getString("description"));
+                    migration.setChecksum(rs.getString("checksum"));
+                    migration.setSuccess(rs.getBoolean("success"));
+
+                    return Optional.of(migration);
+                }
+            }
+        }
+
+        return Optional.empty();
+    }
+
     //FIND THE LAST SUCCESSFUL MIGRATION FILE OR SCRIPT
     public Optional<Migration> findLastSuccessful(Long connectionId, Connection connection) throws SQLException {
 
