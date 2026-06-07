@@ -15,8 +15,7 @@ import java.time.LocalDateTime;
 public class Migration {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String version;
+private String version;
 
     private String description;
 
