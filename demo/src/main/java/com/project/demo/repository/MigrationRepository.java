@@ -273,11 +273,14 @@ public class MigrationRepository {
     }
 
     public Optional<Migration> findByVersion(String version) {
-        String sql = "SELECT * FROM migration WHERE version = ?";
-        List<Migration> results = jdbcTemplate.query(sql, new MigrationRowMapper(), version);
-        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
-    }
+    String sql = "SELECT * FROM sub_migration WHERE version = ?";
+    List<Migration> results =
+            jdbcTemplate.query(sql, new MigrationRowMapper(), version);
 
+    return results.isEmpty()
+            ? Optional.empty()
+            : Optional.of(results.get(0));
+}
     //FIND THE LAST SUCCESSFUL MIGRATION FILE OR SCRIPT
     public Optional<Migration> findLastSuccessful(Long connectionId, Connection connection) throws SQLException {
 
@@ -419,17 +422,17 @@ public class MigrationRepository {
         }
     }
     @Transactional
-    public void deleteByVersion(String version) {
-        String sql = "DELETE FROM migration WHERE version = ?";
-        jdbcTemplate.update(sql, version);
-    }
+public void deleteByVersion(String version) {
+    String sql = "DELETE FROM sub_migration WHERE version = ?";
+    jdbcTemplate.update(sql, version);
+}
 
     @Transactional
-    public boolean existsByVersion(String version) {
-        String sql = "SELECT COUNT(*) FROM migration WHERE version = ?";
-        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, version);
-        return count != null && count > 0;
-    }
+public boolean existsByVersion(String version) {
+    String sql = "SELECT COUNT(*) FROM sub_migration WHERE version = ?";
+    Integer count = jdbcTemplate.queryForObject(sql, Integer.class, version);
+    return count != null && count > 0;
+}
 
     @Transactional
     public Optional<Migration> findById(String version) {
@@ -450,7 +453,7 @@ public class MigrationRepository {
 
     @Transactional
     public boolean existsByDirtyTrue() {
-        String sql = "SELECT COUNT(*) FROM migration ;";
+        String sql = "SELECT COUNT(*) FROM sub_migration";
         Integer count= 0;
         try {
              count = jdbcTemplate.queryForObject(sql, Integer.class);
@@ -470,7 +473,7 @@ public class MigrationRepository {
     public Optional<Migration> findTopByOrderByExecutedAtDesc() {
 
         String sql = """
-            SELECT * FROM migration
+            SELECT * FROM sub_migration
             ORDER BY executed_at DESC
             LIMIT 1;
         """;
