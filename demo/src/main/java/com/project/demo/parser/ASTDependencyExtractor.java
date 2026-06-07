@@ -11,8 +11,11 @@ import net.sf.jsqlparser.statement.alter.Alter;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
+import org.springframework.stereotype.Component;
+
 import java.util.*;
 
+@Component
 public class ASTDependencyExtractor {
 
     public List<Dependency> extract(String sql) throws Exception {

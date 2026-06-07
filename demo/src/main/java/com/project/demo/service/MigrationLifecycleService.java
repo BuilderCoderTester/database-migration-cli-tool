@@ -1,0 +1,351 @@
+package com.project.demo.service;
+
+import com.project.demo.component.ConnectionContext;
+import com.project.demo.component.MigrationEngine;
+import com.project.demo.component.MigrationLoader;
+import com.project.demo.component.MigrationRepair;
+import com.project.demo.dto.MigrationResult;
+import com.project.demo.dto.StatusResponse;
+import com.project.demo.dto.request.MigrationRequest;
+import com.project.demo.model.Migration;
+import com.project.demo.model.MigrationScript;
+import com.project.demo.repository.MigrationRepository;
+import com.project.demo.utility.Helper;
+import com.project.demo.utility.SqlOperationDetector;
+import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
+@Service
+public class MigrationLifecycleService {
+    @Autowired
+    private MigrationLockService migrationLockService;
+    @Autowired
+    private  Helper helper;
+    @Autowired
+    private ConnectionService connectionService;
+    @Autowired
+    private ConnectionContext connectionContext;
+    @Autowired
+    private MigrationEngine engine;
+    @Autowired
+    private MigrationLoader loader;
+    @Autowired
+    private SqlOperationDetector sqlOperationDetector;
+    @Autowired
+    private MigrationRepository migrationRepository;
+
+    @Transactional
+    public MigrationResult migrate(MigrationRequest migrationRequest) throws SQLException {
+
+        Long connectionId = migrationRequest.getConnectionId();
+        String targetVersion = migrationRequest.getTargetVersion();
+        System.out.println("Connection ID at service: " + connectionId);
+
+        StringBuilder lockedBy = null;
+
+        if (connectionId == null) {
+            throw new RuntimeException("No active connection selected");
+        }
+        Connection connection = connectionService.activeConnection(connectionContext.getCurrentDatabase());
+        connection.setAutoCommit(false);
+
+        try {
+            //ACQUIRE LOCK
+            if (migrationLockService.isLockStale(connection)) {
+
+                System.out.println("WARNING: stale migration lock detected");
+
+                migrationLockService.clearStaleLock(connection);
+            }
+            migrationLockService.acquireLock(connection, connectionId);
+            migrationLockService.updateHeartbeat(connection);
+//            var currentOpt = helper.getCurrentVersion(connectionId, connectionContext.getCurrentDatabase());
+            Set<String> executedVersions =
+                    helper.getExecutedVersions(
+                            connectionId,
+                            connectionContext.getCurrentDatabase()
+                    );
+
+//            System.out.println("the currentOPT " + currentOpt);
+//            List<MigrationScript> pending =
+//                    loader.loadPendingMigrations(currentOpt.orElse(null), connectionId);
+            List<MigrationScript> pending =
+                    loader.loadPendingMigrations(
+                            executedVersions,
+                            connectionId
+                    );
+
+            for (MigrationScript sc : pending) {
+                System.out.println("Script " + sc.getVersion());
+            }
+            if (pending.isEmpty()) {
+                return new MigrationResult("✓ No pending migrations", 0, 0);
+            }
+
+            int success = 0;
+            int failed = 0;
+            List<String> applied = new ArrayList<>();
+
+            for (MigrationScript script : pending) {
+                migrationRequest.setOperation(sqlOperationDetector.detectOperation(script.getDescription()));
+                System.out.println("Migration script operation " + migrationRequest.getOperation());
+                if (targetVersion != null &&
+                        helper.compareVersion(script.getVersion(), targetVersion) > 0) {
+                    break;
+                }
+
+                try {
+                    // 🔥 run migration on correct DB
+                    engine.migrateUp(script, connectionId, connectionContext.getCurrentDatabase());
+                    success++;
+                    applied.add(script.getVersion());
+
+                } catch (Exception e) {
+
+                    failed++;
+
+                    // 🔥 save failure
+                    migrationRepository.saveFailure(
+                            script,
+                            connectionId,
+                            e
+                    );
+
+                    return new MigrationResult(
+                            String.format(
+                                    "✗ Migration failed at %s\nReason: %s\nApplied: %s",
+                                    script.getVersion(),
+                                    e.getMessage(),
+                                    applied
+                            ),
+                            success,
+                            failed
+                    );
+                }
+            }
+
+            return new MigrationResult(
+                    String.format(
+                            "✓ Migration complete\nApplied: %s\nSuccess: %d, Failed: %d",
+                            applied,
+                            success,
+                            failed
+                    ),
+                    success,
+                    failed
+            );
+
+        } catch (IOException e) {
+            return new MigrationResult("✗ Migration failed: " + e.getMessage(), 0, 0);
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            try {
+                migrationLockService.releaseLock(connection, connectionId, lockedBy); // 🔥 scoped unlock
+                connection.commit();
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    @Transactional
+    public String rollback(String targetVersion,Long connectionId) {
+
+        try {
+
+            String database =
+                    connectionContext.getCurrentDatabase();
+            System.out.println("hte database is rollback "+database);
+            List<Migration> history =
+                    helper.getMigrationHistory(
+                            connectionId,
+                            database);
+            System.out.println(Arrays.asList(history));
+            List<MigrationScript> allScripts =
+                    history.stream()
+                            .map(migration -> {
+                                try {
+                                    return loader.loadSpecificVersion(
+                                            migration.getVersion(),
+                                            connectionId);
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            })
+                            .filter(Objects::nonNull)
+                            .toList();
+            System.out.println("the all script s"+allScripts);
+            List<MigrationScript> createScripts =
+                    allScripts.stream()
+                            .filter(script ->
+                                    script.getUpScript()
+                                            .trim()
+                                            .toUpperCase()
+                                            .contains("CREATE TABLE"))
+                            .toList();
+            System.out.println("the create scrupts are "+createScripts);
+            for (MigrationScript createScript : createScripts) {
+
+                String tableName =
+                        helper.extractTableName(
+                                createScript.getUpScript());
+
+                System.out.println(
+                        "Processing table : " + tableName);
+
+                List<MigrationScript> dependentScripts =
+                        allScripts.stream()
+                                .filter(script -> script != createScript)
+                                .filter(script -> {
+
+                                    String table =
+                                            helper.extractTableName(
+                                                    script.getUpScript());
+
+                                    return table != null
+                                            && table.equalsIgnoreCase(tableName);
+                                })
+                                .toList();
+
+                // rollback dependents first
+                for (MigrationScript dependent : dependentScripts) {
+
+                    System.out.println(
+                            "Rolling back dependent : "
+                                    + dependent.getVersion());
+
+                    boolean success =
+                            engine.migrateDown(
+                                    dependent,
+                                    database);
+
+                    if (!success) {
+                        return "Failed rollback of "
+                                + dependent.getVersion();
+                    }
+                }
+
+                // rollback create table last
+                System.out.println(
+                        "Rolling back create script : "
+                                + createScript.getVersion());
+
+                boolean success =
+                        engine.migrateDown(
+                                createScript,
+                                database);
+
+                if (!success) {
+                    return "Failed rollback of "
+                            + createScript.getVersion();
+                }
+            }
+
+            return "Rollback completed successfully";
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+            return "Rollback error : "
+                    + e.getMessage();
+        }
+    }
+
+    @Transactional
+    public String repair(long connectionId , String versionId) throws SQLException, IOException {
+        Connection conn = connectionService.activeConnection(connectionContext.getCurrentDatabase());
+        System.out.println("Migration script version " + versionId+"start finding .");
+        MigrationScript script = migrationRepository.findFailedMigrations(versionId,connectionId);
+        System.out.println("Migration script version " + versionId+"end finding .");
+
+        System.out.println("Migration script version " + versionId+"start repairing .");
+        migrationRepository.markAsRepaired(versionId,script,conn,connectionContext.getCurrentDatabase(),connectionId);
+
+        return "✓ Repaired " + versionId + " failed migrations";
+    }
+
+    @Transactional
+    public List<Migration> history(Long connectionId) throws SQLException {
+        List<Migration> migrations = helper.getMigrationHistory(connectionId, connectionContext.getCurrentDatabase());
+        // Count of migration history records
+        System.out.println("Total migration history count: " + migrations.size());
+        String[][] data = new String[migrations.size() + 1][5];
+        data[0] = new String[]{"Version", "Description", "Executed At", "Time (ms)", "Status"};
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+        for (int i = 0; i < migrations.size(); i++) {
+            Migration m = migrations.get(i);
+            data[i + 1] = new String[]{
+                    m.getVersion(),
+                    m.getDescription(),
+                    m.getExecutedAt() != null ? m.getExecutedAt().format(formatter) : "-",
+                    m.getExecutionTime() != null ? m.getExecutionTime().toString() : "-",
+                    m.isSuccess() ? "✓" : "✗"
+            };
+        }
+        return migrations;
+    }
+
+    @Transactional
+    public String validate(Long connectionId) {
+        try {
+            List<Migration> history = helper.getMigrationHistory(connectionId, connectionContext.getCurrentDatabase());
+            int errors = 0;
+
+            for (Migration migration : history) {
+                MigrationScript script = loader.loadSpecificVersion(migration.getVersion(), connectionId);
+                if (script != null && !helper.validateChecksum(migration.getVersion(), script.getUpScript())) {
+                    errors++;
+                    System.out.println("Checksum mismatch: " + migration.getVersion());
+                }
+            }
+
+            return errors == 0 ? "✓ All migrations validated" : "✗ " + errors + " checksum errors found";
+        } catch (IOException | SQLException e) {
+            return "Validation error: " + e.getMessage();
+        }
+    }
+
+    @Transactional
+    public StatusResponse status(Long connectionId) throws SQLException {
+
+        if (connectionId == null) {
+            throw new RuntimeException("No active connection selected");
+        }
+
+//        var currentOpt = helper.getCurrentVersion(connectionId, connectionRequest.getDatabase());
+//        String current = currentOpt.orElse("None");
+        Set<String> executedVersions =
+                helper.getExecutedVersions(
+                        connectionId,
+                        connectionContext.getCurrentDatabase()
+                );
+        try {
+//            List<MigrationScript> pending =
+//                    loader.loadPendingMigrations(currentOpt.orElse(null), connectionId);
+            List<MigrationScript> pending =
+                    loader.loadPendingMigrations(
+                            executedVersions,
+                            connectionId
+                    );
+            return new StatusResponse(
+                    executedVersions.toString(),
+                    pending.size(),
+                    pending
+            );
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load migrations", e);
+        }
+    }
+
+}
