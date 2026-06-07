@@ -426,7 +426,7 @@ public class MigrationService {
 
     public String validate(Long connectionId, String versionId) {
     try {
-
+        System.out.println("reach point for validate -1");
         MigrationScript script =
                 loader.loadSpecificVersion(versionId, connectionId);
 
@@ -445,8 +445,10 @@ public class MigrationService {
 
     } catch (IOException e) {
         return "Validation error: " + e.getMessage();
+    } catch (SQLException e) {
+        throw new RuntimeException(e);
     }
-}
+    }
 
     public ConnectionResponse connect(ConnectionRequest request) {
 
@@ -712,4 +714,6 @@ public class MigrationService {
             }
         }
     }
+
+
 }

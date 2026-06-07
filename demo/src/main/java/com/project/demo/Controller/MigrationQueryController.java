@@ -1,4 +1,5 @@
 package com.project.demo.Controller;
+
 import com.project.demo.dto.ApiResponse;
 import com.project.demo.dto.StatusResponse;
 import com.project.demo.model.Migration;
@@ -38,16 +39,16 @@ public class MigrationQueryController {
         return migrationService.history(connectionId);
     }
 
-    @GetMapping("/validate")
-public ApiResponse validate(
-        @RequestParam Long connectionId,
-        @RequestParam String versionId) {
+    @PostMapping("/validate")
+    public ApiResponse validate(
+            @RequestParam Long connectionId,
+            @RequestParam String versionId) {
 
-    return new ApiResponse(
-            true,
-            migrationService.validate(connectionId, versionId)
-    );
-}
+        return new ApiResponse(
+                true,
+                migrationService.validate(connectionId, versionId)
+        );
+    }
 
     @GetMapping("/get-connection")
     public Long sendConnectionId() {
