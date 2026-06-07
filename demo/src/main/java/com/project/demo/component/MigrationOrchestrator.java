@@ -63,22 +63,14 @@ public class MigrationOrchestrator {
 
         try {
             Connection conn = connectionService.activeConnection(currentDatabase);
-//            helper.saveMigrationRecord(script, connectionId, System.currentTimeMillis() - startTime, false,conn);
 
             // has bugs (workings.............)
 //            validator.validateBeforeUp(script);
 
             MigrationScriptStatus scriptStatus = dependencyEngine.validate(script,conn);
-            // 2. 🔥 AST Dependency Extraction
-//            ASTDependencyExtractor extractor = new ASTDependencyExtractor();
-//            List<Dependency> deps = extractor.extract(script.getUpScript());
-//            System.out.println("Dependency : " + deps);
-//
-//            // only checked for CREATE not for others
-//            DependencyValidator validator = new DependencyValidator();
-//            MigrationScriptStatus scriptStatus = validator.validate(deps, conn);
+
             System.out.println("Status = " + scriptStatus.getTableName());
-            // if failed then call the repair function .
+
             if(scriptStatus.getStatus() == Status.FAILURE){
                 System.out.println("have it here bro");
                 MigrationScript currentScript =  repairService.repair(script,connectionId);
@@ -91,9 +83,7 @@ public class MigrationOrchestrator {
             } else {
                 upService.upMigrationScript(script, startTime, connectionId);
             }
-            // 2. ✅ UPDATE TO SUCCESS
-//            helper.updateMigrationStatus(script.getVersion(), connectionId, Status.PASSED,
-//                    System.currentTimeMillis() - startTime);
+
         } catch (Exception e) {
             failureService.logFailure(script, e, connectionId); // Log in separate transaction
             throw new RuntimeException("Migration failed: " + script.getVersion(), e);
