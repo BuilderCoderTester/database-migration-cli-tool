@@ -20,6 +20,7 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 @Component
 public class MigrationLoader {
@@ -146,11 +147,14 @@ public class MigrationLoader {
     public ConnectionContext connectionContext;
 
     public MigrationScript loadSpecificVersion(String version , Long connectionId) throws IOException {
+        System.out.println("reach point -2 here script ");
+
         Path path = Paths.get(properties.getPath());
         Path connectionPath = path.resolve("conn_" + connectionId);
-
+        System.out.println(path );
+        System.out.println(connectionPath);
         String exactPattern = String.format("%s__*.sql", version);
-
+        System.out.println(exactPattern);
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(connectionPath, exactPattern)) {
             for (Path file : stream) {
                 String content = Files.readString(file);
@@ -310,5 +314,51 @@ public class MigrationLoader {
         return versions;
     }
 
+    // Load all specific related script
+    public List<MigrationScript> loadAllRelatedScript(MigrationScript loadScript, long connectionId) throws IOException {
 
+        String tableName = loadScript.getDescription()
+                .trim()
+                .substring(loadScript.getDescription().lastIndexOf(' ') + 1)
+                .toLowerCase();
+
+        System.out.println("Target table name: " + tableName);
+
+        Path path = Paths.get("migrations");
+        Path connectedPath = path.resolve("conn_" + connectionId);
+
+        if (!Files.exists(connectedPath)) {
+            return List.of();
+        }
+
+        try (Stream<Path> files = Files.list(connectedPath)) {
+            return files
+                    .filter(p -> p.getFileName().toString().endsWith(".sql"))
+                    .map(this::parseFileName)
+                    .filter(script -> {
+                        String description = script.getDescription();
+
+                        if (description == null) {
+                            return false;
+                        }
+
+                        String[] parts = description.toLowerCase().split("_");
+                        String scriptTableName = parts[parts.length - 1];
+
+                        System.out.println(
+                                "Comparing " + scriptTableName +
+                                        " with " + tableName);
+
+                        return scriptTableName.equals(tableName);
+                    })
+                    .sorted(Comparator.comparing(MigrationScript::getVersion))
+                    .toList();
+        }
+    }
+
+    public MigrationScript getActualScript(MigrationScript migrationScript,long connectionId) throws IOException {
+        String version  = migrationScript.getVersion();
+        return loadSpecificVersion(version,connectionId);
+
+    }
 }

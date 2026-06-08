@@ -1,9 +1,6 @@
 package com.project.demo.service;
 
-import com.project.demo.component.ConnectionContext;
-import com.project.demo.component.MigrationComponent;
-import com.project.demo.component.MigrationEngine;
-import com.project.demo.component.MigrationLoader;
+import com.project.demo.component.*;
 import com.project.demo.dto.*;
 import com.project.demo.dto.request.MigrationRequest;
 import com.project.demo.enumuration.DatabaseOperation;
@@ -37,13 +34,14 @@ public class MigrationService {
     private final ConnectionContext connectionContext;
     private final ConnectionRepo connectionRepo;
     private final JdbcTemplate jdbcTemplate;
+    private final SchemaDiffGenerator schemaDiffGenerator;
     @Autowired
     private final ConnectionRequest connectionRequest;
 
     public MigrationService(
             Helper helper,
             ConnectionContext connectionContext,
-            MigrationLoader loader, MigrationEngine engine, MigrationLockService migrationLockService, MigrationRepository repository, ConnectionRepo connectionRepo, JdbcTemplate jdbcTemplate, ConnectionRequest connectionRequest) {
+            MigrationLoader loader, MigrationEngine engine, MigrationLockService migrationLockService, MigrationRepository repository, ConnectionRepo connectionRepo, JdbcTemplate jdbcTemplate, SchemaDiffGenerator schemaDiffGenerator, ConnectionRequest connectionRequest) {
         this.helper = helper;
         this.loader = loader;
         this.engine = engine;
@@ -51,6 +49,7 @@ public class MigrationService {
         this.repository = repository;
         this.connectionRepo = connectionRepo;
         this.jdbcTemplate = jdbcTemplate;
+        this.schemaDiffGenerator = schemaDiffGenerator;
         this.connectionRequest = connectionRequest;
         this.connectionContext = connectionContext;
     }
@@ -252,13 +251,13 @@ public class MigrationService {
     }
 
     @Transactional
-    public String rollback(String targetVersion,Long connectionId) {
+    public String rollback(String targetVersion, Long connectionId) {
 
         try {
 
             String database =
                     connectionContext.getCurrentDatabase();
-            System.out.println("hte database is rollback "+database);
+            System.out.println("hte database is rollback " + database);
             List<Migration> history =
                     helper.getMigrationHistory(
                             connectionId,
@@ -277,7 +276,7 @@ public class MigrationService {
                             })
                             .filter(Objects::nonNull)
                             .toList();
-            System.out.println("the all script s"+allScripts);
+            System.out.println("the all script s" + allScripts);
             List<MigrationScript> createScripts =
                     allScripts.stream()
                             .filter(script ->
@@ -286,7 +285,7 @@ public class MigrationService {
                                             .toUpperCase()
                                             .contains("CREATE TABLE"))
                             .toList();
-            System.out.println("the create scrupts are "+createScripts);
+            System.out.println("the create scrupts are " + createScripts);
             for (MigrationScript createScript : createScripts) {
 
                 String tableName =
@@ -376,14 +375,15 @@ public class MigrationService {
                 })
                 .toList();
     }
-    public String repair(long connectionId , String versionId) throws SQLException, IOException {
-        Connection conn = activeConnection(connectionContext.getCurrentDatabase());
-        System.out.println("Migration script version " + versionId+"start finding .");
-        MigrationScript script = repository.findFailedMigrations(versionId,connectionId);
-        System.out.println("Migration script version " + versionId+"end finding .");
 
-        System.out.println("Migration script version " + versionId+"start repairing .");
-        repository.markAsRepaired(versionId,script,conn,connectionContext.getCurrentDatabase(),connectionId);
+    public String repair(long connectionId, String versionId) throws SQLException, IOException {
+        Connection conn = activeConnection(connectionContext.getCurrentDatabase());
+        System.out.println("Migration script version " + versionId + "start finding .");
+        MigrationScript script = repository.findFailedMigrations(versionId, connectionId);
+        System.out.println("Migration script version " + versionId + "end finding .");
+
+        System.out.println("Migration script version " + versionId + "start repairing .");
+        repository.markAsRepaired(versionId, script, conn, connectionContext.getCurrentDatabase(), connectionId);
 
         return "✓ Repaired " + versionId + " failed migrations";
     }
@@ -425,29 +425,29 @@ public class MigrationService {
     }
 
     public String validate(Long connectionId, String versionId) {
-    try {
-        System.out.println("reach point for validate -1");
-        MigrationScript script =
-                loader.loadSpecificVersion(versionId, connectionId);
+        try {
+            System.out.println("reach point for validate -1");
+            MigrationScript script =
+                    loader.loadSpecificVersion(versionId, connectionId);
 
-        if (script == null) {
-            return "Migration " + versionId + " not found";
+            if (script == null) {
+                return "Migration " + versionId + " not found";
+            }
+
+            boolean valid =
+                    helper.validateChecksum(
+                            versionId,
+                            script.getUpScript());
+
+            return valid
+                    ? "✓ Migration " + versionId + " is valid"
+                    : "✗ Checksum mismatch for " + versionId;
+
+        } catch (IOException e) {
+            return "Validation error: " + e.getMessage();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
-
-        boolean valid =
-                helper.validateChecksum(
-                        versionId,
-                        script.getUpScript());
-
-        return valid
-                ? "✓ Migration " + versionId + " is valid"
-                : "✗ Checksum mismatch for " + versionId;
-
-    } catch (IOException e) {
-        return "Validation error: " + e.getMessage();
-    } catch (SQLException e) {
-        throw new RuntimeException(e);
-    }
     }
 
     public ConnectionResponse connect(ConnectionRequest request) {
@@ -553,17 +553,16 @@ public class MigrationService {
     }
 
 
-
     public List<String> getTables(Long connectionId) throws SQLException {
-        Connection conn = activeConnection( connectionContext.getCurrentDatabase());
+        Connection conn = activeConnection(connectionContext.getCurrentDatabase());
 
         List<String> tables = new ArrayList<>();
         String sql = """
-        SELECT table_name
-        FROM information_schema.tables
-        WHERE table_schema = 'public'
-        ORDER BY table_name
-        """;
+                SELECT table_name
+                FROM information_schema.tables
+                WHERE table_schema = 'public'
+                ORDER BY table_name
+                """;
 
         try (
                 PreparedStatement stmt = conn.prepareStatement(sql);
@@ -616,15 +615,15 @@ public class MigrationService {
             List<ColumnInfoDTO> columns = new ArrayList<>();
 
             String columnSql = """
-            SELECT
-                column_name,
-                data_type,
-                is_nullable
-            FROM information_schema.columns
-            WHERE table_schema = 'public'
-              AND table_name = ?
-            ORDER BY ordinal_position
-            """;
+                    SELECT
+                        column_name,
+                        data_type,
+                        is_nullable
+                    FROM information_schema.columns
+                    WHERE table_schema = 'public'
+                      AND table_name = ?
+                    ORDER BY ordinal_position
+                    """;
 
             System.out.println("Executing Column Query for table: " + tableName);
 
@@ -716,4 +715,37 @@ public class MigrationService {
     }
 
 
+    public MigrationResult migrateUpdatedScript(MigrationRequest request, String version) throws IOException {
+        System.out.println("reach point migrate update -1");
+        long connectionId = request.getConnectionId();
+        MigrationScript newSCript = loader.loadSpecificVersion(version, connectionId);
+        try {
+            List<MigrationScript> scripts =
+                    loader.loadAllRelatedScript(newSCript, connectionId);
+
+            MigrationScript oldScript = loader.getActualScript(scripts.get(0),connectionId);
+            System.out.println("the old script "+ oldScript);
+            String sql = schemaDiffGenerator.generateDiff(oldScript.getUpScript(),newSCript.getUpScript());
+            System.out.println("the alter scirpt " + sql);
+            Connection conn = activeConnection(connectionContext.getCurrentDatabase());
+            PreparedStatement statement = conn.prepareStatement(sql);
+            int affectedRows = statement.executeUpdate();
+
+            System.out.println("Migration executed successfully");
+            System.out.println("Affected rows: " + affectedRows);
+//            System.out.println(scripts);
+//            System.out.println("Loaded scripts count: " + scripts.size());
+//
+//            for (MigrationScript script : scripts) {
+//                System.out.println("Description: " + script.getDescription());
+//            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new MigrationResult(
+                "✓ Migration complete\nApplied: %s\nSuccess: %d, Failed: %d",
+                0,
+                0);
+    }
 }

@@ -28,14 +28,28 @@ public class MigrationScriptService {
         }
     }
 
-    public String update(String version, long connectionId) throws IOException {
+    public String update(String version, String upSql, String downSql, long connectionId) throws IOException {
         MigrationScript migrationScript = loader.loadSpecificVersion(version, connectionId);
-        create(version, migrationScript.getDescription(), migrationScript.getUpScript(), migrationScript.getDownScript());
-        return String.format("✓ Updated migration V%s__%s.sql", version);
 
+        int versionNumber = Integer.parseInt(version);
+        System.out.println("the version number is " + versionNumber);
+
+        String tableName = migrationScript.getDescription()
+                .substring(migrationScript.getDescription().lastIndexOf(' ') + 1);
+
+        System.out.println("table name " + tableName);
+
+        String updatedDescription = "Update table " + tableName;
+
+        create(version, updatedDescription, upSql, downSql);
+
+        return String.format("✓ Updated migration V%s__%s.sql",
+                version,
+                migrationScript.getDescription());
     }
 
     public MigrationScript viewScript(String version , long coonnectionId) throws IOException {
+        System.out.println("reach point -1 here script ");
         MigrationScript script = loader.loadSpecificVersion(version ,coonnectionId);
         return  script;
     }

@@ -227,4 +227,31 @@ public class Helper {
 
         return null;
     }
+
+    private String extractUpSql(String migrationContent) {
+
+        String upMarker = "-- Write your UP SQL here";
+        String downMarker = "-- DOWN";
+
+        int upIndex = migrationContent.indexOf(upMarker);
+
+        if (upIndex == -1) {
+            throw new IllegalArgumentException(
+                    "UP SQL marker not found");
+        }
+
+        int start = upIndex + upMarker.length();
+
+        int downIndex =
+                migrationContent.indexOf(downMarker, start);
+
+        if (downIndex == -1) {
+            throw new IllegalArgumentException(
+                    "DOWN marker not found");
+        }
+
+        return migrationContent
+                .substring(start, downIndex)
+                .trim();
+    }
 }

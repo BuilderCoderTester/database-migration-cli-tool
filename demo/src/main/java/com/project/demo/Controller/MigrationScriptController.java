@@ -38,12 +38,13 @@ public class MigrationScriptController {
 
     @PostMapping("/script/update")
     public ApiResponse updateScript(
-            @RequestParam String version,
             @RequestParam(required = false) String upSql,
             @RequestParam(required = false) String downSql,
-            @RequestParam("connectionId") long connectionId
+            @RequestParam("connectionId") long connectionId,
+            @RequestBody String version
     ) throws IOException {
-        migrationScriptService.update(version, connectionId);
+        System.out.println("the version is "+ version.trim().replace("\"", ""));
+        migrationScriptService.update(version.trim().replace("\"", ""),upSql,downSql, connectionId);
         return new ApiResponse(true, "Migration " + version + " updated successfully");
     }
 

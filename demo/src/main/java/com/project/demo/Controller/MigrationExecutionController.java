@@ -22,7 +22,12 @@ public class MigrationExecutionController {
         request.setConnectionId(connectionId);
         return migrationService.migrate(request);
     }
-
+    @PostMapping("/script/migrate")
+    public MigrationResult migrateUpdateScript(@RequestParam("connectionId") long connectionId ,@RequestParam("versionId") String version) throws SQLException, IOException {
+        MigrationRequest request = new MigrationRequest();
+        request.setConnectionId(connectionId);
+        return migrationService.migrateUpdatedScript(request,version);
+    }
     @PostMapping("/rollback")
     public ApiResponse rollback(
             @RequestParam(required = false) String targetVersion,
