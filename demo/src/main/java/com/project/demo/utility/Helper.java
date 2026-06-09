@@ -17,6 +17,8 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @AllArgsConstructor
 @Component
@@ -253,5 +255,57 @@ public class Helper {
         return migrationContent
                 .substring(start, downIndex)
                 .trim();
+    }
+
+    public List<String> extractIndexFromQuerry(
+            String upScript,
+            String downScript,
+            Connection connection,
+            long connectionId) {
+
+        List<String> indexes = new ArrayList<>();
+
+        // CREATE INDEX idx_name ON table(...)
+        Pattern createIndexPattern = Pattern.compile(
+                "CREATE\\s+(?:UNIQUE\\s+)?INDEX\\s+(\\w+)",
+                Pattern.CASE_INSENSITIVE);
+
+        Matcher createIndexMatcher = createIndexPattern.matcher(upScript);
+
+        while (createIndexMatcher.find()) {
+            indexes.add(createIndexMatcher.group(1));
+        }
+
+        // ALTER TABLE ... ADD INDEX idx_name(...)
+        Pattern alterIndexPattern = Pattern.compile(
+                "ADD\\s+INDEX\\s+(\\w+)",
+                Pattern.CASE_INSENSITIVE);
+
+        Matcher alterIndexMatcher = alterIndexPattern.matcher(upScript);
+
+        while (alterIndexMatcher.find()) {
+            indexes.add(alterIndexMatcher.group(1));
+        }
+
+        return indexes.stream()
+                .distinct()
+                .toList();
+    }
+
+    public List<String> extractPrimaryKeys(String script) {
+
+        List<String> primaryKeys = new ArrayList<>();
+
+        Pattern pattern = Pattern.compile(
+                "(\\w+)\\s+[^,\\n]+\\s+PRIMARY\\s+KEY",
+                Pattern.CASE_INSENSITIVE);
+
+        Matcher matcher = pattern.matcher(script);
+
+        while (matcher.find()) {
+            primaryKeys.add(matcher.group(1));
+        }
+
+        return primaryKeys;
     }
 }
