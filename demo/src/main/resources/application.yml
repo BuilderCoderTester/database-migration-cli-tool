@@ -5,7 +5,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/postgres
     username: postgres
-    password: sigilotech
+    password: anurag2002
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -16,7 +16,15 @@ spring:
       enabled: true
     history:
       enabled: true
-
+  ai:
+    google:
+      genai:
+        api-key: ${Api-key}
+      chat:
+        options:
+          model: gemini-2.5-flash
+  scaler:
+    enabled: true
 migration:
   path: ./migrations
   table: schema_history
