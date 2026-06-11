@@ -62,7 +62,8 @@ public class DependencyValidator {
 
             return new MigrationScriptStatus(
                     Status.FAILURE,
-                    "❌ Missing table: " + dep.getTable()
+                    dep.getTable(),
+                    "Missing Table : "
             );
         }
 

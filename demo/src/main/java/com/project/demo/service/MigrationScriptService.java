@@ -31,7 +31,7 @@ public class MigrationScriptService {
     public String update(String version, String upSql, String downSql, long connectionId) throws IOException {
         MigrationScript migrationScript = loader.loadSpecificVersion(version, connectionId);
 
-        int versionNumber = Integer.parseInt(version);
+        int versionNumber = Integer.parseInt(version.replace("V",""));
         System.out.println("the version number is " + versionNumber);
 
         String tableName = migrationScript.getDescription()

@@ -13,6 +13,7 @@ import com.project.demo.service.MigrationFailureService;
 import com.project.demo.utility.Helper;
 import com.project.demo.validator.DependencyValidator;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -27,6 +28,7 @@ import java.util.*;
 
 @Component
 @AllArgsConstructor
+@Slf4j
 public class MigrationEngine {
 
     private static final Logger logger = LoggerFactory.getLogger(MigrationEngine.class);
@@ -38,7 +40,6 @@ public class MigrationEngine {
     private final Helper helper;
     private final ConnectionService connectionService;
     private final MigrationRepair migrationRepair;
-
     public void initialize() {
         repository.createSchemaHistoryTable();
         logger.info("Schema history table initialized");
@@ -61,7 +62,7 @@ public class MigrationEngine {
         try {
             Connection conn = helper.activeConnection(currentDatabase);
 //            helper.saveMigrationRecord(script, connectionId, System.currentTimeMillis() - startTime, false,conn);
-
+            System.out.println("after helper function");
             // has bugs (workings.............)
 //            validator.validateBeforeUp(script);
 
@@ -77,6 +78,13 @@ public class MigrationEngine {
             // if failed then call the repair function .
             if(scriptStatus.getStatus() == Status.FAILURE){
                 System.out.println("have it here bro");
+
+                log.error(
+                        "Migration {} failed validation. Reason: {}",
+                        script.getVersion(),
+                        scriptStatus.getReason()
+                );
+
                 MigrationScript currentScript =  migrationRepair.migrationRepairFlow(script,connectionId);
                 System.out.println("The required script is "+ currentScript.toString());
                 helper.applyVersioned(currentScript,startTime,connectionId);

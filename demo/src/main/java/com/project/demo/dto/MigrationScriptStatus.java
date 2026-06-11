@@ -15,5 +15,8 @@ import org.springframework.stereotype.Component;
 public class MigrationScriptStatus {
     private Status status;
     private String tableName;
+    private String reason;
 
+    public MigrationScriptStatus(Status status, String functionNotWorking) {
+    }
 }
