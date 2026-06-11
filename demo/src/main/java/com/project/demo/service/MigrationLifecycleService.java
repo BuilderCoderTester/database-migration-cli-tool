@@ -1,9 +1,6 @@
 package com.project.demo.service;
 
-import com.project.demo.component.ConnectionContext;
-import com.project.demo.component.MigrationEngine;
-import com.project.demo.component.MigrationLoader;
-import com.project.demo.component.MigrationRepair;
+import com.project.demo.component.*;
 import com.project.demo.dto.MigrationResult;
 import com.project.demo.dto.StatusResponse;
 import com.project.demo.dto.request.MigrationRequest;
@@ -18,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -40,10 +38,13 @@ public class MigrationLifecycleService {
     private SqlOperationDetector sqlOperationDetector;
     @Autowired
     private MigrationRepository migrationRepository;
+    @Autowired
+    private SchemaDiffGenerator schemaDiffGenerator;
 
     @Transactional
     public MigrationResult migrate(MigrationRequest migrationRequest) throws SQLException {
 
+        // Database validation checking
         Long connectionId = migrationRequest.getConnectionId();
         String targetVersion = migrationRequest.getTargetVersion();
         System.out.println("Connection ID at service: " + connectionId);
@@ -53,7 +54,7 @@ public class MigrationLifecycleService {
         if (connectionId == null) {
             throw new RuntimeException("No active connection selected");
         }
-        Connection connection = connectionService.activeConnection(connectionContext.getCurrentDatabase());
+        Connection connection =connectionService.activeConnection(connectionContext.getCurrentDatabase());
         connection.setAutoCommit(false);
 
         try {
@@ -156,6 +157,40 @@ public class MigrationLifecycleService {
         }
     }
 
+    @Transactional
+    public MigrationResult migrateUpdatedScript(MigrationRequest request, String version) throws IOException {
+        System.out.println("reach point migrate update -1");
+        long connectionId = request.getConnectionId();
+        MigrationScript newSCript = loader.loadSpecificVersion(version, connectionId);
+        try {
+            List<MigrationScript> scripts =
+                    loader.loadAllRelatedScript(newSCript, connectionId);
+
+            MigrationScript oldScript = loader.getActualScript(scripts.get(0),connectionId);
+            System.out.println("the old script "+ oldScript);
+            String sql = schemaDiffGenerator.generateDiff(oldScript.getUpScript(),newSCript.getUpScript());
+            System.out.println("the alter scirpt " + sql);
+            Connection conn = connectionService.activeConnection(connectionContext.getCurrentDatabase());
+            PreparedStatement statement = conn.prepareStatement(sql);
+            int affectedRows = statement.executeUpdate();
+
+            System.out.println("Migration executed successfully");
+            System.out.println("Affected rows: " + affectedRows);
+//            System.out.println(scripts);
+//            System.out.println("Loaded scripts count: " + scripts.size());
+//
+//            for (MigrationScript script : scripts) {
+//                System.out.println("Description: " + script.getDescription());
+//            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new MigrationResult(
+                "✓ Migration complete\nApplied: %s\nSuccess: %d, Failed: %d",
+                0,
+                0);
+    }
     @Transactional
     public String rollback(String targetVersion,Long connectionId) {
 
@@ -260,14 +295,14 @@ public class MigrationLifecycleService {
     }
 
     @Transactional
-    public String repair(long connectionId , String versionId) throws SQLException, IOException {
-        Connection conn = connectionService.activeConnection(connectionContext.getCurrentDatabase());
-        System.out.println("Migration script version " + versionId+"start finding .");
-        MigrationScript script = migrationRepository.findFailedMigrations(versionId,connectionId);
-        System.out.println("Migration script version " + versionId+"end finding .");
+    public String repair(long connectionId, String versionId) throws SQLException, IOException {
+        Connection conn =connectionService.activeConnection(connectionContext.getCurrentDatabase());
+        System.out.println("Migration script version " + versionId + "start finding .");
+        MigrationScript script = migrationRepository.findFailedMigrations(versionId, connectionId);
+        System.out.println("Migration script version " + versionId + "end finding .");
 
-        System.out.println("Migration script version " + versionId+"start repairing .");
-        migrationRepository.markAsRepaired(versionId,script,conn,connectionContext.getCurrentDatabase(),connectionId);
+        System.out.println("Migration script version " + versionId + "start repairing .");
+        migrationRepository.markAsRepaired(versionId, script, conn, connectionContext.getCurrentDatabase(), connectionId);
 
         return "✓ Repaired " + versionId + " failed migrations";
     }
@@ -296,22 +331,29 @@ public class MigrationLifecycleService {
     }
 
     @Transactional
-    public String validate(Long connectionId) {
+    public String validate(Long connectionId, String versionId) {
         try {
-            List<Migration> history = helper.getMigrationHistory(connectionId, connectionContext.getCurrentDatabase());
-            int errors = 0;
+            System.out.println("reach point for validate -1");
+            MigrationScript script =
+                    loader.loadSpecificVersion(versionId, connectionId);
 
-            for (Migration migration : history) {
-                MigrationScript script = loader.loadSpecificVersion(migration.getVersion(), connectionId);
-                if (script != null && !helper.validateChecksum(migration.getVersion(), script.getUpScript())) {
-                    errors++;
-                    System.out.println("Checksum mismatch: " + migration.getVersion());
-                }
+            if (script == null) {
+                return "Migration " + versionId + " not found";
             }
 
-            return errors == 0 ? "✓ All migrations validated" : "✗ " + errors + " checksum errors found";
-        } catch (IOException | SQLException e) {
+            boolean valid =
+                    helper.validateChecksum(
+                            versionId,
+                            script.getUpScript());
+
+            return valid
+                    ? "✓ Migration " + versionId + " is valid"
+                    : "✗ Checksum mismatch for " + versionId;
+
+        } catch (IOException e) {
             return "Validation error: " + e.getMessage();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 

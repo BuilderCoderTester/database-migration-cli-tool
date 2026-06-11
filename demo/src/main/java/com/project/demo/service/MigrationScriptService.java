@@ -1,5 +1,6 @@
 package com.project.demo.service;
 
+import com.project.demo.component.ConnectionContext;
 import com.project.demo.component.MigrationLoader;
 import com.project.demo.model.MigrationScript;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,12 +8,19 @@ import org.springframework.shell.command.annotation.Option;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 @Service
 public class MigrationScriptService {
 
     @Autowired
     private MigrationLoader loader;
+    @Autowired
+    private ConnectionService connectionService;
+    @Autowired
+    private ConnectionContext connectionContext;
 
     public String create(
             @Option(required = true, description = "Migration version") String version,
@@ -53,4 +61,23 @@ public class MigrationScriptService {
         MigrationScript script = loader.loadSpecificVersion(version ,coonnectionId);
         return  script;
     }
+
+    public void delete(long connectionId, String versionId) throws SQLException {
+        String sql = "DELETE FROM sub_migration WHERE version = ? AND connection_id = ?";
+
+        try (Connection connection =connectionService.activeConnection(connectionContext.getCurrentDatabase());
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            System.out.println("Version = " + versionId);
+            System.out.println("Connection Id = " + connectionId);
+            statement.setString(1, versionId);
+            statement.setLong(2, connectionId);
+
+            int rowsAffected = statement.executeUpdate();
+
+            if (rowsAffected == 0) {
+                throw new RuntimeException("Migration not found for version: " + versionId);
+            }
+        }
+    }
+
 }

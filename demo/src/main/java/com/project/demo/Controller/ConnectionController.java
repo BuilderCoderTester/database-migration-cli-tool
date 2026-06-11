@@ -3,6 +3,7 @@ import com.project.demo.dto.*;
 import com.project.demo.service.ConnectionService;
 import com.project.demo.service.MigrationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.*;
@@ -14,18 +15,18 @@ import java.util.Map;
 @RequiredArgsConstructor
 @CrossOrigin("*")
 public class ConnectionController {
-    private final MigrationService migrationService;
-    private final ConnectionService connectionService;
+    @Autowired
+    private  ConnectionService connectionService;
 
     @PostMapping("/connect")
     public ConnectionResponse connect(@RequestBody ConnectionRequest connection) throws SQLException {
-        return migrationService.connect(connection);
+        return connectionService.connect(connection);
     }
 
     @PostMapping("/set-active")
     public ApiResponse setActive(@RequestBody Map<String, String> req) throws SQLException {
         String databaseName = req.get("database");
-        Connection conn = migrationService.activeConnection(databaseName);
+        Connection conn = connectionService.activeConnection(databaseName);
 
         PreparedStatement dbStmt = conn.prepareStatement("SELECT current_database()");
         ResultSet dbRs = dbStmt.executeQuery();
@@ -116,4 +117,5 @@ public class ConnectionController {
             System.out.println(schema + " → " + table);
         }
     }
+
 }
