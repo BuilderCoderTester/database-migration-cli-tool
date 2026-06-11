@@ -4,13 +4,23 @@ import com.project.demo.component.ConnectionContext;
 import com.project.demo.component.MigrationLoader;
 import com.project.demo.model.MigrationScript;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.shell.command.annotation.Option;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.OptionalInt;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 @Service
 public class MigrationScriptService {
@@ -23,13 +33,13 @@ public class MigrationScriptService {
     private ConnectionContext connectionContext;
 
     public String create(
-            @Option(required = true, description = "Migration version") String version,
+            @Option(required = false, description = "Migration version") String version,
             @Option(required = true, description = "Description") String description,
             @Option(defaultValue = "", description = "Up SQL") String up,
             @Option(defaultValue = "", description = "Down SQL") String down
     ) {
         try {
-            loader.createMigrationFile(version, description, up, down);
+            loader.createMigrationFile(description, up, down);
             return String.format("✓ Created migration V%s__%s.sql", version, description.replace(" ", "_"));
         } catch (IOException e) {
             return "Failed to create migration: " + e.getMessage();
@@ -78,6 +88,10 @@ public class MigrationScriptService {
                 throw new RuntimeException("Migration not found for version: " + versionId);
             }
         }
+    }
+
+    public int getLatestMigrationVersion(){
+        return loader.getLatestVersion();
     }
 
 }

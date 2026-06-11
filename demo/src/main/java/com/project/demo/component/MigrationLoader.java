@@ -8,6 +8,7 @@ import com.project.demo.service.LogService;
 import com.project.demo.utility.Helper;
 import com.project.demo.utility.VersionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +22,11 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import java.nio.file.*;
+import java.util.*;
+import java.util.regex.*;
+import java.util.stream.*;
+import java.util.Comparator;
 
 @Component
 public class MigrationLoader {
@@ -168,6 +174,40 @@ public class MigrationLoader {
         return null;
     }
 
+    public int getLatestVersion() {
+        Long connectionId = connectionContext.getCurrentConnectionId();
+        if (connectionId == null) {
+            throw new RuntimeException("No active connection. Please connect first.");
+        }
+
+        Path basePath = Paths.get(properties.getPath());
+        Path connectionFolder = basePath.resolve("conn_" + connectionId);
+
+        int latestVersion = 0;
+
+        if (Files.exists(connectionFolder)) {
+            try (Stream<Path> files = Files.list(connectionFolder)) {
+                OptionalInt maxVersion = files
+                        .filter(Files::isRegularFile)
+                        .filter(p -> p.getFileName().toString().matches("V\\d+__.*\\.sql"))
+                        .map(p -> {
+                            Matcher m = Pattern.compile("V(\\d+)__").matcher(p.getFileName().toString());
+                            return m.find() ? Integer.parseInt(m.group(1)) : 0;
+                        })
+                        .mapToInt(Integer::intValue)
+                        .max();
+
+                if (maxVersion.isPresent()) {
+                    latestVersion = maxVersion.getAsInt();
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to read migrations folder", e);
+            }
+        }
+
+        return latestVersion + 1;
+    }
+
     private MigrationScript parseScript(String version, String description, String content) {
         String upScript = content;
         String downScript = null;
@@ -183,7 +223,7 @@ public class MigrationLoader {
 
     /// CREATION OF MIGRATION FILE
     /// PARAMETERS - VERSION , DESCRIPTION , UP_SCRIPT , DOWN_SCRIPT
-    public void createMigrationFile(String version, String description, String upScript, String downScript )
+    public void createMigrationFile(String description, String upScript, String downScript)
             throws IOException {
 
         Long connectionId = connectionContext.getCurrentConnectionId();
@@ -194,9 +234,38 @@ public class MigrationLoader {
 
         Path basePath = Paths.get(properties.getPath());
         Path connectionFolder = basePath.resolve("conn_" + connectionId);
-
         Files.createDirectories(connectionFolder);
 
+        // ── AUTO-INCREMENT VERSION LOGIC ──
+        int nextVersion = 1; // default if no files exist
+
+        try (Stream<Path> files = Files.list(connectionFolder)) {
+            List<Path> migrationFiles = files
+                    .filter(Files::isRegularFile)
+                    .filter(p -> p.getFileName().toString().matches("V\\d+__.*\\.sql"))
+                    .sorted(Comparator.comparingLong(p -> {
+                        try {
+                            return Files.getLastModifiedTime((Path) p).toMillis();
+                        } catch (IOException e) {
+                            return 0L;
+                        }
+                    }).reversed()) // most recent first
+                    .collect(Collectors.toList());
+
+            if (!migrationFiles.isEmpty()) {
+                Path latestFile = migrationFiles.get(0);
+                String fileName = latestFile.getFileName().toString();
+
+                // Extract version number: V{number}__...
+                Matcher matcher = Pattern.compile("V(\\d+)__").matcher(fileName);
+                if (matcher.find()) {
+                    nextVersion = Integer.parseInt(matcher.group(1)) + 1;
+                }
+            }
+        }
+        // ──────────────────────────────────
+
+        String version = String.valueOf(nextVersion);
         String fileName = String.format("V%s__%s.sql", version, description.replace(" ", "_"));
         Path filePath = connectionFolder.resolve(fileName);
 
@@ -211,7 +280,7 @@ public class MigrationLoader {
         }
 
         Files.writeString(filePath, content.toString());
-        logService.log((fileName + "Migration Applied."),LogLevel.SUCCESS );
+        logService.log((fileName + " Migration Applied."), LogLevel.SUCCESS);
     }
 
     public List<MigrationScript> listAllPendingMigration(Long connectionId,Connection connection) {

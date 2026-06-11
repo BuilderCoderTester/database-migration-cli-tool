@@ -6,10 +6,20 @@ import com.project.demo.service.MigrationScriptService;
 import com.project.demo.service.MigrationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.OptionalInt;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/api/migrations")
@@ -21,7 +31,7 @@ public class MigrationScriptController {
 
     @PostMapping("/create")
     public ApiResponse create(
-            @RequestParam String version,
+            @RequestParam(required = false) String version,
             @RequestParam String description,
             @RequestParam(required = false) String migrateUp,
             @RequestParam(required = false) String migrateDown) {
@@ -35,6 +45,11 @@ public class MigrationScriptController {
             @RequestParam String versionId) throws SQLException {
         migrationScriptService.delete(connectionId, versionId);
         return new ApiResponse(true, "Migration " + versionId + " deleted successfully");
+    }
+
+    @GetMapping("/latest-version")
+    public int getLatestMigrationVersion() {
+        return migrationScriptService.getLatestMigrationVersion();
     }
 
     @PostMapping("/script/update")
