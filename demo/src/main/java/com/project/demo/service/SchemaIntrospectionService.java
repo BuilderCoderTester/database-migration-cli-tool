@@ -23,15 +23,15 @@ public class SchemaIntrospectionService {
     private ConnectionContext connectionContext;
 
     public List<String> getTables(Long connectionId) throws SQLException {
-        Connection conn = connectionService.activeConnection( connectionContext.getCurrentDatabase());
+        Connection conn = connectionService.activeConnection(connectionContext.getCurrentDatabase());
 
         List<String> tables = new ArrayList<>();
         String sql = """
-        SELECT table_name
-        FROM information_schema.tables
-        WHERE table_schema = 'public'
-        ORDER BY table_name
-        """;
+                SELECT table_name
+                FROM information_schema.tables
+                WHERE table_schema = 'public'
+                ORDER BY table_name
+                """;
 
         try (
                 PreparedStatement stmt = conn.prepareStatement(sql);
@@ -84,15 +84,15 @@ public class SchemaIntrospectionService {
             List<ColumnInfoDTO> columns = new ArrayList<>();
 
             String columnSql = """
-            SELECT
-                column_name,
-                data_type,
-                is_nullable
-            FROM information_schema.columns
-            WHERE table_schema = 'public'
-              AND table_name = ?
-            ORDER BY ordinal_position
-            """;
+                    SELECT
+                        column_name,
+                        data_type,
+                        is_nullable
+                    FROM information_schema.columns
+                    WHERE table_schema = 'public'
+                      AND table_name = ?
+                    ORDER BY ordinal_position
+                    """;
 
             System.out.println("Executing Column Query for table: " + tableName);
 

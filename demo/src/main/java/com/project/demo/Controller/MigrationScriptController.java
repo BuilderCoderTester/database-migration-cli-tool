@@ -5,6 +5,7 @@ import com.project.demo.model.MigrationScript;
 import com.project.demo.service.MigrationScriptService;
 import com.project.demo.service.MigrationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -15,8 +16,8 @@ import java.sql.SQLException;
 @RequiredArgsConstructor
 @CrossOrigin("*")
 public class MigrationScriptController {
-    private final MigrationService migrationService;
-    private final MigrationScriptService migrationScriptService;
+    @Autowired
+    private  MigrationScriptService migrationScriptService;
 
     @PostMapping("/create")
     public ApiResponse create(
@@ -25,14 +26,14 @@ public class MigrationScriptController {
             @RequestParam(required = false) String migrateUp,
             @RequestParam(required = false) String migrateDown) {
         return new ApiResponse(true,
-                migrationService.create(version, description, migrateUp, migrateDown));
+                migrationScriptService.create(version, description, migrateUp, migrateDown));
     }
 
     @DeleteMapping("/delete")
     public ApiResponse delete(
             @RequestParam long connectionId,
             @RequestParam String versionId) throws SQLException {
-        migrationService.delete(connectionId, versionId);
+        migrationScriptService.delete(connectionId, versionId);
         return new ApiResponse(true, "Migration " + versionId + " deleted successfully");
     }
 

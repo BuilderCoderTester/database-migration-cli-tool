@@ -4,8 +4,10 @@ import com.project.demo.dto.ApiResponse;
 import com.project.demo.dto.StatusResponse;
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
+import com.project.demo.service.MigrationLifecycleService;
 import com.project.demo.service.MigrationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.SQLException;
@@ -16,7 +18,10 @@ import java.util.List;
 @RequiredArgsConstructor
 @CrossOrigin("*")
 public class MigrationQueryController {
+
     private final MigrationService migrationService;
+    @Autowired
+    private MigrationLifecycleService migrationLifecycleService;
 
     @PostMapping("/init")
     public ApiResponse initialize() {
@@ -36,7 +41,7 @@ public class MigrationQueryController {
 
     @GetMapping("/history")
     public List<Migration> history(@RequestParam("connectionId") Long connectionId) throws SQLException {
-        return migrationService.history(connectionId);
+        return migrationLifecycleService.history(connectionId);
     }
 
     @PostMapping("/validate")
@@ -46,7 +51,7 @@ public class MigrationQueryController {
 
         return new ApiResponse(
                 true,
-                migrationService.validate(connectionId, versionId)
+                migrationLifecycleService.validate(connectionId, versionId)
         );
     }
 
@@ -54,4 +59,5 @@ public class MigrationQueryController {
     public Long sendConnectionId() {
         return migrationService.getConnectionId();
     }
+
 }
