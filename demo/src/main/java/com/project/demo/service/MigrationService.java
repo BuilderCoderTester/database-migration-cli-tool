@@ -417,7 +417,7 @@ public class MigrationService {
             @Option(defaultValue = "", description = "Down SQL") String down
     ) {
         try {
-            loader.createMigrationFile(version, description, up, down);
+            loader.createMigrationFile( description, up, down);
             return String.format("✓ Created migration V%s__%s.sql", version, description.replace(" ", "_"));
         } catch (IOException e) {
             return "Failed to create migration: " + e.getMessage();
