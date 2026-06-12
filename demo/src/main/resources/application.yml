@@ -18,6 +18,8 @@ spring:
       enabled: true
 
 
+
+
 migration:
   path: ./migrations
   table: schema_history
