@@ -19,7 +19,6 @@ spring:
 
 
 
-
 migration:
   path: ./migrations
   table: schema_history
