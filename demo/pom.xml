@@ -96,6 +96,20 @@
             <artifactId>jsqlparser</artifactId>
             <version>4.9</version>
         </dependency>
+
+        <!-- JavaFX Controls -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>21</version>
+        </dependency>
+
+        <!-- JavaFX FXML -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>21</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -112,6 +126,16 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <configuration>
+                    <mainClass>
+                        com.project.demo.javafx.Main
+                    </mainClass>
+                </configuration>
             </plugin>
         </plugins>
     </build>

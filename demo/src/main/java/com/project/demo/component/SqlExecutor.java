@@ -3,6 +3,7 @@ package com.project.demo.component;
 import com.project.demo.service.CommonService;
 import com.project.demo.utility.Helper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +13,7 @@ import java.sql.SQLException;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class SqlExecutor {
     private final JdbcTemplate jdbcTemplate;
     private final CommonService helper;
@@ -19,22 +21,21 @@ public class SqlExecutor {
 
     public void executeScript(String script, Connection connection,String currentDatabase) throws SQLException, SQLException {
 
-        System.out.println("The database in executeScript = "+ currentDatabase);
-        System.out.println("the script in execute script is "+ script);
+        log.debug("Executing migration script against database {}", currentDatabase);
         for (String statement : helper.splitSql(script)) {
 
-            System.out.println("here 2"  +statement);
+            log.trace("Prepared SQL statement: {}", statement);
 
             if (!statement.isBlank()) {
 
-                System.out.println("Executing: " + statement);
+                log.debug("Executing SQL statement");
 
                 try (PreparedStatement preparedStatement =
                              connection.prepareStatement(statement)) {
 
                     preparedStatement.execute();
                 }
-                System.out.println("e bhai kaj korhcce");
+                log.debug("SQL statement executed successfully");
             }
         }
     }

@@ -1,12 +1,16 @@
 package com.project.demo.component;
 
 import com.project.demo.config.MigrationProperties;
+import com.project.demo.dto.MigrationDetailsDTO;
+import com.project.demo.dto.MigrationStatisticsDTO;
+import com.project.demo.dto.RelatedScriptDTO;
 import com.project.demo.model.LogLevel;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.repository.MigrationLogRepo;
 import com.project.demo.service.LogService;
 import com.project.demo.utility.Helper;
 import com.project.demo.utility.VersionUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -29,6 +33,7 @@ import java.util.stream.*;
 import java.util.Comparator;
 
 @Component
+@Slf4j
 public class MigrationLoader {
 
     private static final Pattern MIGRATION_PATTERN =
@@ -153,21 +158,17 @@ public class MigrationLoader {
     public ConnectionContext connectionContext;
 
     public MigrationScript loadSpecificVersion(String version , Long connectionId) throws IOException {
-        System.out.println("reach point -2 here script ");
-
         Path path = Paths.get(properties.getPath());
         Path connectionPath = path.resolve("conn_" + connectionId);
-        System.out.println(path );
-        System.out.println(connectionPath);
         String exactPattern = String.format("%s__*.sql", version);
-        System.out.println(exactPattern);
+        log.debug("Loading migration {} from {}", exactPattern, connectionPath);
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(connectionPath, exactPattern)) {
             for (Path file : stream) {
                 String content = Files.readString(file);
                 String desc = file.getFileName().toString()
                         .replaceFirst("V\\d+__", "")
-                        .replace(".sql", "")
-                        .replace("_", " ");
+                        .replace(".sql", "");
+//                        .replace("_", " ");
                 return parseScript(version, desc, content);
             }
         }
@@ -371,9 +372,7 @@ public class MigrationLoader {
                     String version =
                             rs.getString("version");
 
-                    System.out.println(
-                            "Executed Version = " + version
-                    );
+                    log.debug("Executed migration version {}", version);
 
                     versions.add(version);
                 }
@@ -388,10 +387,10 @@ public class MigrationLoader {
 
         String tableName = loadScript.getDescription()
                 .trim()
-                .substring(loadScript.getDescription().lastIndexOf(' ') + 1)
+                .substring(loadScript.getDescription().lastIndexOf('_') + 1)
                 .toLowerCase();
-
-        System.out.println("Target table name: " + tableName);
+        System.out.println(tableName);
+        log.debug("Target table name for related scripts: {}", tableName);
 
         Path path = Paths.get("migrations");
         Path connectedPath = path.resolve("conn_" + connectionId);
@@ -414,9 +413,7 @@ public class MigrationLoader {
                         String[] parts = description.toLowerCase().split("_");
                         String scriptTableName = parts[parts.length - 1];
 
-                        System.out.println(
-                                "Comparing " + scriptTableName +
-                                        " with " + tableName);
+                        log.trace("Comparing script table {} with target table {}", scriptTableName, tableName);
 
                         return scriptTableName.equals(tableName);
                     })
@@ -430,4 +427,91 @@ public class MigrationLoader {
         return loadSpecificVersion(version,connectionId);
 
     }
+
+    public void updateMigrationFile(MigrationScript script) throws IOException {
+
+        Long connectionId = connectionContext.getCurrentConnectionId();
+
+        if (connectionId == null) {
+            throw new RuntimeException("No active connection.");
+        }
+
+        Path basePath = Paths.get(properties.getPath());
+        Path connectionFolder = basePath.resolve("conn_" + connectionId);
+
+        Path filePath = connectionFolder.resolve(script.getFileName());
+
+        StringBuilder content = new StringBuilder();
+
+        content.append("-- Migration: ")
+                .append(script.getDescription())
+                .append("\n");
+
+        content.append("-- Version: ")
+                .append(script.getVersion().replace("V", ""))
+                .append("\n\n");
+
+        content.append(script.getUpScript());
+
+        if (script.getDownScript() != null &&
+                !script.getDownScript().isBlank()) {
+
+            content.append("\n\n-- DOWN\n\n");
+
+            content.append(script.getDownScript());
+
+        }
+
+        Files.writeString(
+                filePath,
+                content.toString(),
+                StandardOpenOption.TRUNCATE_EXISTING,
+                StandardOpenOption.CREATE
+        );
+
+    }
+
+    public String getFilePath(long connectionId, String version) throws IOException {
+
+        Path basePath = Paths.get(properties.getPath());
+        Path connectionPath = basePath.resolve("conn_" + connectionId);
+
+        String pattern = String.format("%s__*.sql", version);
+
+        log.debug("Searching migration {} in {}", pattern, connectionPath);
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(connectionPath, pattern)) {
+            for (Path file : stream) {
+                return file.toAbsolutePath().toString();
+            }
+        }
+
+        return null;
+    }
+
+    public  MigrationStatisticsDTO calculateStatistics(List<RelatedScriptDTO> scripts) {
+
+        int total = scripts.size();
+
+        int successful = 0;
+        int failed = 0;
+        int pending = 0;
+
+        for (RelatedScriptDTO script : scripts) {
+
+            switch (script.getStatus().toUpperCase()) {
+                case "SUCCESS" -> successful++;
+                case "FAILED" -> failed++;
+                case "PENDING" -> pending++;
+            }
+        }
+
+        return new MigrationStatisticsDTO(
+                total,
+                successful,
+                failed,
+                pending
+        );
+    }
+
 }

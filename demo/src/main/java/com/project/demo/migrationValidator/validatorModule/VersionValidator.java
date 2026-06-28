@@ -1,0 +1,20 @@
+package com.project.demo.migrationValidator.validatorModule;
+
+import com.project.demo.migrationValidator.exception.ValidationException;
+import com.project.demo.migrationValidator.interfaces.MigrationValidator;
+import com.project.demo.model.MigrationScript;
+import org.springframework.stereotype.Component;
+
+import java.sql.Connection;
+
+@Component
+public class VersionValidator implements MigrationValidator {
+    @Override
+    public void validate(MigrationScript script, Connection connection) throws ValidationException {
+        if (script.getVersion() == null ||
+                script.getVersion().isBlank()) {
+
+            throw new ValidationException("Migration version is missing.");
+        }
+    }
+}

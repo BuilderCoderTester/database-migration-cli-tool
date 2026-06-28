@@ -1,0 +1,142 @@
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.ListView?>
+
+<BorderPane fx:id="mainPane"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.project.demo.javafx.DashboardController">
+
+    <!-- LEFT SIDEBAR -->
+    <left>
+        <VBox spacing="15" prefWidth="220"
+              styleClass="sidebar">
+
+            <Label text="MigrateDB"/>
+
+            <Separator/>
+
+            <Label text="VIEWS"/>
+
+            <Button text="All Migrations"/>
+            <Button text="Pending"/>
+            <Button text="Applied"/>
+            <Button text="Run History"/>
+
+            <Separator/>
+
+            <Label text="CONFIG"/>
+
+            <Button text="Connections"
+                    onAction="#openConnections"/>
+            <Button text="Tables"/>
+            <Button text="Settings"/>
+
+        </VBox>
+    </left>
+
+    <!-- TOP TOOLBAR -->
+    <top>
+        <HBox spacing="10"
+              alignment="CENTER_LEFT"
+              styleClass="toolbar">
+
+            <Label text="All Migrations"/>
+
+            <Button text="+ New Migration"/>
+            <Button text="Validate"/>
+            <Button text="Rollback"/>
+
+            <Pane HBox.hgrow="ALWAYS"/>
+
+            <Button text="Repair"/>
+            <Button text="Migrate Now"/>
+
+        </HBox>
+    </top>
+
+    <!-- CENTER -->
+    <center>
+
+        <VBox spacing="15">
+
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <!-- CARDS -->
+            <HBox spacing="15">
+
+                <VBox styleClass="card">
+                    <Label text="TOTAL"/>
+                    <Label text="8" styleClass="big-number"/>
+                </VBox>
+
+                <VBox styleClass="card">
+                    <Label text="APPLIED"/>
+                    <Label text="8" styleClass="big-number-green"/>
+                </VBox>
+
+                <VBox styleClass="card">
+                    <Label text="PENDING"/>
+                    <Label text="0" styleClass="big-number-orange"/>
+                </VBox>
+
+                <VBox styleClass="card">
+                    <Label text="FAILED"/>
+                    <Label text="0" styleClass="big-number-red"/>
+                </VBox>
+
+            </HBox>
+
+            <!-- TABLE -->
+            <TableView fx:id="migrationTable">
+
+                <columns>
+
+                    <TableColumn text="Version"
+                                 fx:id="versionColumn"/>
+
+                    <TableColumn text="Description"
+                                 fx:id="descriptionColumn"/>
+
+                    <TableColumn text="Applied On"
+                                 fx:id="appliedColumn"/>
+
+                    <TableColumn text="Duration"
+                                 fx:id="durationColumn"/>
+
+                    <TableColumn text="Status"
+                                 fx:id="statusColumn"/>
+
+                </columns>
+
+            </TableView>
+
+        </VBox>
+
+    </center>
+
+    <!-- RIGHT PANEL -->
+    <right>
+
+        <VBox prefWidth="300"
+              spacing="10"
+              styleClass="activity-panel">
+
+            <Label text="ACTIVITY LOG"/>
+
+            <ListView fx:id="activityList"/>
+
+        </VBox>
+
+    </right>
+
+</BorderPane>

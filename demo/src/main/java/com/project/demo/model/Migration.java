@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 public class Migration {
 
     @Id
-private String version;
+    private String version;
 
     private String description;
 
@@ -43,10 +43,14 @@ private String version;
     @ManyToOne
     @JoinColumn(name = "connection_id") // FK column
     private ConnectionConfig connection;
+
     public Migration(String version, String description, String script) {
         this.version = version;
         this.description = description;
         this.script = script;
+    }
+
+    public Migration(String vv004, String insertIntoSing, String date, String s, String applied) {
     }
 
     public boolean getSuccess() {

@@ -3,6 +3,7 @@ package com.project.demo.service;
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.repository.MigrationRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class MigrationFailureService {
 
     private final MigrationRepository repository;
@@ -23,7 +25,7 @@ public class MigrationFailureService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logFailure(MigrationScript script, Exception e,Long connectionId) {
-        System.out.println("MIGRATION IS FAILING!");
+        log.error("Migration {} failed for connection {}", script.getVersion(), connectionId, e);
         Migration migration = new Migration();
 
         migration.setVersion(script.getVersion());

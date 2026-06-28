@@ -6,6 +6,7 @@ import com.project.demo.dto.ConnectionRequest;
 import com.project.demo.dto.ConnectionResponse;
 import com.project.demo.model.ConnectionConfig;
 import com.project.demo.repository.ConnectionRepo;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -13,8 +14,11 @@ import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
+@Slf4j
 public class ConnectionService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -37,7 +41,7 @@ public class ConnectionService {
     }
 
     public Connection activeConnection(String databaseName) throws SQLException {
-        System.out.println(databaseName);
+        log.debug("Opening active connection for database {}", databaseName);
         String sql = """
                     SELECT connection_id FROM connections WHERE database = ?
                 """;
@@ -48,7 +52,7 @@ public class ConnectionService {
         connectionContext.setCurrentConnectionId(connection_id);
         connectionContext.setCurrentDatabase(databaseName);
         String dbUrl = jdbcTemplate.queryForObject(url, String.class, connection_id);
-        System.out.println("conneciton url " + dbUrl);
+        log.debug("Resolved JDBC URL for connection {}", connection_id);
 
         Connection newConnection = DriverManager.getConnection(
                 dbUrl,
@@ -57,31 +61,39 @@ public class ConnectionService {
         );
         return newConnection;
     }
+    public List<ConnectionConfig> getAllConnections() {
 
-    // this send the actual connection
-//    public Connection getConnection(Long connectionId) {
-//        System.out.println("the conneciton id at conenciton service:"+connectionId);
-//        PreparedStatement pst = conn.prepareStatement("SELECT current_database()");
-//        ConnectionConfig config = connectionRepository.findById(connectionId)
-//                .orElseThrow(() -> new RuntimeException("No active connection"));
-//        System.out.println(config);
-//        try {
-//            String url = "jdbc:mysql://" + config.getHost() + ":" + config.getPort()
-//                    + "/" + config.getDatabase();
-//
-//            Connection connection =  DriverManager.getConnection(
-//                    url,
-//                    config.getUsername(),
-//                    config.getPassword()
-//            );
-//            if (connection == null || !connection.isValid(5)) {
-//                throw new RuntimeException("Connection is not valid");
-//            }
-//            return connection;
-//        } catch (Exception e) {
-//            throw new RuntimeException("Failed to create DB connection", e);
-//        }
-//    }
+        List<ConnectionConfig> databases = new ArrayList<>();
+
+        String sql = """
+            SELECT datname
+            FROM pg_database
+            WHERE datistemplate = false
+            ORDER BY datname
+            """;
+
+        try (Connection conn = activeConnection("postgres");
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+
+                ConnectionConfig config = new ConnectionConfig();
+
+                config.setDatabase(rs.getString("datname"));
+
+                config.setHost("localhost"); // or current host
+                config.setPort(5432);        // or current port
+
+                databases.add(config);
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return databases;
+    }
 
 
     public ConnectionResponse connect(ConnectionRequest request) {
@@ -114,14 +126,14 @@ public class ConnectionService {
                 String sql = "CREATE DATABASE \"" + dbName + "\"";
                 stmt.executeUpdate(sql);
 
-                System.out.println("Database created: " + dbName);
+                log.info("Database created: {}", dbName);
 
             } catch (SQLException e) {
                 // 42P04 = duplicate_database
                 if (!"42P04".equals(e.getSQLState())) {
                     throw e;
                 }
-                System.out.println("Database already exists: " + dbName);
+                log.info("Database already exists: {}", dbName);
             }
 
             // 🔹 3. Test connection to target DB

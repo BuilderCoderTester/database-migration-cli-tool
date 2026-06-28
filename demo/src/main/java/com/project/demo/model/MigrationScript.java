@@ -18,6 +18,7 @@ public class MigrationScript {
     private String fileName;
     private boolean repeatable;
     private String name;
+    private int connectionNumber;
     @ManyToOne
     @JoinColumn(name = "connection_id")
     private ConnectionConfig connection;
@@ -35,5 +36,9 @@ public class MigrationScript {
     public MigrationScript(String part, String part1) {
         this.version = part;
         this.description = part1;
+    }
+
+    public int getConnectionNumber(){
+        return 27;
     }
 }

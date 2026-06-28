@@ -1,0 +1,21 @@
+package com.project.demo.migrationValidator.validatorModule;
+
+import com.project.demo.migrationValidator.exception.ValidationException;
+import com.project.demo.migrationValidator.interfaces.MigrationValidator;
+import com.project.demo.model.MigrationScript;
+import com.project.demo.utility.Helper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import java.sql.Connection;
+
+@Component
+@RequiredArgsConstructor
+public class SqlSyntaxValidator implements MigrationValidator {
+
+    private final Helper helper;
+    @Override
+    public void validate(MigrationScript script, Connection connection) throws ValidationException {
+        helper.validateSqlSyntax(connection,script.getUpScript());
+    }
+}

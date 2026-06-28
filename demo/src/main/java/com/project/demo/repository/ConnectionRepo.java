@@ -10,4 +10,5 @@ import org.springframework.stereotype.Repository;
 public interface ConnectionRepo extends JpaRepository<ConnectionConfig, Long> {
 
 
+
 }

@@ -48,37 +48,33 @@ public class MigrationEngine {
     // MIGRATE UP MODULE
     @Transactional(rollbackFor = Exception.class)
     public void migrateUp(MigrationScript script, Long connectionId,String currentDatabase) throws SQLException {
-        System.out.println("reach point -1 ");
+        log.debug("Starting migrate up for script {} on connection {}", script.getVersion(), connectionId);
         if (connectionId == null) {
             throw new RuntimeException("No active connection selected");
         }
 
         long startTime = System.currentTimeMillis();
 
-        System.out.println("Applying migration: "
-                + script.getVersion() + " - " + script.getDescription()
-                + " [connectionId=" + connectionId + "]");
+        log.info("Applying migration {} - {} [connectionId={}]", script.getVersion(), script.getDescription(), connectionId);
 
         try {
             Connection conn = helper.activeConnection(currentDatabase);
 //            helper.saveMigrationRecord(script, connectionId, System.currentTimeMillis() - startTime, false,conn);
-            System.out.println("after helper function");
+            log.debug("Active migration connection opened for database {}", currentDatabase);
             // has bugs (workings.............)
 //            validator.validateBeforeUp(script);
 
             // 2. 🔥 AST Dependency Extraction
             ASTDependencyExtractor extractor = new ASTDependencyExtractor();
             List<Dependency> deps = extractor.extract(script.getUpScript());
-            System.out.println("Dependency : " + deps);
+            log.debug("Extracted dependencies for {}: {}", script.getVersion(), deps);
 
             // only checked for CREATE not for others
             DependencyValidator validator = new DependencyValidator();
             MigrationScriptStatus scriptStatus = validator.validate(deps, conn);
-            System.out.println("Status = " + scriptStatus.getTableName());
+            log.debug("Dependency validation status for table {}: {}", scriptStatus.getTableName(), scriptStatus.getStatus());
             // if failed then call the repair function .
             if(scriptStatus.getStatus() == Status.FAILURE){
-                System.out.println("have it here bro");
-
                 log.error(
                         "Migration {} failed validation. Reason: {}",
                         script.getVersion(),
@@ -86,7 +82,7 @@ public class MigrationEngine {
                 );
 
                 MigrationScript currentScript =  migrationRepair.migrationRepairFlow(script,connectionId);
-                System.out.println("The required script is "+ currentScript.toString());
+                log.info("Applying repaired migration script for {}", script.getVersion());
                 helper.applyVersioned(currentScript,startTime,connectionId);
             }
             if (script.isRepeatable()) {

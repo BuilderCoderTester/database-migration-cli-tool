@@ -4,6 +4,7 @@ import lombok.*;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.List;
+import java.util.Map;
 
 @ResponseBody
 @Getter
@@ -17,5 +18,6 @@ public class TableInfoDTO {
     private Long rowCount;
     private Integer columnCount;
     private List<ColumnInfoDTO> columns;
+    private List<Map<String, Object>> rows;
 
 }

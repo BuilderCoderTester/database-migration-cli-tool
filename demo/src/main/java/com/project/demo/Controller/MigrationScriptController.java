@@ -1,10 +1,12 @@
 package com.project.demo.Controller;
 
 import com.project.demo.dto.ApiResponse;
+import com.project.demo.dto.MigrationDetailsResponse;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.service.MigrationScriptService;
 import com.project.demo.service.MigrationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +27,7 @@ import java.util.stream.Stream;
 @RequestMapping("/api/migrations")
 @RequiredArgsConstructor
 @CrossOrigin("*")
+@Slf4j
 public class MigrationScriptController {
     @Autowired
     private  MigrationScriptService migrationScriptService;
@@ -59,8 +62,9 @@ public class MigrationScriptController {
             @RequestParam("connectionId") long connectionId,
             @RequestBody String version
     ) throws IOException {
-        System.out.println("the version is "+ version.trim().replace("\"", ""));
-        migrationScriptService.update(version.trim().replace("\"", ""),upSql,downSql, connectionId);
+        String normalizedVersion = version.trim().replace("\"", "");
+        log.info("Updating migration script version {} for connection {}", normalizedVersion, connectionId);
+        migrationScriptService.update(normalizedVersion, upSql, downSql, connectionId);
         return new ApiResponse(true, "Migration " + version + " updated successfully");
     }
 
@@ -71,5 +75,15 @@ public class MigrationScriptController {
     ) throws IOException {
 
         return migrationScriptService.viewScript(version, connectionId);
+    }
+
+    @GetMapping("/details")
+    public ResponseEntity<MigrationDetailsResponse> getMigrationDetails(
+            @RequestParam Long connectionId,
+            @RequestParam String versionId) throws IOException, SQLException {
+
+        return ResponseEntity.ok(
+                migrationScriptService.getMigrationDetails(connectionId, versionId)
+        );
     }
 }

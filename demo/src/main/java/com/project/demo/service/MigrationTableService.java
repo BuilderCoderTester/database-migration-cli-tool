@@ -3,6 +3,7 @@ package com.project.demo.service;
 import com.project.demo.component.ConnectionContext;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
@@ -16,6 +17,7 @@ import java.util.List;
 @Service
 @AllArgsConstructor
 @NoArgsConstructor
+@Slf4j
 public class MigrationTableService {
     ConnectionContext connectionContext;
     MigrationService migrationService;
@@ -42,7 +44,7 @@ public class MigrationTableService {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        System.out.println(Arrays.asList(tables));
+        log.debug("Loaded tables for connection {}: {}", connectionId, tables);
         return tables;
     }
 }

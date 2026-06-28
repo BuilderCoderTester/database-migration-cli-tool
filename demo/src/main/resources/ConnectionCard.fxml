@@ -1,0 +1,30 @@
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
+<VBox xmlns:fx="http://javafx.com/fxml"
+      spacing="8"
+      prefWidth="240"
+      styleClass="connection-card">
+
+    <Label fx:id="nameLabel"
+           text="Kinjal"
+           styleClass="card-title"/>
+
+    <Label fx:id="hostLabel"
+           text="localhost:5432"/>
+
+    <Label fx:id="dbLabel"
+           text="Madar"/>
+
+    <HBox spacing="10">
+
+        <Button text="Set Active"
+                fx:id="activeBtn"/>
+
+        <Button text="Delete"
+                fx:id="deleteBtn"/>
+
+    </HBox>
+
+</VBox>

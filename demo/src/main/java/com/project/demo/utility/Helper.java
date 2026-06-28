@@ -2,12 +2,14 @@ package com.project.demo.utility;
 
 import com.project.demo.component.*;
 import com.project.demo.dto.ConnectionRequest;
+import com.project.demo.migrationValidator.exception.ValidationException;
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.repository.MigrationRepository;
 import com.project.demo.service.MigrationService;
 import jakarta.transaction.Status;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +24,7 @@ import java.util.regex.Pattern;
 
 @AllArgsConstructor
 @Component
+@Slf4j
 public class Helper {
 
     private final SqlExecutor sqlExecutor;
@@ -57,11 +60,9 @@ public class Helper {
 
     /// version id manageable
     public void applyVersioned(MigrationScript script, long start, Long connectionId) throws SQLException {
-        System.out.println("cominng to the office baby");
         Connection connection = activeConnection(connectionContext.getCurrentDatabase());
-        System.out.println("current databse = "+connectionContext.getCurrentDatabase());
+        log.info("Applying versioned migration {} to database {}", script.getVersion(), connectionContext.getCurrentDatabase());
         sqlExecutor.executeScript(script.getUpScript(),connection,connectionContext.getCurrentDatabase());
-        System.out.println("hehe he ami sei checl je kaj kori");
         saveMigrationRecord(script, connectionId,System.currentTimeMillis() - start, false,connection);
     }
     public void updateMigrationStatus(String version, Long connectionId,
@@ -307,5 +308,59 @@ public class Helper {
         }
 
         return primaryKeys;
+    }
+
+    public void validateSqlSyntax(Connection connection, String upScript)
+            throws ValidationException {
+
+        String sql = extractActualSql(upScript);
+
+        if (sql.isBlank()) {
+            throw new ValidationException("UP script is empty.");
+        }
+
+        boolean originalAutoCommit;
+
+        try {
+            originalAutoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
+
+            try (Statement statement = connection.createStatement()) {
+                statement.execute(sql);
+            }
+
+            // Undo any changes made during validation
+            connection.rollback();
+
+            // Restore original state
+            connection.setAutoCommit(originalAutoCommit);
+
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException ignored) {
+            }
+
+            throw new ValidationException(
+                    "SQL syntax error: " + e.getMessage()
+            );
+        }
+    }
+
+    private String extractActualSql(String upScript) {
+
+        String[] lines = upScript.split("\\R");
+        StringBuilder actualSql = new StringBuilder();
+
+        // Skip template header
+        for (int i = 4; i < lines.length; i++) {
+            actualSql.append(lines[i]).append("\n");
+        }
+
+        return actualSql.toString().trim();
+    }
+
+    public void updateChecksum(String version, String upScript) {
+
     }
 }

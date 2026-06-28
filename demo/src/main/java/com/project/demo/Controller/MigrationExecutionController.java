@@ -24,6 +24,7 @@ public class MigrationExecutionController {
     public MigrationResult migrate(@RequestParam("connectionId") Long connectionId) throws SQLException {
         MigrationRequest request = new MigrationRequest();
         request.setConnectionId(connectionId);
+        System.out.println("reach point -1");
         return migrationLifecycleService.migrate(request);
     }
     @PostMapping("/script/migrate")

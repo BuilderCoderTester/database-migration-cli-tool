@@ -3,10 +3,14 @@ package com.project.demo.repository;
 
 import com.project.demo.component.SqlExecutor;
 import com.project.demo.config.MigrationProperties;
+import com.project.demo.dto.MigrationDetailsDTO;
+import com.project.demo.mappingProfile.MigrationMapper;
 import com.project.demo.model.ConnectionConfig;
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.service.MigrationService;
+import com.project.demo.sqlQueries.MigrationQuery;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -32,6 +36,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Repository
+@Slf4j
 public class MigrationRepository {
 
     private final JdbcTemplate jdbcTemplate;
@@ -92,9 +97,9 @@ public class MigrationRepository {
                 """;
         try{
             jdbcTemplate.execute(check);
-            System.out.println("MIGRATION LOCK TABLE IS CREATED! ");
+            log.info("Migration lock table is ready");
         }catch (Exception e ){
-            System.out.println("Creation Querry is not working.");
+            log.error("Failed to create migration lock table", e);
         }
     }
 
@@ -172,17 +177,15 @@ public class MigrationRepository {
 
             stmt.setLong(8, connectionId);
 
-            System.out.println("Executing insert...");
+            log.debug("Saving migration {} for connection {}", migration.getVersion(), connectionId);
 
             stmt.executeUpdate();
 
-            System.out.println("Insert success");
+            log.debug("Saved migration {} for connection {}", migration.getVersion(), connectionId);
 
         } catch (Exception e) {
 
-            System.out.println("Insert failed");
-
-            e.printStackTrace();
+            log.error("Failed to save migration {} for connection {}", migration.getVersion(), connectionId, e);
         }
     }
 
@@ -203,18 +206,13 @@ public class MigrationRepository {
 
             stmt.setLong(1, connectionId);
 
-            System.out.println("Executing query...");
+            log.debug("Loading migrations for connection {}", connectionId);
 
             try (ResultSet rs = stmt.executeQuery()) {
 
                 while (rs.next()) {
 
-                    System.out.println("---------------");
-
-                    System.out.println(
-                            "Version = " +
-                                    rs.getString("version")
-                    );
+                    log.trace("Mapping migration version {}", rs.getString("version"));
 
                     Migration migration = new Migration();
 
@@ -511,6 +509,39 @@ public boolean existsByVersion(String version) {
 
     }
 
+    public MigrationDetailsDTO loadMigrationScriptDetails(String versionId, Long connectionId ,Connection connection) throws SQLException {
+        PreparedStatement statement =
+                connection.prepareStatement(MigrationQuery.GET_MIGRATION_SCRIPT_DETAILS);
+
+        statement.setLong(1, connectionId);
+        statement.setString(2, versionId);
+
+        ResultSet resultSet = statement.executeQuery();
+
+        Migration actualScript = null;
+
+        if (resultSet.next()) {
+            actualScript = new Migration();
+
+            actualScript.setVersion(resultSet.getString("version"));
+            actualScript.setDescription(resultSet.getString("description"));
+            actualScript.setScript(resultSet.getString("script"));
+            actualScript.setChecksum(resultSet.getString("checksum"));
+            actualScript.setExecutedAt(resultSet.getTimestamp("executed_at").toLocalDateTime());
+            actualScript.setExecutionTime(resultSet.getLong("execution_time"));
+            actualScript.setSuccess(resultSet.getBoolean("success"));
+            actualScript.setErrorMessage(resultSet.getString("error_message"));
+            actualScript.setErrorStackTrace(resultSet.getString("error_stack_trace"));
+            actualScript.setRetryCount(resultSet.getInt("retry_count"));
+            actualScript.setDirty(resultSet.getBoolean("dirty"));
+            actualScript.setRepeatable(resultSet.getBoolean("repeatable"));
+            actualScript.setName(resultSet.getString("name"));
+        }
+
+        return MigrationMapper.toDto(actualScript);
+
+    }
+
     private static class MigrationRowMapper implements RowMapper<Migration> {
         @Override
         public Migration mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -545,4 +576,6 @@ public boolean existsByVersion(String version) {
             return m;
         }
     }
+
+
 }

@@ -2,6 +2,7 @@ package com.project.demo.service;
 
 import com.project.demo.repository.MigrationLockRepository;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.beans.Transient;
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class MigrationLockService {
 
     private final MigrationLockRepository lockRepository;
@@ -22,7 +24,7 @@ public class MigrationLockService {
     // LOCK HOLDING OPERATION
     @Transactional
     public String acquireLock(Connection connection, Long connectionId) throws SQLException {
-        System.out.println("debvug pout -1");
+        log.debug("Attempting to acquire migration lock for connection {}", connectionId);
         String lockedBy = getHostName() + "-" + UUID.randomUUID();
 
         Timestamp timeout = Timestamp.valueOf(
@@ -39,10 +41,7 @@ public class MigrationLockService {
             );
         }
 
-        System.out.println(
-                "LOCK ACQUIRED | DB=" + connectionId +
-                        " | by=" + lockedBy
-        );
+        log.info("Migration lock acquired for connection {} by {}", connectionId, lockedBy);
 
         return lockedBy;
     }
@@ -58,7 +57,7 @@ public class MigrationLockService {
         }
     }
     // LOCK RELEASE OPERATION
-    public void releaseLock(Connection connection , Long connectionId, StringBuilder lockedBy) throws Exception{
+    public void releaseLock(Connection connection, Long connectionId, String lockedBy) throws Exception {
 
         boolean updated = lockRepository.releaseLock(connection,connectionId);
 
@@ -68,13 +67,11 @@ public class MigrationLockService {
             );
         }
 
-        System.out.println(
-                "LOCK RELEASED | DB=" + connectionId + " | by=" + lockedBy
-        );
+        log.info("Migration lock released for connection {} by {}", connectionId, lockedBy);
     }
     public boolean isLockStale(Connection connection)
             throws SQLException {
-        System.out.println("reach point -2 here heartbeat");
+        log.debug("Checking migration lock heartbeat");
         String sql = """
             SELECT heartbeat_at
             FROM migration_lock

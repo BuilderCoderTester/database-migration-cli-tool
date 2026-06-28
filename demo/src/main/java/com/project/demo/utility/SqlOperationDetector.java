@@ -3,15 +3,16 @@ package com.project.demo.utility;
 import com.project.demo.enumuration.DatabaseOperation;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Getter
 @Setter
 @Component
+@Slf4j
 public class SqlOperationDetector {
 
     public DatabaseOperation detectOperation(String sql) {
-        System.out.println(sql);
         String cleaned = sql.lines()
                 .map(String::trim)
                 .filter(line ->
@@ -20,6 +21,7 @@ public class SqlOperationDetector {
                 .findFirst()
                 .orElse("")
                 .toUpperCase();
+        log.trace("Detecting SQL operation from first statement: {}", cleaned);
 
         if (cleaned.startsWith("CREATE")) {
             return DatabaseOperation.CREATE;

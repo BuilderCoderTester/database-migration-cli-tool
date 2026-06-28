@@ -3,18 +3,15 @@ package com.project.demo.service;
 import com.project.demo.component.ConnectionContext;
 import com.project.demo.dto.ColumnInfoDTO;
 import com.project.demo.dto.TableInfoDTO;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.sql.*;
+import java.util.*;
 
 @Service
+@Slf4j
 public class SchemaIntrospectionService {
 
     @Autowired
@@ -45,42 +42,41 @@ public class SchemaIntrospectionService {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        System.out.println(Arrays.asList(tables));
+        log.debug("Loaded tables for connection {}: {}", connectionId, tables);
         return tables;
     }
 
     public TableInfoDTO getTableInfo(Long connectionId, String tableName) throws SQLException {
 
-        System.out.println("=== getTableInfo START ===");
-        System.out.println("Connection Id: " + connectionId);
-        System.out.println("Table Name: " + tableName);
+        log.debug("Loading table info for {} on connection {}", tableName, connectionId);
 
         Connection connection =
-               connectionService.activeConnection(connectionContext.getCurrentDatabase());
+                connectionService.activeConnection(connectionContext.getCurrentDatabase());
 
-        System.out.println("Connection obtained: " + (connection != null));
+        log.trace("Connection obtained for table info: {}", connection != null);
 
         try {
 
-            // Row count
+            // -------------------------------
+            // Row Count
+            // -------------------------------
+
             Long rowCount = 0L;
 
             String countSql = "SELECT COUNT(*) FROM " + tableName;
-
-            System.out.println("Executing Count Query: " + countSql);
 
             try (PreparedStatement stmt = connection.prepareStatement(countSql);
                  ResultSet rs = stmt.executeQuery()) {
 
                 if (rs.next()) {
                     rowCount = rs.getLong(1);
-                    System.out.println("Row Count: " + rowCount);
-                } else {
-                    System.out.println("No result returned from COUNT query");
                 }
             }
 
-            // Column information
+            // -------------------------------
+            // Column Metadata
+            // -------------------------------
+
             List<ColumnInfoDTO> columns = new ArrayList<>();
 
             String columnSql = """
@@ -94,69 +90,66 @@ public class SchemaIntrospectionService {
                     ORDER BY ordinal_position
                     """;
 
-            System.out.println("Executing Column Query for table: " + tableName);
-
-            try (PreparedStatement stmt =
-                         connection.prepareStatement(columnSql)) {
+            try (PreparedStatement stmt = connection.prepareStatement(columnSql)) {
 
                 stmt.setString(1, tableName);
 
                 try (ResultSet rs = stmt.executeQuery()) {
 
-                    int columnCounter = 0;
-
                     while (rs.next()) {
 
-                        String columnName = rs.getString("column_name");
-                        String dataType = rs.getString("data_type");
-                        String nullable = rs.getString("is_nullable");
-
-                        System.out.println(
-                                "Column Found -> Name: " + columnName +
-                                        ", Type: " + dataType +
-                                        ", Nullable: " + nullable
-                        );
-
-                        columns.add(
-                                new ColumnInfoDTO(
-                                        columnName,
-                                        dataType,
-                                        "YES".equals(nullable),
-                                        false
-                                )
-                        );
-
-                        columnCounter++;
+                        columns.add(new ColumnInfoDTO(
+                                rs.getString("column_name"),
+                                rs.getString("data_type"),
+                                "YES".equalsIgnoreCase(rs.getString("is_nullable")),
+                                false
+                        ));
                     }
-
-                    System.out.println("Total Columns Found: " + columnCounter);
                 }
             }
 
-            System.out.println("Preparing DTO...");
-            System.out.println("Table Name: " + tableName);
-            System.out.println("Row Count: " + rowCount);
-            System.out.println("Column Count: " + columns.size());
+            // -------------------------------
+            // Table Data (First 100 Rows)
+            // -------------------------------
 
-            TableInfoDTO dto = new TableInfoDTO(
+            List<Map<String, Object>> rows = new ArrayList<>();
+
+            String dataSql = "SELECT * FROM " + tableName + " LIMIT 100";
+
+            try (PreparedStatement stmt = connection.prepareStatement(dataSql);
+                 ResultSet rs = stmt.executeQuery()) {
+
+                ResultSetMetaData metaData = rs.getMetaData();
+                int columnCount = metaData.getColumnCount();
+
+                while (rs.next()) {
+
+                    Map<String, Object> row = new LinkedHashMap<>();
+
+                    for (int i = 1; i <= columnCount; i++) {
+                        row.put(metaData.getColumnLabel(i), rs.getObject(i));
+                    }
+
+                    rows.add(row);
+                }
+            }
+
+            // -------------------------------
+            // DTO
+            // -------------------------------
+
+            return new TableInfoDTO(
                     tableName,
                     "public",
                     rowCount,
                     columns.size(),
-                    columns
+                    columns,
+                    rows
             );
-
-            System.out.println("DTO Created Successfully");
-            System.out.println(dto);
-            System.out.println("=== getTableInfo END ===");
-
-            return dto;
 
         } catch (SQLException e) {
 
-            System.out.println("ERROR OCCURRED");
-            System.out.println("Message: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Failed to load table information for {}", tableName, e);
 
             throw new RuntimeException(
                     "Failed to load table information for " + tableName,

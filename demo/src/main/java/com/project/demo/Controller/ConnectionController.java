@@ -3,6 +3,7 @@ import com.project.demo.dto.*;
 import com.project.demo.service.ConnectionService;
 import com.project.demo.service.MigrationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +15,7 @@ import java.util.Map;
 @RequestMapping("/api/migrations")
 @RequiredArgsConstructor
 @CrossOrigin("*")
+@Slf4j
 public class ConnectionController {
     @Autowired
     private  ConnectionService connectionService;
@@ -31,7 +33,7 @@ public class ConnectionController {
         PreparedStatement dbStmt = conn.prepareStatement("SELECT current_database()");
         ResultSet dbRs = dbStmt.executeQuery();
         if (dbRs.next()) {
-            System.out.println("🔥 Connected to: " + dbRs.getString(1));
+            log.info("Connected to database {}", dbRs.getString(1));
         }
 
         createSystemTables(conn);
@@ -114,7 +116,7 @@ public class ConnectionController {
         while (rs.next()) {
             String schema = rs.getString("schemaname");
             String table = rs.getString("tablename");
-            System.out.println(schema + " → " + table);
+            log.debug("Discovered table {}.{}", schema, table);
         }
     }
 

@@ -11,6 +11,7 @@ import com.project.demo.repository.ConnectionRepo;
 import com.project.demo.repository.MigrationRepository;
 import com.project.demo.utility.Helper;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -24,6 +25,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
+@Slf4j
 public class MigrationService {
 
     private final Helper helper;
@@ -102,9 +104,9 @@ public class MigrationService {
         // Database validation checking
         Long connectionId = migrationRequest.getConnectionId();
         String targetVersion = migrationRequest.getTargetVersion();
-        System.out.println("Connection ID at service: " + connectionId);
+        log.info("Starting migration for connection {}", connectionId);
 
-        StringBuilder lockedBy = null;
+        String lockedBy = null;
 
         if (connectionId == null) {
             throw new RuntimeException("No active connection selected");
@@ -116,11 +118,11 @@ public class MigrationService {
             //ACQUIRE LOCK
             if (migrationLockService.isLockStale(connection)) {
 
-                System.out.println("WARNING: stale migration lock detected");
+                log.warn("Stale migration lock detected for connection {}", connectionId);
 
                 migrationLockService.clearStaleLock(connection);
             }
-            migrationLockService.acquireLock(connection, connectionId);
+            lockedBy = migrationLockService.acquireLock(connection, connectionId);
             migrationLockService.updateHeartbeat(connection);
 //            var currentOpt = helper.getCurrentVersion(connectionId, connectionContext.getCurrentDatabase());
             Set<String> executedVersions =
@@ -139,7 +141,7 @@ public class MigrationService {
                     );
 
             for (MigrationScript sc : pending) {
-                System.out.println("Script " + sc.getVersion());
+                log.debug("Pending migration script {}", sc.getVersion());
             }
             if (pending.isEmpty()) {
                 return new MigrationResult("✓ No pending migrations", 0, 0);
@@ -151,7 +153,7 @@ public class MigrationService {
 
             for (MigrationScript script : pending) {
                 migrationRequest.setOperation(detectOperation(script.getDescription()));
-                System.out.println("Migration script operation " + migrationRequest.getOperation());
+                log.debug("Detected operation {} for migration {}", migrationRequest.getOperation(), script.getVersion());
                 if (targetVersion != null &&
                         helper.compareVersion(script.getVersion(), targetVersion) > 0) {
                     break;
@@ -207,7 +209,8 @@ public class MigrationService {
             try {
                 migrationLockService.releaseLock(connection, connectionId, lockedBy); // 🔥 scoped unlock
                 connection.commit();
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                log.warn("Failed to release migration lock cleanly for connection {}", connectionId, e);
             }
         }
     }
@@ -580,121 +583,121 @@ public class MigrationService {
         return tables;
     }
 
-    public TableInfoDTO getTableInfo(Long connectionId, String tableName) throws SQLException {
-
-        System.out.println("=== getTableInfo START ===");
-        System.out.println("Connection Id: " + connectionId);
-        System.out.println("Table Name: " + tableName);
-
-        Connection connection =
-                activeConnection(connectionContext.getCurrentDatabase());
-
-        System.out.println("Connection obtained: " + (connection != null));
-
-        try {
-
-            // Row count
-            Long rowCount = 0L;
-
-            String countSql = "SELECT COUNT(*) FROM " + tableName;
-
-            System.out.println("Executing Count Query: " + countSql);
-
-            try (PreparedStatement stmt = connection.prepareStatement(countSql);
-                 ResultSet rs = stmt.executeQuery()) {
-
-                if (rs.next()) {
-                    rowCount = rs.getLong(1);
-                    System.out.println("Row Count: " + rowCount);
-                } else {
-                    System.out.println("No result returned from COUNT query");
-                }
-            }
-
-            // Column information
-            List<ColumnInfoDTO> columns = new ArrayList<>();
-
-            String columnSql = """
-                    SELECT
-                        column_name,
-                        data_type,
-                        is_nullable
-                    FROM information_schema.columns
-                    WHERE table_schema = 'public'
-                      AND table_name = ?
-                    ORDER BY ordinal_position
-                    """;
-
-            System.out.println("Executing Column Query for table: " + tableName);
-
-            try (PreparedStatement stmt =
-                         connection.prepareStatement(columnSql)) {
-
-                stmt.setString(1, tableName);
-
-                try (ResultSet rs = stmt.executeQuery()) {
-
-                    int columnCounter = 0;
-
-                    while (rs.next()) {
-
-                        String columnName = rs.getString("column_name");
-                        String dataType = rs.getString("data_type");
-                        String nullable = rs.getString("is_nullable");
-
-                        System.out.println(
-                                "Column Found -> Name: " + columnName +
-                                        ", Type: " + dataType +
-                                        ", Nullable: " + nullable
-                        );
-
-                        columns.add(
-                                new ColumnInfoDTO(
-                                        columnName,
-                                        dataType,
-                                        "YES".equals(nullable),
-                                        false
-                                )
-                        );
-
-                        columnCounter++;
-                    }
-
-                    System.out.println("Total Columns Found: " + columnCounter);
-                }
-            }
-
-            System.out.println("Preparing DTO...");
-            System.out.println("Table Name: " + tableName);
-            System.out.println("Row Count: " + rowCount);
-            System.out.println("Column Count: " + columns.size());
-
-            TableInfoDTO dto = new TableInfoDTO(
-                    tableName,
-                    "public",
-                    rowCount,
-                    columns.size(),
-                    columns
-            );
-
-            System.out.println("DTO Created Successfully");
-            System.out.println(dto);
-            System.out.println("=== getTableInfo END ===");
-
-            return dto;
-
-        } catch (SQLException e) {
-
-            System.out.println("ERROR OCCURRED");
-            System.out.println("Message: " + e.getMessage());
-            e.printStackTrace();
-
-            throw new RuntimeException(
-                    "Failed to load table information for " + tableName,
-                    e
-            );
-        }
-    }
+//    public TableInfoDTO getTableInfo(Long connectionId, String tableName) throws SQLException {
+//
+//        System.out.println("=== getTableInfo START ===");
+//        System.out.println("Connection Id: " + connectionId);
+//        System.out.println("Table Name: " + tableName);
+//
+//        Connection connection =
+//                activeConnection(connectionContext.getCurrentDatabase());
+//
+//        System.out.println("Connection obtained: " + (connection != null));
+//
+//        try {
+//
+//            // Row count
+//            Long rowCount = 0L;
+//
+//            String countSql = "SELECT COUNT(*) FROM " + tableName;
+//
+//            System.out.println("Executing Count Query: " + countSql);
+//
+//            try (PreparedStatement stmt = connection.prepareStatement(countSql);
+//                 ResultSet rs = stmt.executeQuery()) {
+//
+//                if (rs.next()) {
+//                    rowCount = rs.getLong(1);
+//                    System.out.println("Row Count: " + rowCount);
+//                } else {
+//                    System.out.println("No result returned from COUNT query");
+//                }
+//            }
+//
+//            // Column information
+//            List<ColumnInfoDTO> columns = new ArrayList<>();
+//
+//            String columnSql = """
+//                    SELECT
+//                        column_name,
+//                        data_type,
+//                        is_nullable
+//                    FROM information_schema.columns
+//                    WHERE table_schema = 'public'
+//                      AND table_name = ?
+//                    ORDER BY ordinal_position
+//                    """;
+//
+//            System.out.println("Executing Column Query for table: " + tableName);
+//
+//            try (PreparedStatement stmt =
+//                         connection.prepareStatement(columnSql)) {
+//
+//                stmt.setString(1, tableName);
+//
+//                try (ResultSet rs = stmt.executeQuery()) {
+//
+//                    int columnCounter = 0;
+//
+//                    while (rs.next()) {
+//
+//                        String columnName = rs.getString("column_name");
+//                        String dataType = rs.getString("data_type");
+//                        String nullable = rs.getString("is_nullable");
+//
+//                        System.out.println(
+//                                "Column Found -> Name: " + columnName +
+//                                        ", Type: " + dataType +
+//                                        ", Nullable: " + nullable
+//                        );
+//
+//                        columns.add(
+//                                new ColumnInfoDTO(
+//                                        columnName,
+//                                        dataType,
+//                                        "YES".equals(nullable),
+//                                        false
+//                                )
+//                        );
+//
+//                        columnCounter++;
+//                    }
+//
+//                    System.out.println("Total Columns Found: " + columnCounter);
+//                }
+//            }
+//
+//            System.out.println("Preparing DTO...");
+//            System.out.println("Table Name: " + tableName);
+//            System.out.println("Row Count: " + rowCount);
+//            System.out.println("Column Count: " + columns.size());
+//
+//            TableInfoDTO dto = new TableInfoDTO(
+//                    tableName,
+//                    "public",
+//                    rowCount,
+//                    columns.size(),
+//                    columns
+//            );
+//
+//            System.out.println("DTO Created Successfully");
+//            System.out.println(dto);
+//            System.out.println("=== getTableInfo END ===");
+//
+//            return dto;
+//
+//        } catch (SQLException e) {
+//
+//            System.out.println("ERROR OCCURRED");
+//            System.out.println("Message: " + e.getMessage());
+//            e.printStackTrace();
+//
+//            throw new RuntimeException(
+//                    "Failed to load table information for " + tableName,
+//                    e
+//            );
+//        }
+//    }
 
     public void delete(long connectionId, String versionId) throws SQLException {
         String sql = "DELETE FROM sub_migration WHERE version = ? AND connection_id = ?";
