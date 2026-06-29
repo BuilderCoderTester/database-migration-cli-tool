@@ -199,20 +199,20 @@ public class MigrationCommands {
 //                .build();
 //    }
 
-    @Command(command = "create", description = "Create new migration file")
-    public String create(
-            @Option(required = true, description = "Migration version") String version,
-            @Option(required = true, description = "Description") String description,
-            @Option(defaultValue = "", description = "Up SQL") String up,
-            @Option(defaultValue = "", description = "Down SQL") String down
-    ) {
-        try {
-            loader.createMigrationFile(description, up, down);
-            return String.format("✓ Created migration V%s__%s.sql", version, description.replace(" ", "_"));
-        } catch (IOException e) {
-            return "Failed to create migration: " + e.getMessage();
-        }
-    }
+//    @Command(command = "create", description = "Create new migration file")
+//    public String create(
+//            @Option(required = true, description = "Migration version") String version,
+//            @Option(required = true, description = "Description") String description,
+//            @Option(defaultValue = "", description = "Up SQL") String up,
+//            @Option(defaultValue = "", description = "Down SQL") String down
+//    ) {
+//        try {
+//            loader.createMigrationFile(description, up, down);
+//            return String.format("✓ Created migration V%s__%s.sql", version, description.replace(" ", "_"));
+//        } catch (IOException e) {
+//            return "Failed to create migration: " + e.getMessage();
+//        }
+//    }
 
 //    @Command(command = "validate", description = "Validate migrations against database")
 //    public String validate() {

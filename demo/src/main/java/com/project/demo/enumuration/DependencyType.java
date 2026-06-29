@@ -5,5 +5,5 @@ public enum DependencyType {
     COLUMN,
     FOREIGN_KEY,
     INDEX,
-    VERSION
+    PRIMARY_KEY, VERSION
 }

@@ -148,6 +148,114 @@ public class MigrationLifecycleService {
     }
 
     /**
+     * Execute the Migration Script by Version : Partially Done.
+     */
+    @Transactional
+    public MigrationResult migrateSingle(MigrationRequest request) throws SQLException {
+        System.out.println("the version in here" + request.getTargetVersion());
+        Long connectionId = request.getConnectionId();
+        String targetVersion = request.getTargetVersion();
+
+        if (connectionId == null) {
+            throw new RuntimeException("No active connection selected.");
+        }
+
+        if (targetVersion == null || targetVersion.isBlank()) {
+            throw new RuntimeException("Target version is required.");
+        }
+
+        Connection connection =
+                connectionService.activeConnection(connectionContext.getCurrentDatabase());
+
+        connection.setAutoCommit(false);
+
+        String lockedBy = null;
+
+        try {
+
+            // Handle stale lock
+            if (migrationLockService.isLockStale(connection)) {
+                migrationLockService.clearStaleLock(connection);
+            }
+
+            // Acquire lock
+            lockedBy = migrationLockService.acquireLock(connection, connectionId);
+            migrationLockService.updateHeartbeat(connection);
+
+            // Already executed?
+            Map<String, Boolean> executedVersions =
+                    helper.getScriptExecutedVersions(connectionId, connectionContext.getCurrentDatabase());
+            if (Boolean.TRUE.equals(executedVersions.get(targetVersion))) {
+                return new MigrationResult(
+                        "Migration " + targetVersion + " is already executed successfully.",
+                        0,
+                        0
+                );
+            }
+
+            // Find requested migration
+            MigrationScript targetScript = loader.loadSpecificVersion(targetVersion,connectionId);
+            if(targetScript == null){
+                System.out.println("the target script is null");
+            };
+
+            // Detect operation
+            request.setOperation(
+                    sqlOperationDetector.detectOperation(targetScript.getDescription())
+            );
+
+            // Execute migration
+            engine.migrateUp(
+                    targetScript,
+                    connectionId,
+                    connectionContext.getCurrentDatabase()
+            );
+
+            connection.commit();
+
+            return new MigrationResult(
+                    "Migration " + targetScript.getVersion() + " executed successfully.",
+                    1,
+                    0
+            );
+
+        } catch (Exception ex) {
+
+            connection.rollback();
+
+            try {
+                MigrationScript targetScript = loader.loadPendingMigrations(
+                                helper.getExecutedVersions(connectionId, connectionContext.getCurrentDatabase()),
+                                connectionId
+                        ).stream()
+                        .filter(s -> s.getVersion().equals(targetVersion))
+                        .findFirst()
+                        .orElse(null);
+
+                if (targetScript != null) {
+                    migrationRepository.saveFailure(targetScript, connectionId, ex);
+                }
+            } catch (Exception ignored) {
+            }
+
+            return new MigrationResult(
+                    "Migration failed: " + ex.getMessage(),
+                    0,
+                    1
+            );
+
+        } finally {
+
+            try {
+                migrationLockService.releaseLock(connection, connectionId, lockedBy);
+            } catch (Exception ignored) {
+            }
+
+            connection.close();
+        }
+    }
+
+    /**
      * Migration Scripts are Updated : partially Done.
      */
     @Transactional
@@ -364,4 +472,87 @@ public class MigrationLifecycleService {
         }
     }
 
+    @Transactional
+    public String rollbackByVersion(String version, String rollbackType, Long connectionId) {
+        try {
+
+            String database = connectionContext.getCurrentDatabase();
+
+            log.info("Rollback requested. Version={}, Type={}, Connection={}",
+                    version, rollbackType, connectionId);
+
+            MigrationScript scriptOpt =
+                    loader.loadSpecificVersion(version, connectionId);
+
+            if (scriptOpt == null) {
+                return "Migration " + version + " not found.";
+            }
+
+//            MigrationScript script = scriptOpt.get();
+
+            switch (rollbackType.toUpperCase()) {
+
+                case "CREATE":
+
+                    log.info("Rolling back CREATE migration {}", version);
+
+                    if (!engine.migrateDown(scriptOpt, database)) {
+                        return "Rollback failed for " + version;
+                    }
+
+                    break;
+
+                case "INSERT":
+
+                    log.info("Rolling back INSERT migration {}", version);
+
+                    if (!engine.migrateDown(scriptOpt, database)) {
+                        return "Rollback failed for " + version;
+                    }
+
+                    break;
+
+                case "ROLLBACK":
+
+                    log.info("Rolling back until version {}", version);
+
+                    List<Migration> history =
+                            helper.getMigrationHistory(connectionId, database);
+
+                    history.sort(Comparator.comparing(Migration::getVersion).reversed());
+
+                    for (Migration migration : history) {
+
+                        if (migration.getVersion().equals(version)) {
+                            break;
+                        }
+
+                        Optional<MigrationScript> migrationScript =
+                                Optional.ofNullable(loader.loadSpecificVersion(migration.getVersion(), connectionId));
+
+                        if (migrationScript.isPresent()) {
+
+                            boolean success =
+                                    engine.migrateDown(migrationScript.get(), database);
+
+                            if (!success) {
+                                return "Failed to rollback " + migration.getVersion();
+                            }
+                        }
+                    }
+
+                    break;
+
+                default:
+                    return "Invalid rollback type : " + rollbackType;
+            }
+
+            return "Rollback completed successfully.";
+
+        } catch (Exception e) {
+
+            log.error("Rollback failed", e);
+            return "Rollback error : " + e.getMessage();
+        }
+    }
 }

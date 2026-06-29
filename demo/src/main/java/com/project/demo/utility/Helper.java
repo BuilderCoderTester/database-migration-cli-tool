@@ -1,13 +1,10 @@
 package com.project.demo.utility;
 
 import com.project.demo.component.*;
-import com.project.demo.dto.ConnectionRequest;
 import com.project.demo.migrationValidator.exception.ValidationException;
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.repository.MigrationRepository;
-import com.project.demo.service.MigrationService;
-import jakarta.transaction.Status;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -143,6 +140,35 @@ public class Helper {
 
             while (rs.next()) {
                 versions.add(rs.getString("version"));
+            }
+        }
+
+        return versions;
+    }
+
+    public Map<String, Boolean> getScriptExecutedVersions(
+            Long connectionId,
+            String databaseName
+    ) throws SQLException {
+
+        Map<String, Boolean> versions = new HashMap<>();
+
+        String sql = """
+        SELECT version, success
+        FROM sub_migration
+        """;
+
+        try (
+                Connection conn = activeConnection(connectionContext.getCurrentDatabase());
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                ResultSet rs = stmt.executeQuery()
+        ) {
+
+            while (rs.next()) {
+                versions.put(
+                        rs.getString("version"),
+                        rs.getBoolean("success")
+                );
             }
         }
 
