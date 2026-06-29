@@ -16,6 +16,13 @@ spring:
       enabled: true
     history:
       enabled: true
+  ai:
+    google:
+      genai:
+        api-key: AQ.Ab8RN6Kzn-vczuy2Jhul4rEQ4pmwQMbe9NJnF8sH7oO1ncBGfA
+        chat:
+          options:
+            model: gemini-2.5-flash
 
 
 

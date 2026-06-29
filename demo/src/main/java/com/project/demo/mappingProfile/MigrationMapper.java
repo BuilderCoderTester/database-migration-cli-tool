@@ -15,7 +15,9 @@ public class MigrationMapper {
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public static MigrationDetailsDTO toDto(Migration migration) {
-
+        if (migration == null) {
+            return null;
+        }
         return MigrationDetailsDTO.builder()
                 .version(migration.getVersion())
                 .description(migration.getDescription())
@@ -32,7 +34,7 @@ public class MigrationMapper {
                         migration.getExecutedAt() != null
                                 ? migration.getExecutedAt().format(FORMATTER)
                                 : null)
-                .executionTime(migration.getExecutionTime())
+                .executionTime(migration.getExecutionTime()!= null ? migration.getExecutionTime() : 0L )
                 .checksum(migration.getChecksum())
                 .fileName(migration.getName())
                 .filePath(null)

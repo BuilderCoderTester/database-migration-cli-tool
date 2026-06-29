@@ -1,12 +1,15 @@
 package com.project.demo.component;
 
+import com.project.demo.BeforeExecutionValidation.SchemaValidatorService;
 import com.project.demo.config.MigrationProperties;
 import com.project.demo.dto.MigrationDetailsDTO;
 import com.project.demo.dto.MigrationStatisticsDTO;
 import com.project.demo.dto.RelatedScriptDTO;
+import com.project.demo.dto.response.ValidationResult;
 import com.project.demo.model.LogLevel;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.repository.MigrationLogRepo;
+import com.project.demo.repository.MigrationRepository;
 import com.project.demo.service.LogService;
 import com.project.demo.utility.Helper;
 import com.project.demo.utility.VersionUtils;
@@ -50,6 +53,11 @@ public class MigrationLoader {
     private final JdbcTemplate jdbcTemplate;
     private final LogService logService;
     private final Helper helper;
+    @Autowired
+    private SchemaValidatorService schemaValidatorService;
+    @Autowired
+    private MigrationRepository migrationRepository;
+
     public MigrationLoader(JdbcTemplate jdbcTemplate, MigrationLogRepo migrationLogRepo, LogService logService, Helper helper) {
         this.jdbcTemplate = jdbcTemplate;
         this.logService = logService;
@@ -57,7 +65,7 @@ public class MigrationLoader {
     }
 
     // LOAD PENDING MIGRATION ON SPECIFIC DATABASE CONNECTION
-    public List<MigrationScript> loadPendingMigrations( Set<String> executedVersions ,Long connectionId) throws IOException {
+    public List<MigrationScript> loadPendingMigrations(Set<String> executedVersions, Long connectionId) throws IOException {
 
         if (connectionId == null) {
             throw new RuntimeException("No active connection selected");
@@ -101,7 +109,7 @@ public class MigrationLoader {
 //                        versioned.add(script);
 //                    }
 
-                     executedVersions =
+                    executedVersions =
                             helper.getExecutedVersions(
                                     connectionId,
                                     connectionContext.getCurrentDatabase()
@@ -157,7 +165,7 @@ public class MigrationLoader {
     @Autowired
     public ConnectionContext connectionContext;
 
-    public MigrationScript loadSpecificVersion(String version , Long connectionId) throws IOException {
+    public MigrationScript loadSpecificVersion(String version, Long connectionId) throws IOException {
         Path path = Paths.get(properties.getPath());
         Path connectionPath = path.resolve("conn_" + connectionId);
         String exactPattern = String.format("%s__*.sql", version);
@@ -224,8 +232,8 @@ public class MigrationLoader {
 
     /// CREATION OF MIGRATION FILE
     /// PARAMETERS - VERSION , DESCRIPTION , UP_SCRIPT , DOWN_SCRIPT
-    public void createMigrationFile(String description, String upScript, String downScript)
-            throws IOException {
+    public void createMigrationFile(String description, String upScript, String downScript, Connection connection)
+            throws Exception {
 
         Long connectionId = connectionContext.getCurrentConnectionId();
         if (connectionId == null) {
@@ -280,17 +288,59 @@ public class MigrationLoader {
             content.append(downScript);
         }
 
+        String properVersion = 'V' + version;
+        System.out.println("the version is " + properVersion);
         Files.writeString(filePath, content.toString());
-        logService.log((fileName + " Migration Applied."), LogLevel.SUCCESS);
+        // ---------- CREATE MIGRATION OBJECT ----------
+        MigrationScript migrationScript = new MigrationScript();
+        migrationScript.setVersion(properVersion);
+        migrationScript.setDescription(description);
+        migrationScript.setName(fileName);
+        migrationScript.setUpScript(upScript);
+        migrationScript.setDownScript(downScript);
+
+        ValidationResult result = schemaValidatorService.validate(migrationScript, loadOtherMigrationScript(migrationScript.getVersion(), connectionId));
+        if (result.isValid()) {
+            // ---------- SAVE TO SUB_MIGRATION TABLE ----------
+            migrationRepository.saveCreatedMigration(
+                    migrationScript,
+                    connectionId,
+                    connection, content
+            );
+            logService.log((fileName + " Migration Applied."), LogLevel.SUCCESS);
+        } else {
+
+            logService.log((fileName + " Migration Failed."), LogLevel.ERROR);
+        }
+
     }
 
-    public List<MigrationScript> listAllPendingMigration(Long connectionId,Connection connection) {
+    public List<MigrationScript> loadOtherMigrationScript(String targetVersion, long connectionId) throws IOException {
+
+        Path path = Paths.get("migrations");
+        Path connectedPath = path.resolve("conn_" + connectionId);
+
+        if (!Files.exists(connectedPath)) {
+            return List.of();
+        }
+
+        try (Stream<Path> files = Files.list(connectedPath)) {
+            return files
+                    .filter(p -> p.getFileName().toString().endsWith(".sql"))
+                    .map(this::parseFileName)
+                    .filter(script -> !script.getVersion().equalsIgnoreCase(targetVersion))
+                    .sorted(Comparator.comparing(MigrationScript::getVersion))
+                    .toList();
+        }
+    }
+
+    public List<MigrationScript> listAllPendingMigration(Long connectionId, Connection connection) {
         try {
             // 1️⃣ Load all migration files from folder
             List<MigrationScript> allScripts = loadFromFolder(connectionId);
 
             // 2️⃣ Load executed versions from DB
-            Set<String> executedVersions = loadExecutedVersionsFromDB(connectionId,connection);
+            Set<String> executedVersions = loadExecutedVersionsFromDB(connectionId, connection);
 
             // 3️⃣ Filter pending scripts
             List<MigrationScript> pending = allScripts.stream()
@@ -318,8 +368,8 @@ public class MigrationLoader {
 
     public List<MigrationScript> loadFromFolder(Long connectionId) throws IOException {
 
-        if(connectionId == null){
-            throw  new RuntimeException("No active connection is selected.");
+        if (connectionId == null) {
+            throw new RuntimeException("No active connection is selected.");
         }
         Path path = Paths.get("migrations");
         Path connectedPath = path.resolve("conn_" + connectionId);
@@ -352,11 +402,11 @@ public class MigrationLoader {
     ) throws SQLException {
 
         String sql = """
-            SELECT version
-            FROM sub_migration
-            WHERE success = true
-            AND connection_id = ?
-            """;
+                SELECT version
+                FROM sub_migration
+                WHERE success = true
+                AND connection_id = ?
+                """;
 
         Set<String> versions = new HashSet<>();
 
@@ -422,9 +472,9 @@ public class MigrationLoader {
         }
     }
 
-    public MigrationScript getActualScript(MigrationScript migrationScript,long connectionId) throws IOException {
-        String version  = migrationScript.getVersion();
-        return loadSpecificVersion(version,connectionId);
+    public MigrationScript getActualScript(MigrationScript migrationScript, long connectionId) throws IOException {
+        String version = migrationScript.getVersion();
+        return loadSpecificVersion(version, connectionId);
 
     }
 
@@ -489,7 +539,7 @@ public class MigrationLoader {
         return null;
     }
 
-    public  MigrationStatisticsDTO calculateStatistics(List<RelatedScriptDTO> scripts) {
+    public MigrationStatisticsDTO calculateStatistics(List<RelatedScriptDTO> scripts) {
 
         int total = scripts.size();
 

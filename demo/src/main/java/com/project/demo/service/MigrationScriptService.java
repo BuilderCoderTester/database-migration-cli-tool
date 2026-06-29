@@ -44,10 +44,15 @@ public class MigrationScriptService {
             @Option(defaultValue = "", description = "Down SQL") String down
     ) {
         try {
-            loader.createMigrationFile(description, up, down);
+            Connection connection = connectionService.activeConnection(connectionContext.getCurrentDatabase());
+            loader.createMigrationFile(description, up, down,connection);
             return String.format("✓ Created migration V%s__%s.sql", version, description.replace(" ", "_"));
         } catch (IOException e) {
             return "Failed to create migration: " + e.getMessage();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -99,10 +104,11 @@ public class MigrationScriptService {
     }
 
     public MigrationDetailsResponse getMigrationDetails(Long connectionId, String versionId) throws IOException, SQLException {
+        System.out.println("the version "+ versionId);
         Connection connection = connectionService.activeConnection(connectionContext.getCurrentDatabase());
 
         MigrationScript originalScript = loader.loadSpecificVersion(versionId, connectionId);
-
+        System.out.println("the script is " +originalScript);
         MigrationDetailsDTO actualScript =
                 migrationRepository.loadMigrationScriptDetails(versionId, connectionId, connection);
 

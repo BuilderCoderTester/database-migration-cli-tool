@@ -2,6 +2,7 @@ package com.project.demo.Controller;
 import com.google.auto.value.AutoBuilder;
 import com.project.demo.dto.ApiResponse;
 import com.project.demo.dto.MigrationResult;
+import com.project.demo.dto.RollbackRequest;
 import com.project.demo.dto.request.MigrationRequest;
 import com.project.demo.service.MigrationLifecycleService;
 import com.project.demo.service.MigrationService;
@@ -27,6 +28,19 @@ public class MigrationExecutionController {
         System.out.println("reach point -1");
         return migrationLifecycleService.migrate(request);
     }
+    @PostMapping("/migrateByVersion")
+    public MigrationResult migrateByVersion(
+            @RequestParam("connectionId") Long connectionId,
+            @RequestParam String versionId) throws SQLException {
+        MigrationRequest request = new MigrationRequest();
+        request.setConnectionId(connectionId);
+        request.setTargetVersion(versionId);
+
+        System.out.println("reach point -1");
+
+        return migrationLifecycleService.migrateSingle(request);
+    }
+
     @PostMapping("/script/migrate")
     public MigrationResult migrateUpdateScript(@RequestParam("connectionId") long connectionId ,@RequestParam("versionId") String version) throws SQLException, IOException {
         MigrationRequest request = new MigrationRequest();
@@ -41,10 +55,16 @@ public class MigrationExecutionController {
     }
 
     @PostMapping("/rollback-version")
-    public ApiResponse rollbackByVersion(
-            @RequestParam(required = true) String targetVersion,
-            @RequestParam("connectionId") Long connectionId) {
-        return new ApiResponse(true, migrationLifecycleService.rollback(targetVersion, connectionId));
+    public ApiResponse rollback(@RequestBody RollbackRequest request) {
+
+        return new ApiResponse(
+                true,
+                migrationLifecycleService.rollbackByVersion(
+                        request.getVersion(),
+                        request.getRollbackType(),
+                        request.getConnectionId()
+                )
+        );
     }
 
     @PostMapping("/repair")

@@ -77,7 +77,7 @@ public class MigrationLockRepository {
                     locked_at = NULL,
                     locked_by = NULL,
                     heartbeat_at = NULL,
-                    last_completed_at = CURRENT_TIMESTAMP
+                    last_completed_time = CURRENT_TIMESTAMP
                 WHERE connection_id = ?
                 """;
 

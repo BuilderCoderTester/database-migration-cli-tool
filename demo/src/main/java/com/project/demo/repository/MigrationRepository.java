@@ -423,6 +423,23 @@ public class MigrationRepository {
 
         save(m,connectionId ,connection);
     }
+
+    public void saveCreatedMigration(MigrationScript script, Long connectionId,Connection connection,StringBuilder content) throws SQLException {
+
+        Migration migration = new Migration();
+
+        migration.setVersion(script.getVersion());
+        migration.setDescription(script.getDescription());
+        migration.setName(script.getName());
+        migration.setChecksum(calculateChecksum(script.getUpScript()));
+        migration.setScript(String.valueOf(content));
+        migration.setSuccess(false);      // Not executed yet
+        migration.setDirty(false);
+        migration.setRepeatable(false);
+        migration.setExecutionTime(System.currentTimeMillis());
+
+        save(migration,connectionId,connection);
+    }
     /// SFA checksum
     public String calculateChecksum(String content) {
         try {
@@ -527,7 +544,11 @@ public boolean existsByVersion(String version) {
             actualScript.setDescription(resultSet.getString("description"));
             actualScript.setScript(resultSet.getString("script"));
             actualScript.setChecksum(resultSet.getString("checksum"));
-            actualScript.setExecutedAt(resultSet.getTimestamp("executed_at").toLocalDateTime());
+            Timestamp executedAt = resultSet.getTimestamp("executed_at");
+
+            actualScript.setExecutedAt(
+                    executedAt != null ? executedAt.toLocalDateTime() : null
+            );
             actualScript.setExecutionTime(resultSet.getLong("execution_time"));
             actualScript.setSuccess(resultSet.getBoolean("success"));
             actualScript.setErrorMessage(resultSet.getString("error_message"));
