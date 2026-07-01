@@ -41,13 +41,13 @@ public class ASTDependencyExtractor {
 
                             String refTable = refPart.substring(0, refPart.indexOf("(")).trim();
 
-                            deps.add(new Dependency(
-                                    DependencyType.TABLE,
-                                    refTable,
-                                    null,
-                                    null,
-                                    null
-                            ));
+//                            deps.add(new Dependency(
+//                                    DependencyType.TABLE,
+//                                    refTable,
+//                                    null,
+//                                    null,
+//                                    null
+//                            ));
                         }
                     }
                 });

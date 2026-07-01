@@ -32,7 +32,7 @@ public class DependencyMapper {
 
                 case COLUMN -> {
                     ColumnSchemaDto column = new ColumnSchemaDto();
-                    column.setColumnName(dependency.getColumn());
+                    column.setColumnName(String.valueOf(dependency.getColumn()));
 
                     table.getColumns().add(column);
                 }
@@ -49,13 +49,13 @@ public class DependencyMapper {
                         pk = table.getPrimaryKeys().get(0);
                     }
 
-                    pk.getColumnNames().add(dependency.getColumn());
+                    pk.getColumnNames().add(String.valueOf(dependency.getColumn()));
                 }
 
                 case FOREIGN_KEY -> {
 
                     ForeignKeyDTO fk = new ForeignKeyDTO();
-                    fk.setColumnName(dependency.getColumn());
+                    fk.setColumnName(String.valueOf(dependency.getColumn()));
                     fk.setReferencedTable(dependency.getReferenceTable());
                     fk.setReferencedColumn(dependency.getReferenceColumn());
 

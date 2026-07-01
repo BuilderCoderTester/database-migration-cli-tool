@@ -4,6 +4,8 @@ import com.project.demo.dto.MigrationDetailsDTO;
 import com.project.demo.dto.MigrationDetailsResponse;
 import com.project.demo.dto.MigrationStatisticsDTO;
 import com.project.demo.dto.RelatedScriptDTO;
+import com.project.demo.dto.response.MigrationScriptCreateResponse;
+import com.project.demo.dto.response.ValidationResult;
 import com.project.demo.model.Migration;
 import com.project.demo.model.MigrationScript;
 
@@ -34,7 +36,7 @@ public class MigrationMapper {
                         migration.getExecutedAt() != null
                                 ? migration.getExecutedAt().format(FORMATTER)
                                 : null)
-                .executionTime(migration.getExecutionTime()!= null ? migration.getExecutionTime() : 0L )
+                .executionTime(migration.getExecutionTime() != null ? migration.getExecutionTime() : 0L)
                 .checksum(migration.getChecksum())
                 .fileName(migration.getName())
                 .filePath(null)
@@ -72,5 +74,36 @@ public class MigrationMapper {
                 relatedScripts,
                 statistics
         );
+    }
+
+    public static MigrationScriptCreateResponse toResponse(
+            ValidationResult result) {
+
+        if (result.isValid()) {
+            return MigrationScriptCreateResponse.success(
+                    result.getMessage(),
+                    null,
+                    null
+            );
+        }
+
+        return MigrationScriptCreateResponse.failure(
+                result.getMessage(),
+                buildReason(result)
+        );
+    }
+
+    private static String buildReason(ValidationResult result) {
+
+        if (result.getExistingMigrationVersion() != null) {
+            return String.format(
+                    "Table '%s' already exists in migration %s (%s).",
+                    result.getTableName(),
+                    result.getExistingMigrationVersion(),
+                    result.getExistingMigrationName()
+            );
+        }
+
+        return result.getMessage();
     }
 }

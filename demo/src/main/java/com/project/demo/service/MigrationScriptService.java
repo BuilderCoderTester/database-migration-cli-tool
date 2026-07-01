@@ -6,6 +6,9 @@ import com.project.demo.dto.MigrationDetailsDTO;
 import com.project.demo.dto.MigrationDetailsResponse;
 import com.project.demo.dto.MigrationStatisticsDTO;
 import com.project.demo.dto.RelatedScriptDTO;
+import com.project.demo.dto.response.MigrationScriptCreateResponse;
+import com.project.demo.dto.response.ValidationResult;
+import com.project.demo.exception.MigrationCreationException;
 import com.project.demo.mappingProfile.MigrationMapper;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.repository.MigrationRepository;
@@ -37,7 +40,7 @@ public class MigrationScriptService {
     @Autowired
     private MigrationRepository migrationRepository;
 
-    public String create(
+    public MigrationScriptCreateResponse create(
             @Option(required = false, description = "Migration version") String version,
             @Option(required = true, description = "Description") String description,
             @Option(defaultValue = "", description = "Up SQL") String up,
@@ -45,14 +48,14 @@ public class MigrationScriptService {
     ) {
         try {
             Connection connection = connectionService.activeConnection(connectionContext.getCurrentDatabase());
-            loader.createMigrationFile(description, up, down,connection);
-            return String.format("✓ Created migration V%s__%s.sql", version, description.replace(" ", "_"));
-        } catch (IOException e) {
-            return "Failed to create migration: " + e.getMessage();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+            ValidationResult result = loader.createMigrationFile(description, up, down, connection);
+            return MigrationMapper.toResponse(result);
+
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new MigrationCreationException(
+                    "Failed to create migration.",
+                    e
+            );
         }
     }
 
@@ -104,11 +107,11 @@ public class MigrationScriptService {
     }
 
     public MigrationDetailsResponse getMigrationDetails(Long connectionId, String versionId) throws IOException, SQLException {
-        System.out.println("the version "+ versionId);
+        System.out.println("the version " + versionId);
         Connection connection = connectionService.activeConnection(connectionContext.getCurrentDatabase());
 
         MigrationScript originalScript = loader.loadSpecificVersion(versionId, connectionId);
-        System.out.println("the script is " +originalScript);
+        System.out.println("the script is " + originalScript);
         MigrationDetailsDTO actualScript =
                 migrationRepository.loadMigrationScriptDetails(versionId, connectionId, connection);
 

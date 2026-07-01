@@ -21,11 +21,11 @@ public class ASTSchemaExtractor {
         SchemaModel schema = new SchemaModel();
 
         if (statement instanceof CreateTable createTable) {
-
+            System.out.println("yes");
             parseCreateTable(createTable, schema);
 
         }
-
+        System.out.println("no");
         return schema;
     }
 

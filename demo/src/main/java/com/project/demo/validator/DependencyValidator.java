@@ -79,7 +79,7 @@ public class DependencyValidator {
             throw new RuntimeException("⚠️ Column validation failed: table not specified for column " + dep.getColumn());
         }
 
-        if (!columnExists(conn, dep.getTable(), dep.getColumn())) {
+        if (!columnExists(conn, dep.getTable(), String.valueOf(dep.getColumn()))) {
             throw new RuntimeException(
                     "❌ Missing column: " + dep.getColumn() + " in table " + dep.getTable()
             );
@@ -108,7 +108,7 @@ public class DependencyValidator {
     // =========================
     private void validateIndex(Dependency dep, Connection conn) throws SQLException {
 
-        if (!indexExists(conn, dep.getTable(), dep.getColumn())) {
+        if (!indexExists(conn, dep.getTable(), String.valueOf(dep.getColumn()))) {
             throw new RuntimeException(
                     "❌ Missing index: " + dep.getColumn()
                             + " on table " + dep.getTable()

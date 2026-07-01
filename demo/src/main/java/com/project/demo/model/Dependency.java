@@ -43,4 +43,15 @@ public class Dependency {
      * Used only for VERSION dependency.
      */
     private String version;
+
+    public Dependency(DependencyType dependencyType, String name, Object o, Object o1, Object o2) {
+    }
+
+    public String getReferenceTable() {
+        return null ;
+    }
+
+    public String getReferenceColumn() {
+        return  null;
+    }
 }
