@@ -2,6 +2,7 @@ package com.project.demo.Controller;
 
 import com.project.demo.dto.ApiResponse;
 import com.project.demo.dto.MigrationDetailsResponse;
+import com.project.demo.dto.response.MigrationScriptCreateResponse;
 import com.project.demo.model.MigrationScript;
 import com.project.demo.service.MigrationScriptService;
 import com.project.demo.service.MigrationService;
@@ -30,15 +31,15 @@ import java.util.stream.Stream;
 @Slf4j
 public class MigrationScriptController {
     @Autowired
-    private  MigrationScriptService migrationScriptService;
+    private MigrationScriptService migrationScriptService;
 
     @PostMapping("/create")
-    public ApiResponse create(
+    public MigrationScriptCreateResponse create(
             @RequestParam(required = false) String version,
             @RequestParam String description,
             @RequestParam(required = false) String migrateUp,
             @RequestParam(required = false) String migrateDown) {
-        return new ApiResponse(true,
+        return (
                 migrationScriptService.create(version, description, migrateUp, migrateDown));
     }
 

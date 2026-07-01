@@ -1,5 +1,8 @@
 package com.project.demo.service;
 
+import com.project.demo.BeforeExecutionValidation.builder.DatabaseSchemaBuilder;
+import com.project.demo.BeforeExecutionValidation.comparator.SchemaComparator;
+import com.project.demo.BeforeExecutionValidation.parser.ASTSchemaExtractor;
 import com.project.demo.component.*;
 import com.project.demo.dto.MigrationResult;
 import com.project.demo.dto.StatusResponse;
@@ -52,7 +55,14 @@ public class MigrationLifecycleService {
     @Autowired
     private RepairEngine repairEngine;
 
+    @Autowired
+    private DatabaseSchemaBuilder databaseSchemaBuilder;
 
+    @Autowired
+    private ASTSchemaExtractor astSchemaExtractor;
+
+    @Autowired
+    private SchemaComparator schemaComparator;
     /**
      * Execute the Migration Script : Partially Done.
      */

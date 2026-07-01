@@ -232,7 +232,7 @@ public class MigrationLoader {
 
     /// CREATION OF MIGRATION FILE
     /// PARAMETERS - VERSION , DESCRIPTION , UP_SCRIPT , DOWN_SCRIPT
-    public void createMigrationFile(String description, String upScript, String downScript, Connection connection)
+    public ValidationResult createMigrationFile(String description, String upScript, String downScript, Connection connection)
             throws Exception {
 
         Long connectionId = connectionContext.getCurrentConnectionId();
@@ -287,11 +287,8 @@ public class MigrationLoader {
             content.append("\n\n-- DOWN\n\n");
             content.append(downScript);
         }
-
         String properVersion = 'V' + version;
         System.out.println("the version is " + properVersion);
-        Files.writeString(filePath, content.toString());
-        // ---------- CREATE MIGRATION OBJECT ----------
         MigrationScript migrationScript = new MigrationScript();
         migrationScript.setVersion(properVersion);
         migrationScript.setDescription(description);
@@ -299,25 +296,34 @@ public class MigrationLoader {
         migrationScript.setUpScript(upScript);
         migrationScript.setDownScript(downScript);
 
+//        System.out.println("The migration script is : " + migrationScript.toString());
         ValidationResult result = schemaValidatorService.validate(migrationScript, loadOtherMigrationScript(migrationScript.getVersion(), connectionId));
+        System.out.println("the result after is : "+result.toString());
         if (result.isValid()) {
+            Files.writeString(filePath, content.toString());
+
             // ---------- SAVE TO SUB_MIGRATION TABLE ----------
             migrationRepository.saveCreatedMigration(
                     migrationScript,
                     connectionId,
                     connection, content
             );
+
             logService.log((fileName + " Migration Applied."), LogLevel.SUCCESS);
+            return ValidationResult.success("Migration Applied !!!!! ");
         } else {
 
             logService.log((fileName + " Migration Failed."), LogLevel.ERROR);
         }
+        return ValidationResult.error("Migration not Applied !HAHA!HADA! ");
 
     }
 
-    public List<MigrationScript> loadOtherMigrationScript(String targetVersion, long connectionId) throws IOException {
+    public List<MigrationScript> loadOtherMigrationScript(
+            String targetVersion,
+            long connectionId) throws IOException {
 
-        Path path = Paths.get("migrations");
+        Path path = Paths.get(properties.getPath());
         Path connectedPath = path.resolve("conn_" + connectionId);
 
         if (!Files.exists(connectedPath)) {
@@ -325,9 +331,27 @@ public class MigrationLoader {
         }
 
         try (Stream<Path> files = Files.list(connectedPath)) {
+
             return files
                     .filter(p -> p.getFileName().toString().endsWith(".sql"))
-                    .map(this::parseFileName)
+                    .map(file -> {
+                        try {
+                            String name = file.getFileName().toString();
+                            String[] parts = name.replace(".sql", "").split("__");
+
+                            String content = Files.readString(file);
+
+                            MigrationScript script =
+                                    parseScript(parts[0], parts[1], content);
+
+                            script.setFileName(name);
+
+                            return script;
+
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
                     .filter(script -> !script.getVersion().equalsIgnoreCase(targetVersion))
                     .sorted(Comparator.comparing(MigrationScript::getVersion))
                     .toList();
@@ -387,7 +411,7 @@ public class MigrationLoader {
     private MigrationScript parseFileName(Path file) {
 
         String name = file.getFileName().toString(); // V1__init.sql
-
+        System.out.println("the name is" + name);
         String[] parts = name.replace(".sql", "").split("__");
 
         return new MigrationScript(

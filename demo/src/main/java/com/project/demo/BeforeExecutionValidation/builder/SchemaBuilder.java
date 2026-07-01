@@ -6,6 +6,7 @@ import com.project.demo.model.MigrationScript;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -16,7 +17,7 @@ public class SchemaBuilder {
     private ASTSchemaExtractor extractor;
 
     public SchemaModel build(List<MigrationScript> migrations) throws Exception {
-
+//        System.out.println(Arrays.toString(migrations.toArray()));
         SchemaModel schema = new SchemaModel();
 
         migrations.stream()
@@ -24,7 +25,6 @@ public class SchemaBuilder {
                 .forEach(script -> {
 
                     try {
-
                         SchemaModel parsed =
                                 extractor.extract(script.getUpScript());
 
@@ -41,7 +41,8 @@ public class SchemaBuilder {
     private void merge(
             SchemaModel current,
             SchemaModel incoming) {
-
+//        System.out.println("the current : "+ current);
+//        System.out.println("the current : "+ incoming);
         incoming.getTables().forEach((tableName, table) -> {
 
             current.getTables().putIfAbsent(

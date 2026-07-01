@@ -26,11 +26,12 @@ public class SchemaComparator {
     private boolean isDuplicateTable(
             SchemaModel current,
             TableModel incomingTable) {
-
+        System.out.println("Incoming: " + incomingTable.getTableName());
+        System.out.println("Current tables: " + current.getTables().keySet());
         TableModel existing =
                 current.getTables()
                         .get(incomingTable.getTableName());
-
+        System.out.println("Found: " + existing);
         if (existing == null) {
             return false;
         }

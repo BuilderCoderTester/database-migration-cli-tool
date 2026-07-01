@@ -25,24 +25,28 @@ public class SchemaValidatorService {
 
         SchemaModel current =
                 schemaBuilder.build(history);
-
+//        System.out.println("Other scripts : "+current.toString());
         SchemaModel incoming =
                 schemaBuilder.build(newMigration);
-        if (comparator.isDuplicate(current, incoming)) {
-
+//        System.out.println("New created Script: " + incoming.toString());
+        boolean value = comparator.isDuplicate(current, incoming);
+        if (value) {
             return ValidationResult.error(
                     "An identical migration already exists."
             );
         }
-
-        if (!comparator.introducesNewChanges(
+        boolean val = !comparator.introducesNewChanges(
                 current,
-                incoming)) {
+                incoming);
+        System.out.println("the boolean value is " + val);
+
+        if (val) {
 
             return ValidationResult.error(
                     "Migration introduces no new schema changes."
             );
         }
+        System.out.println("reach point schema service -1");
 
         return ValidationResult.success(
                 "Validation successful."
