@@ -18,6 +18,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
+import javax.xml.transform.Result;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
@@ -561,6 +562,53 @@ public boolean existsByVersion(String version) {
 
         return MigrationMapper.toDto(actualScript);
 
+    }
+
+    public List<Migration> loadAllPendingMigrationScript(
+            Connection connection,
+            Long connectionId) throws SQLException {
+
+        List<Migration> migrations = new ArrayList<>();
+
+        try (PreparedStatement statement =
+                     connection.prepareStatement(MigrationQuery.GET_PENDING_MIGRATION_SCRIPT)) {
+
+            statement.setLong(1, connectionId);
+
+            try (ResultSet rs = statement.executeQuery()) {
+
+                while (rs.next()) {
+
+                    Migration migration = new Migration();
+
+                    migration.setVersion(rs.getString("version"));
+                    migration.setDescription(rs.getString("description"));
+                    migration.setScript(rs.getString("script"));
+                    migration.setChecksum(rs.getString("checksum"));
+
+                    Timestamp executedAt = rs.getTimestamp("executed_at");
+                    if (executedAt != null) {
+                        migration.setExecutedAt(executedAt.toLocalDateTime());
+                    }
+
+                    migration.setExecutionTime(rs.getLong("execution_time"));
+                    migration.setSuccess(rs.getBoolean("success"));
+                    migration.setErrorMessage(rs.getString("error_message"));
+                    migration.setErrorStackTrace(rs.getString("error_stack_trace"));
+                    migration.setRetryCount(rs.getInt("retry_count"));
+                    migration.setDirty(rs.getBoolean("dirty"));
+                    migration.setRepeatable(rs.getBoolean("repeatable"));
+                    migration.setName(rs.getString("name"));
+                    ConnectionConfig connectionConfig = new ConnectionConfig();
+                    connectionConfig.setConnectionId(rs.getLong("connection_id"));
+                    migration.setConnection(connectionConfig);
+
+                    migrations.add(migration);
+                }
+            }
+        }
+
+        return migrations;
     }
 
     private static class MigrationRowMapper implements RowMapper<Migration> {

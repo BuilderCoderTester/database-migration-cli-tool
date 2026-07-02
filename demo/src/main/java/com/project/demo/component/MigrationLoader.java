@@ -359,35 +359,7 @@ public class MigrationLoader {
     }
 
     public List<MigrationScript> listAllPendingMigration(Long connectionId, Connection connection) {
-        try {
-            // 1️⃣ Load all migration files from folder
-            List<MigrationScript> allScripts = loadFromFolder(connectionId);
-
-            // 2️⃣ Load executed versions from DB
-            Set<String> executedVersions = loadExecutedVersionsFromDB(connectionId, connection);
-
-            // 3️⃣ Filter pending scripts
-            List<MigrationScript> pending = allScripts.stream()
-                    .filter(script -> !executedVersions.contains(script.getVersion()))
-                    .toList();
-
-            // 4️⃣ Format output
-            if (pending.isEmpty()) {
-                return Collections.emptyList();
-            }
-            StringBuilder sb = new StringBuilder("⏳ Pending Migrations:\n");
-
-            for (MigrationScript script : pending) {
-                sb.append(String.format(" - %s__%s\n",
-                        script.getVersion(),
-                        script.getDescription()));
-            }
-
-            return pending;
-
-        } catch (Exception e) {
-            return Collections.emptyList();
-        }
+        List<Migration> pendingScript = migrationRepository.loadAllPendingMigrationScript(connection,c);
     }
 
     public List<MigrationScript> loadFromFolder(Long connectionId) throws IOException {
