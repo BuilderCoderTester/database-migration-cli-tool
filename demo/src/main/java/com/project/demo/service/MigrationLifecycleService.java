@@ -2,6 +2,7 @@ package com.project.demo.service;
 
 import com.project.demo.BeforeExecutionValidation.builder.DatabaseSchemaBuilder;
 import com.project.demo.BeforeExecutionValidation.comparator.SchemaComparator;
+import com.project.demo.BeforeExecutionValidation.model.SchemaModel;
 import com.project.demo.BeforeExecutionValidation.parser.ASTSchemaExtractor;
 import com.project.demo.component.*;
 import com.project.demo.dto.MigrationResult;
@@ -63,6 +64,7 @@ public class MigrationLifecycleService {
 
     @Autowired
     private SchemaComparator schemaComparator;
+
     /**
      * Execute the Migration Script : Partially Done.
      */
@@ -162,7 +164,7 @@ public class MigrationLifecycleService {
      */
     @Transactional
     public MigrationResult migrateSingle(MigrationRequest request) throws SQLException {
-        System.out.println("the version in here" + request.getTargetVersion());
+
         Long connectionId = request.getConnectionId();
         String targetVersion = request.getTargetVersion();
 
@@ -180,6 +182,7 @@ public class MigrationLifecycleService {
         connection.setAutoCommit(false);
 
         String lockedBy = null;
+        MigrationScript targetScript = null;
 
         try {
 
@@ -192,9 +195,16 @@ public class MigrationLifecycleService {
             lockedBy = migrationLockService.acquireLock(connection, connectionId);
             migrationLockService.updateHeartbeat(connection);
 
-            // Already executed?
+            // Build current database schema
+            SchemaModel currentSchema =
+                    databaseSchemaBuilder.build(connection);
+
+            // Check if migration is already executed
             Map<String, Boolean> executedVersions =
-                    helper.getScriptExecutedVersions(connectionId, connectionContext.getCurrentDatabase());
+                    helper.getScriptExecutedVersions(
+                            connectionId,
+                            connectionContext.getCurrentDatabase());
+
             if (Boolean.TRUE.equals(executedVersions.get(targetVersion))) {
                 return new MigrationResult(
                         "Migration " + targetVersion + " is already executed successfully.",
@@ -203,15 +213,38 @@ public class MigrationLifecycleService {
                 );
             }
 
-            // Find requested migration
-            MigrationScript targetScript = loader.loadSpecificVersion(targetVersion,connectionId);
-            if(targetScript == null){
-                System.out.println("the target script is null");
-            };
+            // Load target migration
+            targetScript =
+                    loader.loadSpecificVersion(targetVersion, connectionId);
+
+            if (targetScript == null) {
+                throw new RuntimeException(
+                        "Migration " + targetVersion + " not found."
+                );
+            }
+
+            // Build schema from migration script
+            SchemaModel incomingSchema =
+                    astSchemaExtractor.extract(targetScript.getUpScript());
+
+            // Compare schemas
+            boolean duplicate =
+                    schemaComparator.isDuplicate(
+                            currentSchema,
+                            incomingSchema
+                    );
+
+            if (duplicate) {
+                throw new RuntimeException(
+                        "Migration cannot be executed because the schema already exists in the database."
+                );
+            }
 
             // Detect operation
             request.setOperation(
-                    sqlOperationDetector.detectOperation(targetScript.getDescription())
+                    sqlOperationDetector.detectOperation(
+                            targetScript.getDescription()
+                    )
             );
 
             // Execute migration
@@ -234,16 +267,12 @@ public class MigrationLifecycleService {
             connection.rollback();
 
             try {
-                MigrationScript targetScript = loader.loadPendingMigrations(
-                                helper.getExecutedVersions(connectionId, connectionContext.getCurrentDatabase()),
-                                connectionId
-                        ).stream()
-                        .filter(s -> s.getVersion().equals(targetVersion))
-                        .findFirst()
-                        .orElse(null);
-
                 if (targetScript != null) {
-                    migrationRepository.saveFailure(targetScript, connectionId, ex);
+                    migrationRepository.saveFailure(
+                            targetScript,
+                            connectionId,
+                            ex
+                    );
                 }
             } catch (Exception ignored) {
             }
@@ -257,11 +286,18 @@ public class MigrationLifecycleService {
         } finally {
 
             try {
-                migrationLockService.releaseLock(connection, connectionId, lockedBy);
+                migrationLockService.releaseLock(
+                        connection,
+                        connectionId,
+                        lockedBy
+                );
             } catch (Exception ignored) {
             }
 
-            connection.close();
+            try {
+                connection.close();
+            } catch (Exception ignored) {
+            }
         }
     }
 
