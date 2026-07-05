@@ -1,15 +1,11 @@
 package com.project.demo.component;
 
-import com.project.demo.dto.MigrationScriptStatus;
+import com.project.demo.modules.migration.dto.MigrationScriptStatus;
 import com.project.demo.enumuration.Status;
-import com.project.demo.model.Dependency;
-import com.project.demo.model.MigrationLogs;
-import com.project.demo.model.MigrationScript;
-import com.project.demo.parser.ASTDependencyExtractor;
-import com.project.demo.repository.MigrationRepository;
-import com.project.demo.service.ConnectionService;
-import com.project.demo.service.MigrationFailureService;
-import com.project.demo.validator.DependencyValidator;
+import com.project.demo.modules.migration.model.MigrationScript;
+import com.project.demo.modules.migration.repository.MigrationRepository;
+import com.project.demo.modules.migration.service.ConnectionService;
+import com.project.demo.modules.migration.service.MigrationFailureService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.List;
 
 @Component
 public class MigrationOrchestrator {

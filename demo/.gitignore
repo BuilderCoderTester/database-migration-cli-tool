@@ -37,3 +37,4 @@ build/
 .idea/
 .env
 ../migrations/
+src/main/resources/application.yml

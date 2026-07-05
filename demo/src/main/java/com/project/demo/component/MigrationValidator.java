@@ -1,13 +1,10 @@
 package com.project.demo.component;
 
-import com.project.demo.model.Migration;
-import com.project.demo.model.MigrationScript;
-import com.project.demo.repository.MigrationRepository;
-import com.project.demo.service.ChecksumService;
+import com.project.demo.modules.migration.model.MigrationScript;
+import com.project.demo.modules.migration.repository.MigrationRepository;
+import com.project.demo.modules.migration.service.ChecksumService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor

@@ -1,18 +1,10 @@
 package com.project.demo.component;
 
-import com.project.demo.model.Migration;
-import com.project.demo.repository.MigrationRepository;
-import com.project.demo.service.MigrationService;
+import com.project.demo.modules.migration.repository.MigrationRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.JdbcAccessor;
 import org.springframework.stereotype.Component;
-
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.Optional;
 
 @Component
 @AllArgsConstructor

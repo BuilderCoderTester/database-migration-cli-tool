@@ -2,9 +2,9 @@ package com.project.demo.BeforeExecutionValidation;
 
 import com.project.demo.BeforeExecutionValidation.builder.SchemaBuilder;
 import com.project.demo.BeforeExecutionValidation.comparator.SchemaComparator;
-import com.project.demo.dto.response.ValidationResult;
+import com.project.demo.modules.migration.dto.response.ValidationResult;
 import com.project.demo.BeforeExecutionValidation.model.SchemaModel;
-import com.project.demo.model.MigrationScript;
+import com.project.demo.modules.migration.model.MigrationScript;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

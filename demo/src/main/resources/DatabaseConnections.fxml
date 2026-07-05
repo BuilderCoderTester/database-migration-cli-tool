@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane
+        xmlns:fx="http://javafx.com/fxml"
+        fx:controller="com.project.demo.api.rest.javafx.DatabaseConnectionsController"
+        fx:id="dashboardConnection"
+        stylesheets="@css/connection.css"
+>
+    <center>
+        <ScrollPane
+                fitToWidth="true"
+                vbarPolicy="AS_NEEDED"
+                styleClass="content-scrollpane">
+            <content>
+                <VBox spacing="24" styleClass="content-container">
+                    <padding>
+                        <Insets top="24" right="24" bottom="24" left="24"/>
+                    </padding>
+
+                    <!-- ================= HEADER CARD ================= -->
+                    <VBox spacing="12" styleClass="card-panel, header-hero-card">
+                        <padding>
+                            <Insets top="24" right="24" bottom="24" left="24"/>
+                        </padding>
+                        <HBox alignment="CENTER_LEFT">
+                            <VBox spacing="6" HBox.hgrow="ALWAYS">
+                                <Label text="DATABASE" styleClass="status-chip, database-tag"/>
+                                <Label text="Database Connections" styleClass="page-title-large"/>
+                                <Label text="Manage PostgreSQL connections used by the migration engine."
+                                       styleClass="page-subtitle"/>
+                            </VBox>
+                            <Button text="+ New Connection" styleClass="btn-teal-action"
+                                    onAction="#addNewConnections"/>
+                        </HBox>
+                    </VBox>
+
+                    <TilePane fx:id="connectionTilePane"
+                              hgap="20"
+                              vgap="20"
+                              prefColumns="3"
+                              tileAlignment="TOP_LEFT"/>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </center>
+</BorderPane>

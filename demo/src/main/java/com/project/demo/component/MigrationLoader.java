@@ -2,20 +2,19 @@ package com.project.demo.component;
 
 import com.project.demo.BeforeExecutionValidation.SchemaValidatorService;
 import com.project.demo.config.MigrationProperties;
-import com.project.demo.dto.MigrationDetailsDTO;
-import com.project.demo.dto.MigrationStatisticsDTO;
-import com.project.demo.dto.RelatedScriptDTO;
-import com.project.demo.dto.response.ValidationResult;
-import com.project.demo.model.LogLevel;
-import com.project.demo.model.MigrationScript;
-import com.project.demo.repository.MigrationLogRepo;
-import com.project.demo.repository.MigrationRepository;
-import com.project.demo.service.LogService;
+import com.project.demo.modules.migration.dto.MigrationStatisticsDTO;
+import com.project.demo.modules.migration.dto.RelatedScriptDTO;
+import com.project.demo.modules.migration.dto.response.ValidationResult;
+import com.project.demo.modules.migration.model.LogLevel;
+import com.project.demo.modules.migration.model.Migration;
+import com.project.demo.modules.migration.model.MigrationScript;
+import com.project.demo.modules.migration.repository.MigrationLogRepo;
+import com.project.demo.modules.migration.repository.MigrationRepository;
+import com.project.demo.modules.migration.service.LogService;
 import com.project.demo.utility.Helper;
 import com.project.demo.utility.VersionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -29,9 +28,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import java.nio.file.*;
-import java.util.*;
-import java.util.regex.*;
 import java.util.stream.*;
 import java.util.Comparator;
 
@@ -358,10 +354,24 @@ public class MigrationLoader {
         }
     }
 
-    public List<MigrationScript> listAllPendingMigration(Long connectionId, Connection connection) {
-        List<Migration> pendingScript = migrationRepository.loadAllPendingMigrationScript(connection,c);
+    public List<MigrationScript> listAllPendingMigration(Long connectionId, Connection connection) throws SQLException {
+        List<Migration> pendingScripts =
+                migrationRepository.loadAllPendingMigrationScript(connection, connectionId);
+
+        return pendingScripts.stream()
+                .map(this::mapToMigrationScript)
+                .toList();
     }
 
+    private MigrationScript mapToMigrationScript(Migration migration) {
+        MigrationScript script = new MigrationScript();
+
+        script.setVersion(migration.getVersion());
+        script.setDescription(migration.getDescription());
+        // Map the remaining fields as needed
+
+        return script;
+    }
     public List<MigrationScript> loadFromFolder(Long connectionId) throws IOException {
 
         if (connectionId == null) {

@@ -1,10 +1,10 @@
 package com.project.demo.component;
 
-import com.project.demo.dto.MigrationScriptStatus;
-import com.project.demo.model.Dependency;
-import com.project.demo.model.MigrationScript;
-import com.project.demo.parser.ASTDependencyExtractor;
-import com.project.demo.validator.DependencyValidator;
+import com.project.demo.modules.migration.dto.MigrationScriptStatus;
+import com.project.demo.modules.migration.model.Dependency;
+import com.project.demo.modules.migration.model.MigrationScript;
+import com.project.demo.modules.migration.parser.ASTDependencyExtractor;
+import com.project.demo.modules.migration.validator.DependencyValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
