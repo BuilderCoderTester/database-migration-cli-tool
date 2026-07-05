@@ -1,10 +1,10 @@
 package com.project.demo.modules.migration.dto.request;
 
 import com.project.demo.enumuration.DatabaseOperation;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.jetbrains.annotations.NotNull;
 
 @Getter
 @Setter
