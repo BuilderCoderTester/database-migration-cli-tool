@@ -1,7 +1,7 @@
 package com.project.demo.migrationRepair.interfaces;
 
 import com.project.demo.migrationRepair.exception.RepairException;
-import com.project.demo.model.MigrationScript;
+import com.project.demo.modules.migration.model.MigrationScript;
 
 import java.sql.Connection;
 

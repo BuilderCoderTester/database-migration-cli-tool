@@ -1,7 +1,7 @@
 package com.project.demo.component;
 
 import com.project.demo.enumuration.Status;
-import com.project.demo.model.MigrationScript;
+import com.project.demo.modules.migration.model.MigrationScript;
 import com.project.demo.utility.Helper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

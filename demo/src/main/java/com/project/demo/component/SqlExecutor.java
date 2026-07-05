@@ -1,7 +1,6 @@
 package com.project.demo.component;
 
-import com.project.demo.service.CommonService;
-import com.project.demo.utility.Helper;
+import com.project.demo.modules.migration.service.CommonService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;

@@ -2,9 +2,9 @@ package com.project.demo.utility;
 
 import com.project.demo.component.*;
 import com.project.demo.migrationValidator.exception.ValidationException;
-import com.project.demo.model.Migration;
-import com.project.demo.model.MigrationScript;
-import com.project.demo.repository.MigrationRepository;
+import com.project.demo.modules.migration.model.Migration;
+import com.project.demo.modules.migration.model.MigrationScript;
+import com.project.demo.modules.migration.repository.MigrationRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -194,8 +194,9 @@ public class Helper {
     }
     /// history of migration records
     public List<Migration> getMigrationHistory(Long connectionId,String currentDatabase) throws SQLException {
+        String databaseName = connectionContext.getCurrentDatabase();
         Connection connection = activeConnection(currentDatabase);
-        return repository.findAll(connectionId,connection);
+        return repository.findAll(connectionId,connection,databaseName);
     }
 
     ///  checksum validation

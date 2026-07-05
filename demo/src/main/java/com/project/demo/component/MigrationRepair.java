@@ -1,8 +1,7 @@
 package com.project.demo.component;
 
 import com.project.demo.enumuration.DatabaseOperation;
-import com.project.demo.model.MigrationScript;
-import com.project.demo.service.MigrationService;
+import com.project.demo.modules.migration.model.MigrationScript;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

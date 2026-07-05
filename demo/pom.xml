@@ -47,12 +47,6 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- CLI -->
-        <dependency>
-            <groupId>org.springframework.shell</groupId>
-            <artifactId>spring-shell-starter</artifactId>
-            <version>3.2.0</version>
-        </dependency>
 
         <!-- JDBC -->
         <dependency>
@@ -133,7 +127,7 @@
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>
-                        com.project.demo.javafx.Main
+                        com.project.demo.Main
                     </mainClass>
                 </configuration>
             </plugin>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.project.demo.api.rest.javafx.CreateMigrationController"
+      spacing="20"
+      prefWidth="780"
+      styleClass="modal-container">
+
+    <padding>
+        <Insets top="24" right="24" bottom="20" left="24"/>
+    </padding>
+
+    <!-- ================= HEADER SECTION ================= -->
+    <HBox alignment="TOP_LEFT">
+        <VBox spacing="6" HBox.hgrow="ALWAYS">
+            <Label text="✨ MANUAL MIGRATION" styleClass="modal-badge"/>
+            <Label text="Create Database Migration" styleClass="modal-title"/>
+            <Label text="Create a versioned SQL migration that can be executed against the selected database." styleClass="modal-subtitle"/>
+        </VBox>
+        <!-- Close 'X' Button -->
+        <Button text="✕" onAction="#handleCancel" styleClass="btn-close-icon"/>
+    </HBox>
+
+    <Separator styleClass="modal-separator"/>
+
+    <!-- ================= METADATA INPUTS SECTION ================= -->
+    <GridPane hgap="20" vgap="10" VBox.vgrow="NEVER">
+        <columnConstraints>
+            <ColumnConstraints hgrow="ALWAYS" minWidth="400"/>
+            <ColumnConstraints hgrow="NEVER" prefWidth="220"/>
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints vgrow="NEVER"/>
+        </rowConstraints>
+        <children>
+            <!-- Migration Name Field -->
+            <VBox spacing="8" GridPane.columnIndex="0">
+                <Label text="Migration Name" styleClass="input-label-bold"/>
+                <TextField fx:id="migrationNameField" promptText="create_employee_table" styleClass="modal-input-field"/>
+            </VBox>
+
+            <!-- Version Readonly / Status Box -->
+            <HBox spacing="12" alignment="CENTER_LEFT" GridPane.columnIndex="1" styleClass="version-display-box">
+                <padding>
+                    <Insets top="12" right="16" bottom="12" left="16"/>
+                </padding>
+                <Label text="📄" styleClass="version-box-icon"/>
+                <VBox spacing="2">
+                    <Label text="Version" styleClass="version-box-title"/>
+                    <Label text="V" styleClass="version-box-value"/>
+                </VBox>
+            </HBox>
+        </children>
+    </GridPane>
+
+    <!-- ================= SQL EDITORS SECTION ================= -->
+    <!-- UP Migration Editor -->
+    <VBox spacing="8" VBox.vgrow="ALWAYS">
+        <Label text="UP Migration" styleClass="input-label-bold"/>
+        <TextArea fx:id="upMigrationArea"
+                  text="-- Write your UP SQL here&#10;"
+                  prefHeight="120"
+                  styleClass="sql-code-editor"/>
+    </VBox>
+
+    <!-- DOWN Migration Editor -->
+    <VBox spacing="8" VBox.vgrow="ALWAYS">
+        <Label text="DOWN Migration" styleClass="input-label-bold"/>
+        <TextArea fx:id="downMigrationArea"
+                  text="-- Write your DOWN SQL here&#10;"
+                  prefHeight="120"
+                  styleClass="sql-code-editor"/>
+    </VBox>
+
+    <!-- ================= FOOTER ACTIONS SECTION ================= -->
+    <HBox alignment="CENTER_RIGHT" spacing="12">
+        <padding>
+            <Insets top="10"/>
+        </padding>
+        <Button text="Cancel" onAction="#handleCancel" styleClass="btn-modal-secondary"/>
+        <Button text="Create Migration" onAction="#handleCreate" styleClass="btn-modal-primary"/>
+    </HBox>
+
+</VBox>

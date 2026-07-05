@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.project.demo.api.rest.javafx.DatabaseTablesController"
+            styleClass="main-layout">
+
+    <center>
+        <!-- SplitPane splits the view into Left List and Right Details -->
+        <SplitPane dividerPositions="0.22" styleClass="dashboard-splitpane">
+            <items>
+
+                <!-- ================= LEFT PANEL: TABLES LIST ================= -->
+                <VBox spacing="16" minWidth="200" maxWidth="400" styleClass="card-panel, sidebar-list-panel">
+                    <padding>
+                        <Insets top="20" right="16" bottom="20" left="16"/>
+                    </padding>
+
+                    <VBox spacing="12">
+                        <Label text="Database Tables" styleClass="panel-title-bold"/>
+                        <Separator styleClass="panel-separator"/>
+                    </VBox>
+
+                    <!-- Table ListView with a dynamic placeholder container -->
+                    <ListView fx:id="tablesListView" VBox.vgrow="ALWAYS" styleClass="transparent-list-view">
+                        <placeholder>
+                            <Label text="No tables found" styleClass="table-placeholder-text"/>
+                        </placeholder>
+                    </ListView>
+                </VBox>
+
+                <!-- ================= RIGHT PANEL: TABLE DETAILS ================= -->
+                <VBox spacing="12" styleClass="card-panel, detail-viewer-panel" VBox.vgrow="ALWAYS">
+                    <padding>
+                        <Insets top="24" right="24" bottom="24" left="24"/>
+                    </padding>
+
+                    <Label text="Select a Table" styleClass="page-title-large"/>
+                    <Label text="Choose a table from the left panel to view its structure." styleClass="page-subtitle"/>
+
+                    <!-- This area is empty by default per image_36d7a8.png, but ready for table data injection -->
+                    <StackPane fx:id="tableContentPlaceholder" VBox.vgrow="ALWAYS" />
+                </VBox>
+
+            </items>
+        </SplitPane>
+    </center>
+
+</BorderPane>

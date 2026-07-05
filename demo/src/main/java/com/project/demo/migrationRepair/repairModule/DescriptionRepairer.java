@@ -1,7 +1,7 @@
 package com.project.demo.migrationRepair.repairModule;
 
 import com.project.demo.migrationRepair.interfaces.MigrationRepairer;
-import com.project.demo.model.MigrationScript;
+import com.project.demo.modules.migration.model.MigrationScript;
 import org.springframework.stereotype.Component;
 
 import java.sql.Connection;

@@ -1,7 +1,7 @@
 package com.project.demo.migrationValidator.validationEngine;
 
 import com.project.demo.migrationValidator.interfaces.MigrationValidator;
-import com.project.demo.model.MigrationScript;
+import com.project.demo.modules.migration.model.MigrationScript;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

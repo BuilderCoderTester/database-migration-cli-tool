@@ -1,7 +1,7 @@
 package com.project.demo.migrationValidator.interfaces;
 
 import com.project.demo.migrationValidator.exception.ValidationException;
-import com.project.demo.model.MigrationScript;
+import com.project.demo.modules.migration.model.MigrationScript;
 
 import java.sql.Connection;
 

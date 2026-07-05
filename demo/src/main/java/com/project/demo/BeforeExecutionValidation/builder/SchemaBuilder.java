@@ -2,11 +2,10 @@ package com.project.demo.BeforeExecutionValidation.builder;
 
 import com.project.demo.BeforeExecutionValidation.model.SchemaModel;
 import com.project.demo.BeforeExecutionValidation.parser.ASTSchemaExtractor;
-import com.project.demo.model.MigrationScript;
+import com.project.demo.modules.migration.model.MigrationScript;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
