@@ -12,7 +12,7 @@
 <BorderPane xmlns:fx="http://javafx.com/fxml/1"
             xmlns="http://javafx.com/javafx/17"
             fx:controller="com.project.demo.api.rest.javafx.ConnectionViewController"
-            styleClass="connection-view">
+            stylesheets="@css/connection_view.css">
 
     <!-- Consistent margin surrounding the entire layout workspace -->
     <padding>
@@ -21,7 +21,7 @@
 
     <!-- Top Action Bar -->
     <top>
-        <HBox alignment="CENTER_LEFT" spacing="10" BorderPane.alignment="CENTER">
+        <HBox alignment="CENTER_LEFT" spacing="10" BorderPane.alignment="CENTER" styleClass="database" >
             <BorderPane.margin>
                 <Insets bottom="20"/>
             </BorderPane.margin>

@@ -14,7 +14,8 @@
       minWidth="260"
       prefWidth="300"
       maxWidth="380"
-      styleClass="connection-card">
+      styleClass="connection-card"
+      stylesheets="@css/connection_card.css">
 
     <!-- Safe internal boundaries so content never touches the card edge -->
     <padding>
@@ -23,15 +24,6 @@
 
     <!-- Connection Meta Details -->
     <VBox spacing="4" VBox.vgrow="ALWAYS">
-        <Label fx:id="nameLabel"
-               text="Kinjal"
-               styleClass="card-title"
-               wrapText="true"/>
-
-        <Label fx:id="hostLabel"
-               text="localhost:5432"
-               styleClass="card-subtitle"
-               wrapText="true"/>
 
         <Label fx:id="dbLabel"
                text="Madar"

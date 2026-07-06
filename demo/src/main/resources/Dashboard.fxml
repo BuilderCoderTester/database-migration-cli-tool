@@ -57,9 +57,9 @@
                         <Button text="📜 Migration Scripts"
                                 onAction="#handleMigrationScriptsClick"
                                 maxWidth="Infinity" styleClass="nav-button"/>
-                        <Button text="⏳ Pending Migrations" maxWidth="Infinity" styleClass="nav-button"/>
-                        <Button text="✅ Applied Migrations" maxWidth="Infinity" styleClass="nav-button"/>
-                        <Button text="🕒 Run History" maxWidth="Infinity" styleClass="nav-button"/>
+<!--                        <Button text="⏳ Pending Migrations" maxWidth="Infinity" styleClass="nav-button"/>-->
+<!--                        <Button text="✅ Applied Migrations" maxWidth="Infinity" styleClass="nav-button"/>-->
+                        <Button text="🕒 Run History" maxWidth="Infinity" styleClass="nav-button" onAction="#handelRunHsitory"/>
                     </VBox>
 
                     <Separator styleClass="sidebar-separator"/>
