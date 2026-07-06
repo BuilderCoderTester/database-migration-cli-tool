@@ -30,7 +30,7 @@ public class MigrationScriptController {
             @RequestParam(required = false) String migrateUp,
             @RequestParam(required = false) String migrateDown) {
         return (
-                migrationScriptService.create(version, description, migrateUp, migrateDown));
+                migrationScriptService.create(version,description, migrateUp, migrateDown));
     }
 
     @DeleteMapping("/delete")

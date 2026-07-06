@@ -22,10 +22,11 @@ public class ValidationResult {
         return result;
     }
 
-    public static ValidationResult success(String message) {
+    public static ValidationResult success(String message, String tableName) {
         ValidationResult result = new ValidationResult();
         result.setValid(true);
         result.setMessage(message);
+        result.setTableName(tableName);
         return result;
     }
 

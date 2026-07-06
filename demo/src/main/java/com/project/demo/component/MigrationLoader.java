@@ -232,6 +232,7 @@ public class MigrationLoader {
             throws Exception {
 
         Long connectionId = connectionContext.getCurrentConnectionId();
+        System.out.println("teh connection id : "+ connectionId);
         if (connectionId == null) {
             logService.log("No active connection. Please connect first.", LogLevel.ERROR);
             throw new RuntimeException("No active connection. Please connect first.");
@@ -306,7 +307,7 @@ public class MigrationLoader {
             );
 
             logService.log((fileName + " Migration Applied."), LogLevel.SUCCESS);
-            return ValidationResult.success("Migration Applied !!!!! ");
+            return ValidationResult.success("Migration Applied !!!!! ", migrationScript.getName());
         } else {
 
             logService.log((fileName + " Migration Failed."), LogLevel.ERROR);

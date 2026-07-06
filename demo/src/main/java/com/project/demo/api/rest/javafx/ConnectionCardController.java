@@ -40,15 +40,11 @@ public class ConnectionCardController {
 
         dbLabel.setText(connection.getDatabase());
         activeBtn.setUserData(connection.getDatabase());
-        System.out.println(
-                "Controller = " + System.identityHashCode(this)
-                        + " Database = " + connection.getDatabase()
-        );
+
     }
 
     public void setActive(ActionEvent actionEvent) throws SQLException {
         String databaseName = (String) activeBtn.getUserData();
-        System.out.println("the database Name " + databaseName);
 
         Connection conn = connectionService.activeConnection(databaseName);
         PreparedStatement dbStmt = conn.prepareStatement("SELECT current_database()");

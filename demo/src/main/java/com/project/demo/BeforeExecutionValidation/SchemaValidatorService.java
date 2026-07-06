@@ -49,7 +49,7 @@ public class SchemaValidatorService {
         System.out.println("reach point schema service -1");
 
         return ValidationResult.success(
-                "Validation successful."
+                "Validation successful.", newMigration.getName()
         );
 
     }

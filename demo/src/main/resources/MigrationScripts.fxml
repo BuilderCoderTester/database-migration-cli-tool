@@ -26,14 +26,15 @@
                 <Pane HBox.hgrow="ALWAYS"/>
 
                 <Button text="+ New Migration"
-                onAction="#createNewMigrations"
+                        onAction="#createNewMigrations"
                 />
 
                 <Button text="Validate"/>
 
                 <Button text="Repair"/>
 
-                <Button text="Run Migration"/>
+                <Button text="Preview" onAction="#previewMigrationScripts"/>
+                <Button text="Refresh" onAction="#refreshMethod"/>
 
             </HBox>
 
@@ -79,6 +80,11 @@
 
                     <columns>
 
+                        <TableColumn fx:id="selectColumn"
+                                     text=""
+                                     prefWidth="40"
+                                     resizable="false"/>
+
                         <TableColumn fx:id="versionColumn"
                                      text="Version"
                                      prefWidth="120"/>
@@ -111,7 +117,7 @@
 
             <!-- Preview -->
 
-            <VBox spacing="12"
+            <VBox spacing="15"
                   styleClass="dashboard-panel">
 
                 <padding>
@@ -121,10 +127,65 @@
                 <Label text="Migration Preview"
                        styleClass="panel-title"/>
 
-                <TextArea fx:id="scriptPreview"
+                <GridPane hgap="15" vgap="10">
+
+                    <Label text="Version"/>
+                    <Label fx:id="versionLabel" GridPane.columnIndex="1"/>
+
+                    <Label text="Description" GridPane.rowIndex="1"/>
+                    <Label fx:id="descriptionLabel"
+                           GridPane.columnIndex="1"
+                           GridPane.rowIndex="1"/>
+
+                    <Label text="Status"
+                           GridPane.rowIndex="2"/>
+                    <Label fx:id="statusLabel"
+                           GridPane.columnIndex="1"
+                           GridPane.rowIndex="2"/>
+
+                    <Label text="Type"
+                           GridPane.rowIndex="3"/>
+                    <Label fx:id="typeLabel"
+                           GridPane.columnIndex="1"
+                           GridPane.rowIndex="3"/>
+
+                </GridPane>
+
+                <Label text="UP Script"/>
+
+                <TextArea fx:id="upScriptArea"
                           editable="false"
                           wrapText="false"
                           VBox.vgrow="ALWAYS"/>
+
+                <Label text="DOWN Script"/>
+
+                <TextArea fx:id="downScriptArea"
+                          editable="false"
+                          wrapText="false"
+                          prefHeight="150"/>
+
+                <!-- Action Buttons -->
+                <HBox spacing="10"
+                      alignment="CENTER_RIGHT">
+
+                    <Button fx:id="migrateButton"
+                            text="Migrate"
+                            onAction="#handleMigrate"/>
+
+                    <Button fx:id="updateButton"
+                            text="Update"
+                            onAction="#handleUpdate"/>
+
+                    <Button fx:id="repairButton"
+                            text="Repair"
+                            onAction="#handleRepair"/>
+
+                    <Button fx:id="rollbackButton"
+                            text="Rollback"
+                            onAction="#handleRollback"/>
+
+                </HBox>
 
             </VBox>
 

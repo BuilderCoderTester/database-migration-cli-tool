@@ -8,7 +8,7 @@
       fx:controller="com.project.demo.api.rest.javafx.CreateMigrationController"
       spacing="20"
       prefWidth="780"
-      styleClass="modal-container">
+      stylesheets="@css/createMigrationScript.css">
 
     <padding>
         <Insets top="24" right="24" bottom="20" left="24"/>

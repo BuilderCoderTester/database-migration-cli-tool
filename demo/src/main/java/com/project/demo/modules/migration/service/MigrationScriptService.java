@@ -43,6 +43,7 @@ public class MigrationScriptService {
     ) {
         try {
             Connection connection = connectionService.activeConnection(connectionContext.getCurrentDatabase());
+            System.out.println("the connection is : " + connection);
             ValidationResult result = loader.createMigrationFile(description, up, down, connection);
             return MigrationMapper.toResponse(result);
 

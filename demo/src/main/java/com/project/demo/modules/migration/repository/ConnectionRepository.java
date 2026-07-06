@@ -190,31 +190,25 @@ public class ConnectionRepository {
 
             while (rs.next()) {
 
-                System.out.println("Coming...");
 
                 ConnectionConfig config = new ConnectionConfig();
 
                 String database = rs.getString("datname");
-                System.out.println("Database: " + database);
 
                 config.setDatabase(database);
 
                 config.setHost("localhost");
                 config.setPort(5432);
 
-                System.out.println("Host: " + config.getHost());
-                System.out.println("Port: " + config.getPort());
 
                 String url = buildJdbcUrl(
                         config.getHost(),
                         config.getPort(),
                         config.getDatabase());
 
-                System.out.println("Generated URL: " + url);
 
                 config.setUrl(url);
 
-                System.out.println("Config URL: " + config.getUrl());
 
                 databases.add(config);
             }

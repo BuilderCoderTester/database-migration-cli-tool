@@ -84,7 +84,7 @@ public class MigrationMapper {
             return MigrationScriptCreateResponse.success(
                     result.getMessage(),
                     null,
-                    null
+                    result.getTableName()
             );
         }
 
@@ -120,6 +120,7 @@ public class MigrationMapper {
         migrationDescriptionResponse.setExecutionTime(migration.getExecutionTime());
         migrationDescriptionResponse.setScript(migration.getScript());
         migrationDescriptionResponse.setSuccess(migration.getSuccess());
+        migrationDescriptionResponse.setVersion(migration.getVersion());
         return  migrationDescriptionResponse;
     }
 }
