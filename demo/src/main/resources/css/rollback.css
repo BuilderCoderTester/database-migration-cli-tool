@@ -1,0 +1,95 @@
+/* Core Modal Setup */
+.modal-container {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 8px;
+}
+.modal-body-scroll {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+.modal-body-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+/* Typography */
+.modal-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0f172a;
+}
+.modal-subtitle {
+    -fx-font-size: 13px;
+    -fx-text-fill: #64748b;
+}
+.section-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0f172a;
+}
+
+/* Custom Card RadioButtons */
+.strategy-card {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-padding: 16px;
+    -fx-max-width: infinity;
+    -fx-alignment: center-left;
+}
+.strategy-card:hover {
+    -fx-border-color: #cbd5e1;
+    -fx-cursor: hand;
+}
+/* When selected, give it the distinct blue border */
+.strategy-card:selected {
+    -fx-border-color: #2563eb;
+    -fx-border-width: 2px;
+    -fx-padding: 15px; /* Adjust padding to prevent shifting due to border-width change */
+}
+.card-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1e293b;
+}
+.card-description {
+    -fx-font-size: 13px;
+    -fx-text-fill: #64748b;
+}
+
+/* Warning Banner */
+.warning-banner {
+    -fx-background-color: #fffbeb;
+    -fx-border-color: #fef3c7;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+.warning-text {
+    -fx-font-size: 13px;
+    -fx-text-fill: #b45309;
+}
+
+/* Buttons */
+.close-button {
+    -fx-background-color: transparent;
+    -fx-padding: 4px;
+}
+.btn-cancel {
+    -fx-background-color: #e2e8f0;
+    -fx-text-fill: #374151;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 20px;
+    -fx-background-radius: 6px;
+}
+.btn-execute {
+    -fx-background-color: #fee2e2;
+    -fx-text-fill: #991b1b;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 20px;
+    -fx-background-radius: 6px;
+}
+.btn-cancel:hover { -fx-background-color: #cbd5e1; }
+.btn-execute:hover { -fx-background-color: #fca5a5; }

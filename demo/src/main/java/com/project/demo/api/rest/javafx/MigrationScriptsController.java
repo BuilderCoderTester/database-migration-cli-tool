@@ -16,11 +16,15 @@ import com.project.demo.modules.migration.service.MigrationService;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -182,11 +186,13 @@ public class MigrationScriptsController {
     }
     @FXML
     public void handleRollback(ActionEvent actionEvent) throws IOException {
+
         MigrationDescriptionResponse selectedMigration = migrationTable.getItems()
                 .stream()
                 .filter(MigrationDescriptionResponse::isSelected)
                 .findFirst()
                 .orElse(null);
+
         if (selectedMigration == null) {
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setHeaderText(null);
@@ -194,10 +200,33 @@ public class MigrationScriptsController {
             alert.showAndWait();
             return;
         }
-        long connectionId = migrationService.getConnectionId();
-        String version = selectedMigration.getVersion();
-        String rollbackType = null;
-        MigrationRollbackRequestDto requestDto = new MigrationRollbackRequestDto(version,connectionId,rollbackType);
-        MigrationRollbackResponseDto response = migrationLifecycleService.rollbackMigrationScriptByVersion(requestDto);
+
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/RollbackDialog.fxml"));
+            loader.setControllerFactory(Main.getContext()::getBean);
+            Parent root = loader.load();
+
+            // Get the dialog controller
+            RollbackDialogController controller = loader.getController();
+
+            // Pass required data
+            controller.setRollbackData(
+                    migrationService.getConnectionId(),
+                    selectedMigration
+            );
+
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("Rollback Configuration");
+            dialogStage.initModality(Modality.APPLICATION_MODAL);
+            // Tie it to your primary window stage so it blocks input behind it
+            dialogStage.initOwner(((Node) actionEvent.getSource()).getScene().getWindow());
+
+            Scene scene = new Scene(root);
+            dialogStage.setScene(scene);
+            dialogStage.showAndWait();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
