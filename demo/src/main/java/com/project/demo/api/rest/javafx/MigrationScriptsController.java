@@ -91,6 +91,24 @@ public class MigrationScriptsController {
 
     @FXML
     public void initialize() {
+
+        statusFilter.getItems().addAll(
+                "All",
+                "Connected",
+                "Disconnected",
+                "Active",
+                "Inactive"
+        );
+
+        statusFilter.setValue("All"); // Optional default selection
+
+        typeFilter.getItems().addAll(
+                "All",
+                "Pending",
+                "Applied"
+        );
+        typeFilter.setValue("All");
+
         migrationTable.setEditable(true);
 
         selectColumn.setCellValueFactory(cellData ->

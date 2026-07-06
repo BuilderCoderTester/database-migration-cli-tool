@@ -24,19 +24,10 @@ public class ConnectionCardController {
     private ConnectionService connectionService;
 
     @FXML
-    private Label nameLabel;
-
-    @FXML
-    private Label hostLabel;
-    @FXML
     private Button activeBtn;
     @FXML
     private Label dbLabel;
     public void setData(ConnectionConfig connection) {
-
-        nameLabel.setText(connection.getName());
-
-        hostLabel.setText(connection.getHost() + ":" + connection.getPort());
 
         dbLabel.setText(connection.getDatabase());
         activeBtn.setUserData(connection.getDatabase());

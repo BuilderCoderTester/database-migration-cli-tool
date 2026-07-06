@@ -6,7 +6,8 @@
 
 <BorderPane xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.project.demo.api.rest.javafx.MigrationScriptsController"
-            fx:id="scriptPane">
+            fx:id="scriptPane"
+stylesheets="@css/script.css">
 
     <!-- ================= HEADER ================= -->
 
@@ -29,11 +30,8 @@
                         onAction="#createNewMigrations"
                 />
 
-                <Button text="Validate"/>
 
-                <Button text="Repair"/>
-
-                <Button text="Preview" onAction="#previewMigrationScripts"/>
+                <Button text="Preview" onAction="#previewMigrationScripts" />
                 <Button text="Refresh" onAction="#refreshMethod"/>
 
             </HBox>

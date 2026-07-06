@@ -103,4 +103,16 @@ public class DashboardController {
             throw new RuntimeException(e);
         }
     }
+
+    public void handelRunHsitory(ActionEvent actionEvent) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/RunHistory.fxml"));
+            loader.setControllerFactory(Main.getContext()::getBean);
+            Parent migrationScriptView = loader.load();
+
+            mainPane.setCenter(migrationScriptView);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
