@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1"
+      xmlns="http://javafx.com/javafx/17"
+      fx:controller="com.project.demo.api.rest.javafx.ConnectionCardController"
+      spacing="12"
+      minWidth="260"
+      prefWidth="300"
+      maxWidth="380"
+      styleClass="connection-card"
+      stylesheets="@css/connection_card.css">
+
+    <!-- Safe internal boundaries so content never touches the card edge -->
+    <padding>
+        <Insets top="16" right="16" bottom="16" left="16"/>
+    </padding>
+
+    <!-- Connection Meta Details -->
+    <VBox spacing="4" VBox.vgrow="ALWAYS">
+
+        <Label fx:id="dbLabel"
+               text="Madar"
+               styleClass="card-database"
+               wrapText="true"/>
+    </VBox>
+
+    <!-- Action Buttons Footer -->
+    <HBox spacing="10" alignment="CENTER_LEFT" VBox.vgrow="NEVER">
+        <Button text="Set Active"
+                fx:id="activeBtn"
+                styleClass="card-button-active"
+        onAction="#setActive"/>
+
+        <!-- A subtle structural space to push the destructive action safely to the right -->
+        <Pane HBox.hgrow="ALWAYS"/>
+
+        <Button text="Delete"
+                fx:id="deleteBtn"
+                styleClass="card-button-delete"/>
+    </HBox>
+
+</VBox>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            prefHeight="500.0"
+            prefWidth="700.0"
+            fx:controller="com.project.demo.setup.SetupController">
+
+    <children>
+
+        <VBox spacing="15"
+              alignment="TOP_LEFT"
+              AnchorPane.topAnchor="30"
+              AnchorPane.leftAnchor="40"
+              AnchorPane.rightAnchor="40"
+              AnchorPane.bottomAnchor="30">
+
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <Label text="Migration Tool Setup"
+                   style="-fx-font-size:28px; -fx-font-weight:bold;"/>
+
+            <Label text="Configure PostgreSQL before launching the application."
+                   style="-fx-font-size:14px;"/>
+
+            <Separator/>
+
+            <Label text="Host"/>
+
+            <TextField fx:id="hostField"
+                       promptText="localhost"/>
+
+            <Label text="Port"/>
+
+            <TextField fx:id="portField"
+                       promptText="5432"/>
+
+            <Label text="Username"/>
+
+            <TextField fx:id="usernameField"
+                       promptText="postgres"/>
+
+            <Label text="Password"/>
+
+            <PasswordField fx:id="passwordField"
+                           promptText="PostgreSQL Password"/>
+
+            <HBox spacing="15">
+
+                <Button text="Test Connection"
+                        prefWidth="170"
+                        onAction="#testConnection"/>
+
+                <Button text="Continue"
+                        prefWidth="170"
+                        onAction="#continueSetup"/>
+
+            </HBox>
+
+        </VBox>
+
+    </children>
+
+</AnchorPane>

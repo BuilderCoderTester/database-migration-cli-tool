@@ -38,3 +38,4 @@ build/
 .env
 ../migrations/
 src/main/resources/application.yml
+config/

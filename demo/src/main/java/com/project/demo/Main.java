@@ -1,5 +1,6 @@
 package com.project.demo;
 
+import com.project.demo.config.ConfigManager;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -15,8 +16,19 @@ public class Main extends Application {
 
     @Override
     public void init() {
-        context = new SpringApplicationBuilder(DemoApplication.class)
-                .web(WebApplicationType.NONE).run();
+//        context = new SpringApplicationBuilder(DemoApplication.class)
+//                .web(WebApplicationType.NONE).run();
+    }
+    public static void startSpring() {
+
+        if (context == null) {
+
+            context = new SpringApplicationBuilder(DemoApplication.class)
+                    .web(WebApplicationType.NONE)
+                    .run();
+
+        }
+
     }
 
     @Override
@@ -24,28 +36,34 @@ public class Main extends Application {
 
         System.out.println("1. Start method called");
 
-        FXMLLoader loader = new FXMLLoader(
-                getClass().getResource("/Dashboard.fxml"));
+        ConfigManager manager = new ConfigManager();
 
-        loader.setControllerFactory(context::getBean);
+        FXMLLoader loader;
 
-        System.out.println("2. Loading FXML");
+        if (manager.configExists()) {
+
+            startSpring();
+
+            loader = new FXMLLoader(
+                    getClass().getResource("/Dashboard.fxml"));
+
+            loader.setControllerFactory(context::getBean);
+
+        } else {
+
+            loader = new FXMLLoader(
+                    getClass().getResource("/Setup.fxml"));
+
+        }
 
         Parent root = loader.load();
-
-        System.out.println("3. FXML Loaded");
 
         Scene scene = new Scene(root);
 
         stage.setScene(scene);
-        stage.setTitle("MigrateDB");
+        stage.setTitle("Migration Tool");
         stage.centerOnScreen();
-
-        System.out.println("4. Showing Stage");
-
         stage.show();
-
-        System.out.println("5. Stage Shown");
     }
 
     @Override
