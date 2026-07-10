@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
+import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,11 +40,11 @@ public class ConnectionService {
         );
     }
 
-    public Connection activeConnection(String databaseName) throws SQLException {
+    public Connection activeConnection(String databaseName) throws SQLException, IOException {
         return connectionRepository.activeConnection(databaseName);
     }
 
-    public List<ConnectionConfig> getAllConnections() throws SQLException {
+    public List<ConnectionConfig> getAllConnections() throws SQLException, IOException {
         List<ConnectionConfig> allConneciton = connectionRepository.getAllConnections();
 
        return allConneciton;

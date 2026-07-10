@@ -178,7 +178,7 @@ public class MigrationScriptsController {
     }
 
     @FXML
-    public void handleMigrate(ActionEvent actionEvent) throws SQLException {
+    public void handleMigrate(ActionEvent actionEvent) throws SQLException, IOException {
         MigrationDescriptionResponse selectedMigration = migrationTable.getItems()
                 .stream()
                 .filter(MigrationDescriptionResponse::isSelected)

@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.sql.*;
 import java.util.Map;
 
@@ -28,10 +29,10 @@ public class ConnectionController {
     }
 
     @PostMapping("/set-active")
-    public ActiveResponseDto setActive(@RequestBody Map<String, String> req) throws SQLException {
+    public ActiveResponseDto setActive(@RequestBody Map<String, String> req) throws SQLException, IOException {
         String databaseName = req.get("database");
         Connection conn = connectionService.activeConnection(databaseName);
-
+        System.out.println("yes ");
         PreparedStatement dbStmt = conn.prepareStatement("SELECT current_database()");
         ResultSet dbRs = dbStmt.executeQuery();
         if (dbRs.next()) {

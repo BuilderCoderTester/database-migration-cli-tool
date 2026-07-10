@@ -35,7 +35,7 @@ public class MigrationExecutionController {
     @PostMapping("/migrateByVersion")
     public MigrationResultResponseDto executeMigrationScriptsByVersion(
             @RequestBody ExecuteMigrationRequestDto executeMigrationRequestDto
-    ) throws SQLException {
+    ) throws SQLException, IOException {
         return migrationLifecycleService.executeMigrationScriptsByVersion(executeMigrationRequestDto);
     }
 

@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.sql.*;
 import java.util.*;
 
@@ -19,7 +20,7 @@ public class SchemaIntrospectionService {
     @Autowired
     private ConnectionContext connectionContext;
 
-    public List<String> getTables(Long connectionId) throws SQLException {
+    public List<String> getTables(Long connectionId) throws SQLException, IOException {
         Connection conn = connectionService.activeConnection(connectionContext.getCurrentDatabase());
 
         List<String> tables = new ArrayList<>();
@@ -46,7 +47,7 @@ public class SchemaIntrospectionService {
         return tables;
     }
 
-    public TableInfoDTO getTableInfo(Long connectionId, String tableName) throws SQLException {
+    public TableInfoDTO getTableInfo(Long connectionId, String tableName) throws SQLException, IOException {
 
         log.debug("Loading table info for {} on connection {}", tableName, connectionId);
 

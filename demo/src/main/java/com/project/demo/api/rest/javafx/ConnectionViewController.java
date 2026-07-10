@@ -9,6 +9,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class ConnectionViewController {
     }
 
     @FXML
-    public void initialize() throws SQLException {
+    public void initialize() throws SQLException, IOException {
 
         List<ConnectionConfig> connections =
                 connectionService.getAllConnections();

@@ -11,6 +11,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -34,7 +35,7 @@ public class ConnectionCardController {
 
     }
 
-    public void setActive(ActionEvent actionEvent) throws SQLException {
+    public void setActive(ActionEvent actionEvent) throws SQLException, IOException {
         String databaseName = (String) activeBtn.getUserData();
 
         Connection conn = connectionService.activeConnection(databaseName);

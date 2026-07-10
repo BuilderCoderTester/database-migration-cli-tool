@@ -1,6 +1,8 @@
 package com.project.demo.utility;
 
 import com.project.demo.component.*;
+import com.project.demo.config.ConfigManager;
+import com.project.demo.config.DatabaseConfig;
 import com.project.demo.migrationValidator.exception.ValidationException;
 import com.project.demo.modules.migration.model.Migration;
 import com.project.demo.modules.migration.model.MigrationScript;
@@ -10,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -184,13 +187,19 @@ public class Helper {
         Long connection_id = jdbcTemplate.queryForObject(sql, Long.class, databaseName);
         connectionContext.setCurrentConnectionId(connection_id);
         String dbUrl = jdbcTemplate.queryForObject(url,String.class,connection_id);
+        try {
+            DatabaseConfig databaseConfig = ConfigManager.load();
+            Connection newConnection = DriverManager.getConnection(
+                    dbUrl,
+                    databaseConfig.getUsername(),
+                    databaseConfig.getPassword()
+            );
+            return newConnection;
 
-        Connection newConnection = DriverManager.getConnection(
-                dbUrl,
-                "postgres",
-                "sigilotech"
-        );
-        return newConnection;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
     /// history of migration records
     public List<Migration> getMigrationHistory(Long connectionId,String currentDatabase) throws SQLException {

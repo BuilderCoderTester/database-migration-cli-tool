@@ -39,3 +39,5 @@ build/
 ../migrations/
 src/main/resources/application.yml
 config/
+output/
+runtime/

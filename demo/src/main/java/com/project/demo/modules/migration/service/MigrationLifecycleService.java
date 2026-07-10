@@ -201,6 +201,8 @@ public class MigrationLifecycleService {
                     "Unable to establish database connection.",
                     ex
             );
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -209,7 +211,7 @@ public class MigrationLifecycleService {
      */
     @Transactional
     public MigrationResultResponseDto executeMigrationScriptsByVersion(
-            ExecuteMigrationRequestDto request) throws SQLException {
+            ExecuteMigrationRequestDto request) throws SQLException, IOException {
 
         Long connectionId = request.connectionId();
         String targetVersion = request.Version();

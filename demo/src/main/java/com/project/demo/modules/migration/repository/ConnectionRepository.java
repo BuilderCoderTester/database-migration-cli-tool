@@ -1,6 +1,8 @@
 package com.project.demo.modules.migration.repository;
 
 import com.project.demo.component.ConnectionContext;
+import com.project.demo.config.ConfigManager;
+import com.project.demo.config.DatabaseConfig;
 import com.project.demo.infrastructure.sqlQueries.MigrationQuery;
 import com.project.demo.modules.migration.dto.connection.request.ConnectionRequest;
 import com.project.demo.modules.migration.dto.connection.response.ConnectionResponseDto;
@@ -13,6 +15,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
+import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +45,7 @@ public class ConnectionRepository {
         if (!dbName.matches("[a-zA-Z0-9_]+")) {
             return new ConnectionResponseDto(false, "Invalid database name", null);
         }
+//        DatabaseConfig databaseConfig = ConfigManager.load();
 
         try {
 
@@ -148,7 +152,7 @@ public class ConnectionRepository {
         );
     }
 
-    public Connection activeConnection(String databaseName) throws SQLException {
+    public Connection activeConnection(String databaseName) throws SQLException, IOException {
         log.debug("Opening active connection for database {}", databaseName);
         String sql = """
                     SELECT connection_id FROM connections WHERE database = ?
@@ -163,14 +167,15 @@ public class ConnectionRepository {
         log.debug("Resolved JDBC URL for connection {}", connection_id);
 
         assert dbUrl != null;
+        DatabaseConfig databaseConfig = ConfigManager.load();
+
         return DriverManager.getConnection(
                 dbUrl,
-                "postgres",
-                "sigilotech"
+                databaseConfig.getUsername(), databaseConfig.getPassword()
         );
     }
 
-    public List<ConnectionConfig> getAllConnections() throws SQLException {
+    public List<ConnectionConfig> getAllConnections() throws SQLException, IOException {
 
         List<ConnectionConfig> databases = new ArrayList<>();
         String sql = """
@@ -179,10 +184,12 @@ public class ConnectionRepository {
                 WHERE datistemplate = false
                 ORDER BY datname
                 """;
+        DatabaseConfig databaseConfig = ConfigManager.load();
+
         Connection metadataConn = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/postgres",
-                "postgres",
-                "sigilotech"
+                databaseConfig.getUsername(),
+                databaseConfig.getPassword()
         );
         try (
                 PreparedStatement ps = metadataConn.prepareStatement(sql);

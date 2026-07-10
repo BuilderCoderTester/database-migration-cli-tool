@@ -44,14 +44,29 @@ public class Dependency {
      */
     private String version;
 
-    public Dependency(DependencyType dependencyType, String name, Object o, Object o1, Object o2) {
+    public Dependency(
+            DependencyType type,
+            String table,
+            ColumnSchemaDto column,
+            PrimaryKeyDTO primaryKey,
+            ForeignKeyDTO foreignKey) {
+
+        this.type = type;
+        this.table = table;
+        this.column = column;
+        this.primaryKey = primaryKey;
+        this.foreignKey = foreignKey;
     }
 
     public String getReferenceTable() {
-        return null ;
+        return foreignKey != null
+                ? foreignKey.getReferencedTable()
+                : null;
     }
 
     public String getReferenceColumn() {
-        return  null;
+        return foreignKey != null
+                ? foreignKey.getReferencedColumn()
+                : null;
     }
 }

@@ -15,7 +15,7 @@ public class ConfigManager {
     private static final String CONFIG_FILE =
             CONFIG_DIR + File.separator + "config.json";
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     public boolean configExists() {
 
@@ -26,7 +26,7 @@ public class ConfigManager {
         return file.exists();
     }
 
-    public DatabaseConfig load() throws IOException {
+    public static DatabaseConfig load() throws IOException {
         return mapper.readValue(new File(CONFIG_FILE), DatabaseConfig.class);
     }
 

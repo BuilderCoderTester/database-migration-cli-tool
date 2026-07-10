@@ -11,6 +11,7 @@ import com.project.demo.modules.migration.model.MigrationScript;
 import com.project.demo.modules.migration.repository.MigrationLogRepo;
 import com.project.demo.modules.migration.repository.MigrationRepository;
 import com.project.demo.modules.migration.service.LogService;
+import com.project.demo.modules.migration.service.MigrationValidatorService;
 import com.project.demo.utility.Helper;
 import com.project.demo.utility.VersionUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +52,8 @@ public class MigrationLoader {
     private final Helper helper;
     @Autowired
     private SchemaValidatorService schemaValidatorService;
+    @Autowired
+    private MigrationValidatorService migrationValidatorService;
     @Autowired
     private MigrationRepository migrationRepository;
 
@@ -294,7 +297,7 @@ public class MigrationLoader {
         migrationScript.setDownScript(downScript);
 
 //        System.out.println("The migration script is : " + migrationScript.toString());
-        ValidationResult result = schemaValidatorService.validate(migrationScript, loadOtherMigrationScript(migrationScript.getVersion(), connectionId));
+        ValidationResult result = migrationValidatorService.validate(migrationScript, loadOtherMigrationScript(migrationScript.getVersion(), connectionId));
         System.out.println("the result after is : "+result.toString());
         if (result.isValid()) {
             Files.writeString(filePath, content.toString());

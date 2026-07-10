@@ -95,6 +95,8 @@ public class MigrationScriptService {
             if (rowsAffected == 0) {
                 throw new RuntimeException("Migration not found for version: " + versionId);
             }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

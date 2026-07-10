@@ -1,0 +1,6 @@
+MigrationTool License Agreement
+
+Copyright (c) 2026 BuilderCoderTester
+
+This software is licensed to the end user.
+Unauthorized redistribution is prohibited.
