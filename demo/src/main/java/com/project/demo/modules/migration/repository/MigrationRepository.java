@@ -317,52 +317,7 @@ public class MigrationRepository {
     }
 
     public MigrationScript findFailedMigrations(String versionId, Long connectionId) {
-
-        try {
-
-            Path basePath = Paths.get(properties.getPath());
-            Path path = basePath.resolve("conn_" + connectionId);
-
-            if (!Files.exists(path)) {
-                return null;
-            }
-
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(path, "*.sql")) {
-
-                for (Path file : stream) {
-
-                    String fileName = file.getFileName().toString();
-                    Matcher v = VERSIONED_PATTERN.matcher(fileName);
-
-                    if (v.matches()) {
-
-                        String version = "V" + v.group(1);
-
-                        if (version.equals(versionId)) {
-
-                            String description =
-                                    v.group(2).replace("_", " ");
-
-                            String content =
-                                    Files.readString(file);
-
-                            MigrationScript script =
-                                    parseScript(version, description, content);
-
-                            script.setFileName(fileName);
-                            script.setRepeatable(false);
-
-                            return script;
-                        }
-                    }
-                }
-            }
-
-            return null;
-
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load migration: " + versionId, e);
-        }
+        return null;
     }
 
     private MigrationScript parseScript(String version, String description, String content) {
@@ -598,6 +553,10 @@ public boolean existsByVersion(String version) {
         }
 
         return migrations;
+    }
+
+    public List<MigrationScript> getFailedMigrations(Connection connection) {
+        return  null;
     }
 
     private static class MigrationRowMapper implements RowMapper<Migration> {

@@ -19,7 +19,7 @@
 
 <BorderPane xmlns:fx="http://javafx.com/fxml/1"
             xmlns="http://javafx.com/javafx/17"
-            fx:controller="com.project.demo.api.rest.javafx.TablesController"
+            fx:controller="com.project.demo.api.desktop.javafx.TablesController"
             stylesheets="@css/tables.css"
             styleClass="page-root">
 

@@ -1,4 +1,4 @@
-package com.project.demo.api.rest.javafx;
+package com.project.demo.api.desktop.javafx;
 
 import org.springframework.stereotype.Component;
 
