@@ -1,14 +1,9 @@
-package com.project.demo.api.rest.javafx;
+package com.project.demo.api.desktop.javafx;
 
 import com.project.demo.Main;
 import com.project.demo.modules.migration.dto.migration.request.ExecuteMigrationRequestDto;
-import com.project.demo.modules.migration.dto.migration.request.MigrationRollbackRequestDto;
-import com.project.demo.modules.migration.dto.migration.request.MigrationUpdateRequestDto;
 import com.project.demo.modules.migration.dto.migration.response.MigrationResultResponseDto;
-import com.project.demo.modules.migration.dto.migration.response.MigrationRollbackResponseDto;
-import com.project.demo.modules.migration.dto.migration.response.MigrationUpdateResponseDto;
 import com.project.demo.modules.migration.dto.response.MigrationDescriptionResponse;
-import com.project.demo.modules.migration.dto.response.MigrationScriptCreateResponse;
 import com.project.demo.modules.migration.model.MigrationScript;
 import com.project.demo.modules.migration.service.MigrationLifecycleService;
 import com.project.demo.modules.migration.service.MigrationScriptService;

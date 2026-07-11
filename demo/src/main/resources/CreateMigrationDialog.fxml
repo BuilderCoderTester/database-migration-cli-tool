@@ -14,7 +14,7 @@
 
 <VBox xmlns:fx="http://javafx.com/fxml/1"
       xmlns="http://javafx.com/javafx/17"
-      fx:controller="com.project.demo.api.rest.javafx.CreateMigrationController"
+      fx:controller="com.project.demo.api.desktop.javafx.CreateMigrationController"
       spacing="20"
       prefWidth="780"
       styleClass="modal-container"

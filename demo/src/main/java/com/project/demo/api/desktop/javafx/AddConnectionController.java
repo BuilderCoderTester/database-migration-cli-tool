@@ -1,4 +1,4 @@
-package com.project.demo.api.rest.javafx;
+package com.project.demo.api.desktop.javafx;
 
 import com.project.demo.modules.migration.dto.connection.request.ConnectionRequest;
 import com.project.demo.modules.migration.service.ConnectionService;
@@ -6,7 +6,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.springframework.beans.factory.annotation.Autowired;

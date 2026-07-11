@@ -753,4 +753,8 @@ public class MigrationService {
                 0,
                 0);
     }
+
+    public List<MigrationScript> getPendingMigrations(Connection connection, ConnectionConfig config) {
+        return null;
+    }
 }

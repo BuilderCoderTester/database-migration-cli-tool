@@ -1,4 +1,4 @@
-package com.project.demo.api.rest.javafx;
+package com.project.demo.api.desktop.javafx;
 
 import com.project.demo.modules.migration.dto.response.MigrationScriptCreateResponse;
 import com.project.demo.modules.migration.service.MigrationScriptService;

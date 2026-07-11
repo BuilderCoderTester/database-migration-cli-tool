@@ -1,4 +1,4 @@
-package com.project.demo.api.rest.javafx;
+package com.project.demo.api.desktop.javafx;
 
 import com.project.demo.Main;
 import com.project.demo.modules.migration.model.ConnectionConfig;
@@ -32,7 +32,6 @@ public class DatabaseConnectionsController {
     @FXML
     public void initialize() throws IOException, SQLException {
 
-        System.out.println("jheeleo");
         List<ConnectionConfig> connections =
                 connectionService.getAllConnections();
 

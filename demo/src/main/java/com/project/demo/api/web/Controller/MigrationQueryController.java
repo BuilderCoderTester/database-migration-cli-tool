@@ -1,4 +1,4 @@
-package com.project.demo.api.rest.Controller;
+package com.project.demo.api.web.Controller;
 
 import com.project.demo.modules.migration.dto.connection.response.ActiveResponseDto;
 import com.project.demo.modules.migration.dto.StatusResponse;

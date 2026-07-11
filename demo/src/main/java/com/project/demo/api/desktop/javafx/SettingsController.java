@@ -1,10 +1,10 @@
-package com.project.demo.api.rest.javafx;
+package com.project.demo.api.desktop.javafx;
 
 import javafx.fxml.FXML;
 import org.springframework.stereotype.Component;
 
 @Component
-public class TablesController {
+public class SettingsController {
     @FXML
     public void initialize() {
 

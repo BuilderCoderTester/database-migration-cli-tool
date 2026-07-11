@@ -1,10 +1,9 @@
-package com.project.demo.api.rest.javafx;
+package com.project.demo.api.desktop.javafx;
 
 import com.project.demo.modules.migration.dto.ColumnInfoDTO;
 import com.project.demo.modules.migration.dto.TableInfoDTO;
 import com.project.demo.modules.migration.service.MigrationService;
 import com.project.demo.modules.migration.service.SchemaIntrospectionService;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;

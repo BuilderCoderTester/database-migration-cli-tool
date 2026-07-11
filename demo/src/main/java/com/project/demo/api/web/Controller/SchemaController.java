@@ -1,4 +1,4 @@
-package com.project.demo.api.rest.Controller;
+package com.project.demo.api.web.Controller;
 
 import com.project.demo.modules.migration.dto.TableInfoDTO;
 import com.project.demo.modules.migration.service.SchemaIntrospectionService;
