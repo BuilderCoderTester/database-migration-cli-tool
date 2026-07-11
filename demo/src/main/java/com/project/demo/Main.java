@@ -16,59 +16,76 @@ public class Main extends Application {
 
     @Override
     public void init() {
-//        context = new SpringApplicationBuilder(DemoApplication.class)
-//                .web(WebApplicationType.NONE).run();
+        ConsoleLogger.info("JavaFX lifecycle: init() hook invoked.");
     }
+
     public static void startSpring() {
-
         if (context == null) {
-
-            context = new SpringApplicationBuilder(DemoApplication.class)
-                    .web(WebApplicationType.NONE)
-                    .run();
-
+            ConsoleLogger.info("Starting Spring Boot Context in headless mode (No Web Server)...");
+            try {
+                context = new SpringApplicationBuilder(DemoApplication.class)
+                        .web(WebApplicationType.NONE)
+                        .run();
+                ConsoleLogger.success("Spring Boot Application Context loaded successfully!");
+            } catch (Exception e) {
+                ConsoleLogger.error("Failed to initialize Spring Boot context: " + e.getMessage());
+                throw e;
+            }
         }
-
     }
 
     @Override
     public void start(Stage stage) throws Exception {
-
-        System.out.println("1. Start method called");
+        ConsoleLogger.info("JavaFX lifecycle: start() method called. Preparing Window UI.");
 
         ConfigManager manager = new ConfigManager();
-
         FXMLLoader loader;
 
-        if (manager.configExists()) {
+        // 1. Detect view type
+        ConsoleLogger.info("Checking for existing database configuration file...");
+        boolean isDashboard = manager.configExists();
 
+        if (isDashboard) {
+            ConsoleLogger.success("Configuration detected. Routing application to Dashboard View.");
             startSpring();
-
-            loader = new FXMLLoader(
-                    getClass().getResource("/Dashboard.fxml"));
-
+            loader = new FXMLLoader(getClass().getResource("/Dashboard.fxml"));
             loader.setControllerFactory(context::getBean);
-
         } else {
-
-            loader = new FXMLLoader(
-                    getClass().getResource("/Setup.fxml"));
-
+            ConsoleLogger.warning("No configuration found. Routing application to Setup Wizard View.");
+            loader = new FXMLLoader(getClass().getResource("/Setup.fxml"));
         }
 
         Parent root = loader.load();
-
         Scene scene = new Scene(root);
-
         stage.setScene(scene);
         stage.setTitle("Migration Tool");
+
+        // 2. Apply Responsive Window Guardrails
+        if (isDashboard) {
+            stage.setMinWidth(1100);
+            stage.setMinHeight(750);
+            stage.setMaximized(true);
+            ConsoleLogger.info("Applied responsive constraints to Dashboard view (Defaulting to Maximized).");
+        } else {
+            stage.setMinWidth(600);
+            stage.setMinHeight(500);
+            stage.setResizable(false);
+            ConsoleLogger.info("Applied fixed boundaries to Setup Wizard view.");
+        }
+
         stage.centerOnScreen();
         stage.show();
+        ConsoleLogger.success("Application window successfully rendered on screen.");
     }
 
     @Override
     public void stop() {
-        context.close();
+        ConsoleLogger.warning("Application close request detected. Executing graceful shutdown procedures...");
+        if (context != null) {
+            context.close();
+            ConsoleLogger.success("Spring Context closed gracefully.");
+        }
+        ConsoleLogger.info("JavaFX application lifecycle stopped cleanly.");
     }
 
     public static ConfigurableApplicationContext getContext() {

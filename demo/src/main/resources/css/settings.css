@@ -1,0 +1,188 @@
+/* ==========================================================================
+   1. Root Framework Canvas & Global Variables
+   ========================================================================== */
+.page-root {
+    -fx-background-color: #f8fafc; /* Crisp off-white slate background */
+    -fx-font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+}
+
+/* ==========================================================================
+   2. Header Navigation Branding
+   ========================================================================== */
+.page-header {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 0 0 1px 0;
+}
+
+.section-caption {
+    -fx-text-fill: #0d9488; /* System emerald/teal brand token */
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.page-title {
+    -fx-text-fill: #0f172a; /* Deep slate slate */
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+/* ==========================================================================
+   3. Central Container Layout Panels
+   ========================================================================== */
+.dashboard-panel {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 8px;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 20px;
+}
+
+.panel-title {
+    -fx-text-fill: #0f172a;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-border-color: #f1f5f9 transparent transparent transparent;
+    -fx-padding: 0 0 4px 0;
+}
+
+.checkbox-group-container {
+    -fx-padding: 4px 0 0 0;
+}
+
+/* ==========================================================================
+   4. Form Field Controls & Components
+   ========================================================================== */
+.form-label {
+    -fx-text-fill: #475569;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+/* Text Fields, Passwords, Inputs */
+.form-input {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 12px;
+    -fx-text-fill: #1e293b;
+    -fx-font-size: 13px;
+}
+.form-input:focused {
+    -fx-border-color: #2563eb; /* Action Blue */
+    -fx-background-color: #ffffff;
+}
+
+/* Combo Boxes Selection */
+.form-combo {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 4px 6px;
+}
+.form-combo:focused {
+    -fx-border-color: #2563eb;
+}
+
+/* Spinners Controls */
+.form-spinner {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+}
+.form-spinner .text-field {
+    -fx-background-color: transparent;
+    -fx-padding: 6px 10px;
+}
+
+/* Checkboxes */
+.form-checkbox {
+    -fx-text-fill: #334155;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+}
+.form-checkbox .box {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #cbd5e1;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+.form-checkbox:selected .box {
+    -fx-background-color: #2563eb;
+    -fx-border-color: #2563eb;
+}
+
+/* Range Sliders */
+.form-slider .track {
+    -fx-background-color: #e2e8f0;
+    -fx-background-radius: 4px;
+    -fx-pref-height: 6px;
+}
+.form-slider .thumb {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #2563eb;
+    -fx-border-width: 2px;
+    -fx-background-radius: 50%;
+    -fx-cursor: hand;
+}
+
+/* ==========================================================================
+   5. Interactive Button Controls
+   ========================================================================== */
+.button {
+    -fx-cursor: hand;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 9px 20px;
+    -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
+    -fx-border-width: 1px;
+}
+
+/* Primary Execution Button */
+.btn-primary {
+    -fx-background-color: #2563eb;
+    -fx-border-color: #2563eb;
+    -fx-text-fill: #ffffff;
+}
+.btn-primary:hover {
+    -fx-background-color: #1d4ed8;
+    -fx-border-color: #1d4ed8;
+}
+
+/* Secondary Cancel / Neutral Button */
+.btn-secondary {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #cbd5e1;
+    -fx-text-fill: #475569;
+}
+.btn-secondary:hover {
+    -fx-background-color: #f8fafc;
+    -fx-border-color: #94a3b8;
+}
+
+/* ==========================================================================
+   6. ScrollPane Cleanup
+   ========================================================================== */
+.transparent-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-padding: 0;
+}
+.transparent-scroll .viewport {
+    -fx-background-color: transparent;
+}
+.transparent-scroll .thumb {
+    -fx-background-color: #cbd5e1;
+    -fx-background-radius: 4px;
+}
+.transparent-scroll .track {
+    -fx-background-color: transparent;
+}

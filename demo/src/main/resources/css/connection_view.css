@@ -1,54 +1,82 @@
-/* ==========================================
-   GLOBAL CONFIGURATION & VIEWPORT BACKGROUND
-   ========================================== */
+/* ==========================================================================
+   GLOBAL CONFIGURATION & VIEWPORT BACKGROUND (Technical Font Stack)
+   ========================================================================== */
 .root {
-    -fx-background-color: #e2e8f0; /* Crisp, clean dashboard gray */
+    -fx-background-color: #f8fafc; /* Crisp, clean modern slate-gray tint dashboard */
     -fx-font-family: "JetBrains Mono", "Cascadia Code", "Consolas", "Fira Code", "Courier New", monospace;
 }
-/* Header Text */
-.title {
-    -fx-font-size: 24px;
-    -fx-font-weight: 700;
-    -fx-text-fill: #0f172a; /* Deep slate gray */
-}
-.database{
-    -fx-background-color: #10b981; /* Current emerald */
+
+/* ==========================================================================
+   HEADER SECTION ACTIONS
+   ========================================================================== */
+.action-header-bar {
+    -fx-background-color: transparent;
 }
 
-/* ==========================================
-   TOP BAR ACTION BUTTONS
-   ========================================== */
+/* Header Text Layout */
+.title {
+    -fx-font-size: 1.6em;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0f172a; /* Deep slate gray */
+}
+
+/* ==========================================================================
+   TOP BAR INTERACTIVE BUTTONS
+   ========================================================================== */
 .button {
     -fx-cursor: hand;
-    -fx-font-weight: 600;
-    -fx-font-size: 13px;
+    -fx-font-weight: bold;
 }
 
 .primary-button {
-    -fx-background-color: #0ea5e9; /* Light blue sky accent matching image_c485d2.png */
+    -fx-background-color: #0ea5e9; /* Sky accent blue branding */
     -fx-text-fill: #ffffff;
     -fx-background-radius: 6px;
+    -fx-border-color: #0ea5e9;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
     -fx-padding: 8px 16px;
+    -fx-font-size: 13px;
 }
 
 .primary-button:hover {
     -fx-background-color: #0284c7;
+    -fx-border-color: #0284c7;
 }
 
-/* ==========================================
+.primary-button:pressed {
+    -fx-background-color: #0369a1;
+}
+
+/* ==========================================================================
    SCROLL PANE & CARD FLOW CONTAINER
-   ========================================== */
+   ========================================================================== */
 .dashboard-scroll {
-    -fx-background: transparent; /* CRITICAL: Fixes default white scrollpane bug */
+    -fx-background: transparent; /* CRITICAL: Override default fallback white scroll pane */
     -fx-background-color: transparent;
     -fx-background-insets: 0;
     -fx-padding: 0;
 }
 
 .dashboard-scroll .viewport {
-    -fx-background-color: transparent; /* CRITICAL: Ensures inner viewport is clear */
+    -fx-background-color: transparent; /* CRITICAL: Keeps layout workspace clean */
 }
 
 .card-container {
     -fx-background-color: transparent;
+}
+
+/* ==========================================================================
+   INJECTED INTERFACE PROFILE HOOKS (Connection Metadata Cards)
+   ========================================================================== */
+.meta-connection-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 12px;
+    -fx-border-radius: 12px;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1px;
+    -fx-padding: 16px;
+}
+.meta-connection-card:hover {
+    -fx-border-color: #cbd5e1;
 }

@@ -43,7 +43,7 @@ public class ActivityLogsController {
     }
 
     @FXML
-    public void refreshMethod() {
+    public void handleRefresh() {
         refreshActivityLogs();
     }
 

@@ -1,75 +1,78 @@
-/* Run History Page Stylesheet - Fixed Light Theme Alignment */
-
+/* ==========================================================================
+   1. Page Layout Framework (System Technical Typography Override)
+   ========================================================================== */
 .page-root {
-    -fx-background-color: #f8fafc; /* Clean off-white background matching image_cfea80.png main panel */
+    -fx-background-color: #f8fafc; /* Modern slate off-white dashboard context */
+    -fx-font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
 }
 
-/* --- Header Section --- */
+/* ==========================================================================
+   2. Header Canvas Layout Elements
+   ========================================================================== */
 .page-header {
     -fx-background-color: #ffffff;
     -fx-border-color: #e2e8f0;
-    -fx-border-width: 0 0 1 0; /* Thin light divider */
+    -fx-border-width: 0 0 1px 0;
 }
 
 .section-caption {
-    -fx-text-fill: #006666; /* Deep teal accent from sidebar context */
-    -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+    -fx-text-fill: #0d9488; /* Emerald system primary accent color */
     -fx-font-size: 11px;
     -fx-font-weight: bold;
 }
 
 .page-title {
-    -fx-text-fill: #0f172a; /* Near-black sharp title text */
-    -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
-    -fx-font-size: 24px;
+    -fx-text-fill: #0f172a; /* Deep slate charcoal title */
+    -fx-font-size: 22px;
     -fx-font-weight: bold;
 }
 
 .page-subtitle {
-    -fx-text-fill: #64748b; /* Slate-gray description text */
-    -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+    -fx-text-fill: #64748b;
     -fx-font-size: 13px;
-    -fx-max-width: 600px;
+    -fx-max-width: 620px;
 }
 
-/* --- Summary Widget Card --- */
+/* ==========================================================================
+   3. Summary Widgets
+   ========================================================================== */
 .summary-card {
     -fx-background-color: #ffffff;
     -fx-background-radius: 8px;
-    -fx-border-color: #cbd5e1;
+    -fx-border-color: #e2e8f0;
     -fx-border-radius: 8px;
     -fx-border-width: 1px;
 }
 
 .summary-icon {
-    -fx-text-fill: #007a7a; /* Clean teal accent tint */
-    -fx-font-size: 18px;
+    -fx-text-fill: #0d9488;
+    -fx-font-size: 16px;
 }
 
 .summary-value {
     -fx-text-fill: #0f172a;
-    -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
-    -fx-font-size: 28px;
+    -fx-font-size: 26px;
     -fx-font-weight: bold;
 }
 
 .summary-label {
     -fx-text-fill: #64748b;
-    -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
     -fx-font-size: 12px;
 }
 
-/* --- ScrollPane Cleanup --- */
+/* ==========================================================================
+   4. ScrollPane Component Styling
+   ========================================================================== */
 .transparent-scroll {
     -fx-background-color: transparent;
     -fx-background: transparent;
+    -fx-padding: 0;
 }
 
 .transparent-scroll .viewport {
     -fx-background-color: transparent;
 }
 
-/* Minimalist scrollbar to match clean light UI elements */
 .transparent-scroll .thumb {
     -fx-background-color: #cbd5e1;
     -fx-background-radius: 4px;
@@ -81,7 +84,9 @@
     -fx-background-color: transparent;
 }
 
-/* --- History Cards --- */
+/* ==========================================================================
+   5. Dynamic Metrics History Cards
+   ========================================================================== */
 .history-card {
     -fx-background-color: #ffffff;
     -fx-background-radius: 8px;
@@ -97,43 +102,39 @@
 }
 
 .migration-version {
-    -fx-text-fill: #006666; /* Matching matching system teal primary accent color */
-    -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
-    -fx-font-size: 12px;
+    -fx-text-fill: #0d9488;
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
 }
 
 .migration-title {
-    -fx-text-fill: #334155;
-    -fx-font-family: 'Consolas', 'Courier New', monospace;
+    -fx-text-fill: #1e293b;
     -fx-font-size: 14px;
     -fx-font-weight: bold;
 }
 
-/* Shared Field Typography */
+/* Structured Key-Value Fields Grid Labels */
 .field-label {
     -fx-text-fill: #94a3b8;
-    -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
     -fx-font-size: 10px;
     -fx-font-weight: bold;
 }
 
 .field-value {
     -fx-text-fill: #475569;
-    -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
-    -fx-font-size: 13px;
+    -fx-font-size: 12px;
 }
 
-/* Status Badges */
+/* Pill Status Success Badges */
 .status-success {
-    -fx-text-fill: #0d9488; /* Fresh emerald/teal success color */
-    -fx-background-color: #f0fdfa; /* Ultra soft background pill tint */
-    -fx-background-radius: 4px;
+    -fx-text-fill: #0d9488;
+    -fx-background-color: #f0fdfa;
+    -fx-background-radius: 6px;
     -fx-border-color: #ccfbf1;
-    -fx-border-radius: 4px;
+    -fx-border-radius: 6px;
     -fx-border-width: 1px;
-    -fx-padding: 4px 12px;
-    -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+    -fx-padding: 6px 14px;
     -fx-font-size: 11px;
     -fx-font-weight: bold;
+    -fx-alignment: center;
 }

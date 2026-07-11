@@ -1,0 +1,209 @@
+/* ==========================================================================
+   1. Root Canvas Environment & Global Font Stack
+   ========================================================================== */
+.page-root {
+    -fx-background-color: #f8fafc; /* Standard modern slate dashboard gray */
+    -fx-font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+}
+
+/* ==========================================================================
+   2. Header Navigation Layout
+   ========================================================================== */
+.page-header {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 0 0 1px 0;
+}
+
+.section-caption {
+    -fx-text-fill: #0d9488; /* System emerald brand token accent */
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.page-title {
+    -fx-text-fill: #0f172a;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+/* ==========================================================================
+   3. Central Layout Sub-Panes & Splitter Blocks
+   ========================================================================== */
+.dashboard-splitpane {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+/* Clean divider split baseline */
+.dashboard-splitpane .split-pane-divider {
+    -fx-background-color: #e2e8f0;
+    -fx-padding: 0 1px 0 1px;
+    -fx-border-color: transparent;
+}
+.dashboard-splitpane .split-pane-divider:hover {
+    -fx-background-color: #cbd5e1;
+}
+
+.side-explorer-panel,
+.main-details-panel {
+    -fx-background-color: transparent;
+}
+
+.dashboard-panel {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 8px;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+}
+
+.panel-title {
+    -fx-text-fill: #0f172a;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 0 4px 0;
+}
+
+/* ==========================================================================
+   4. Form Input Controls
+   ========================================================================== */
+.form-input {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 12px;
+    -fx-text-fill: #1e293b;
+    -fx-font-size: 13px;
+}
+.form-input:focused {
+    -fx-border-color: #2563eb;
+}
+
+.form-combo {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+}
+.form-combo:focused {
+    -fx-border-color: #2563eb;
+}
+
+/* ==========================================================================
+   5. Technical Inverted Metadata Labels (Grid View)
+   ========================================================================== */
+.metadata-label {
+    -fx-text-fill: #64748b;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.metadata-value {
+    -fx-text-fill: #0f172a;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+/* ==========================================================================
+   6. Custom Specialized Schema Output Viewers (Tables & Lists)
+   ========================================================================== */
+/* Explorer List View Left Pane */
+.technical-listview {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 4px;
+}
+.technical-listview .list-cell {
+    -fx-padding: 8px 12px;
+    -fx-text-fill: #334155;
+    -fx-font-size: 13px;
+    -fx-background-color: transparent;
+}
+.technical-listview .list-cell:filled:hover {
+    -fx-background-color: #f1f5f9;
+    -fx-text-fill: #0f172a;
+    -fx-cursor: hand;
+}
+.technical-listview .list-cell:filled:selected {
+    -fx-background-color: #e0f2fe; /* Light sky blue focus state */
+    -fx-text-fill: #0369a1;
+    -fx-font-weight: bold;
+}
+
+/* Main Schema Grid Right Pane */
+.schema-tableview {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+}
+
+.schema-tableview .column-header-background {
+    -fx-background-color: #f8fafc;
+    -fx-padding: 0;
+}
+.schema-tableview .column-header {
+    -fx-background-color: transparent;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 0 1px 1px 0;
+    -fx-padding: 10px 12px;
+}
+.schema-tableview .column-header .label {
+    -fx-text-fill: #475569;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.schema-tableview .table-row-cell {
+    -fx-background-color: transparent;
+    -fx-border-color: #f1f5f9;
+    -fx-border-width: 0 0 1px 0;
+}
+.schema-tableview .table-row-cell:odd {
+    -fx-background-color: #fafafa;
+}
+.schema-tableview .table-cell {
+    -fx-padding: 10px 12px;
+    -fx-text-fill: #1e293b;
+    -fx-font-size: 13px;
+}
+.schema-tableview .table-row-cell:selected {
+    -fx-background-color: #f0fdf4; /* Light emerald row focus matching your system style */
+}
+.schema-tableview .table-row-cell:selected .table-cell {
+    -fx-text-fill: #115e59;
+    -fx-font-weight: bold;
+}
+
+/* ==========================================================================
+   7. Functional Secondary Header Control Elements
+   ========================================================================== */
+.btn-secondary {
+    -fx-cursor: hand;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 16px;
+    -fx-background-color: #ffffff;
+    -fx-border-color: #cbd5e1;
+    -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
+    -fx-border-width: 1px;
+    -fx-text-fill: #475569;
+}
+.btn-secondary:hover {
+    -fx-background-color: #f8fafc;
+    -fx-border-color: #94a3b8;
+    -fx-text-fill: #1e293b;
+}
+.btn-secondary:pressed {
+    -fx-background-color: #f1f5f9;
+}

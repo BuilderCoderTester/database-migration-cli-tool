@@ -1,71 +1,74 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
 
-<ScrollPane xmlns:fx="http://javafx.com/fxml"
+<ScrollPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.project.demo.api.rest.javafx.ActivityLogsController"
             fitToWidth="true"
+            fitToHeight="true"
+            hbarPolicy="NEVER"
             vbarPolicy="AS_NEEDED"
+            styleClass="transparent-scroll"
             stylesheets="@css/activityLogs.css">
+
     <content>
         <VBox spacing="16" styleClass="content-container">
             <padding>
                 <Insets top="24" right="24" bottom="24" left="24"/>
             </padding>
 
-            <!-- ================= 1. HEADER HERO CARD ================= -->
-            <VBox spacing="12" styleClass="card-panel, header-hero-card">
+            <VBox spacing="12" styleClass="dashboard-panel, header-hero-card">
                 <padding>
                     <Insets top="20" right="24" bottom="20" left="24"/>
                 </padding>
                 <HBox alignment="CENTER_LEFT">
-                    <VBox spacing="6" HBox.hgrow="ALWAYS">
-                        <HBox spacing="8" alignment="CENTER_LEFT">
-                            <Label text="📈" styleClass="header-icon-pulse"/>
-                            <Label text="Activity Logs" styleClass="page-title-large"/>
-                        </HBox>
+                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                        <Label text="REAL-TIME MONITOR" styleClass="section-caption"/>
+                        <Label text="Activity Logs" styleClass="page-title-large"/>
                         <Label text="Monitor every migration, validation, repair and rollback executed on the connected database."
-                               styleClass="page-subtitle"/>
+                               styleClass="page-subtitle" wrapText="true"/>
                     </VBox>
-                    <Button text="🔄 Refresh" styleClass="btn-secondary-white"/>
+                    <Button text="Refresh View" onAction="#handleRefresh" styleClass="btn-secondary"/>
                 </HBox>
             </VBox>
 
-            <!-- ================= 2. SEARCH BAR BARROW ================= -->
             <TextField fx:id="activitySearchField"
-                       promptText="🔍 Search activity..."
-                       styleClass="card-panel, search-input-large"/>
+                       promptText="Search activity history logs..."
+                       styleClass="form-input-large"/>
 
-            <!-- ================= 3. SPLIT WORKSPACE PANELS ================= -->
             <GridPane hgap="16" VBox.vgrow="ALWAYS">
                 <columnConstraints>
-                    <ColumnConstraints percentWidth="33"/>
-                    <ColumnConstraints percentWidth="67"/>
+                    <ColumnConstraints percentWidth="35"/>
+                    <ColumnConstraints percentWidth="65"/>
                 </columnConstraints>
                 <rowConstraints>
-                    <RowConstraints minHeight="450" vgrow="ALWAYS"/>
+                    <RowConstraints minHeight="400" vgrow="ALWAYS"/>
                 </rowConstraints>
                 <children>
 
-                    <!-- Left Workspace: Timeline List Panel -->
-                    <VBox fx:id="timelineContainer" styleClass="card-panel" alignment="CENTER" spacing="12" GridPane.columnIndex="0">
+                    <VBox fx:id="timelineContainer" styleClass="dashboard-panel" alignment="CENTER" spacing="12" GridPane.columnIndex="0">
                         <padding>
-                            <Insets top="24" right="20" bottom="24" left="20"/>
+                            <Insets top="32" right="20" bottom="32" left="20"/>
                         </padding>
-                        <!-- Centered No Activity State -->
                         <Label text="🕒" styleClass="placeholder-icon-large"/>
                         <Label text="No Activity Found" styleClass="placeholder-title-bold"/>
                         <Label text="No migration activity has been recorded yet." styleClass="page-subtitle" alignment="CENTER" wrapText="true"/>
                     </VBox>
 
-                    <!-- Right Workspace: Full Detail Viewer Panel -->
-                    <VBox fx:id="detailInspectorContainer" styleClass="card-panel" alignment="CENTER" spacing="12" GridPane.columnIndex="1">
+                    <VBox fx:id="detailInspectorContainer" styleClass="dashboard-panel" alignment="CENTER" spacing="12" GridPane.columnIndex="1">
                         <padding>
-                            <Insets top="24" right="24" bottom="24" left="24"/>
+                            <Insets top="32" right="24" bottom="32" left="24"/>
                         </padding>
-                        <!-- Centered No Selection State -->
                         <Label text="📈" styleClass="placeholder-icon-pulse-large"/>
                         <Label text="No Activity Selected" styleClass="placeholder-title-bold"/>
                         <Label text="Select an activity from the timeline to view its complete details." styleClass="page-subtitle" alignment="CENTER" wrapText="true"/>

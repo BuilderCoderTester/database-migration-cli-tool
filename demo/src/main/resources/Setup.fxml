@@ -12,65 +12,72 @@
 
 <AnchorPane xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
-            prefHeight="500.0"
+            prefHeight="550.0"
             prefWidth="700.0"
-            fx:controller="com.project.demo.setup.SetupController">
+            fx:controller="com.project.demo.setup.SetupController"
+            stylesheets="@css/setup.css"
+            styleClass="window-root">
 
     <children>
-
-        <VBox spacing="15"
+        <VBox spacing="18"
               alignment="TOP_LEFT"
               AnchorPane.topAnchor="30"
-              AnchorPane.leftAnchor="40"
-              AnchorPane.rightAnchor="40"
-              AnchorPane.bottomAnchor="30">
+              AnchorPane.leftAnchor="50"
+              AnchorPane.rightAnchor="50"
+              AnchorPane.bottomAnchor="30"
+              styleClass="setup-container">
 
             <padding>
-                <Insets top="20" right="20" bottom="20" left="20"/>
+                <Insets top="32" right="32" bottom="32" left="32"/>
             </padding>
 
-            <Label text="Migration Tool Setup"
-                   style="-fx-font-size:28px; -fx-font-weight:bold;"/>
+            <VBox spacing="4">
+                <Label text="Migration Tool Setup" styleClass="page-title"/>
+                <Label text="Configure PostgreSQL metadata store before launching the application CLI pipeline."
+                       styleClass="page-subtitle" wrapText="true"/>
+            </VBox>
 
-            <Label text="Configure PostgreSQL before launching the application."
-                   style="-fx-font-size:14px;"/>
+            <Separator styleClass="section-separator"/>
 
-            <Separator/>
+            <VBox spacing="14" VBox.vgrow="ALWAYS">
 
-            <Label text="Host"/>
+                <VBox spacing="6">
+                    <Label text="Database Host Server" styleClass="form-label"/>
+                    <TextField fx:id="hostField" promptText="localhost" styleClass="form-input"/>
+                </VBox>
 
-            <TextField fx:id="hostField"
-                       promptText="localhost"/>
+                <VBox spacing="6">
+                    <Label text="Port Configuration" styleClass="form-label"/>
+                    <TextField fx:id="portField" promptText="5432" styleClass="form-input"/>
+                </VBox>
 
-            <Label text="Port"/>
+                <VBox spacing="6">
+                    <Label text="Username" styleClass="form-label"/>
+                    <TextField fx:id="usernameField" promptText="postgres" styleClass="form-input"/>
+                </VBox>
 
-            <TextField fx:id="portField"
-                       promptText="5432"/>
+                <VBox spacing="6">
+                    <Label text="Authentication Password" styleClass="form-label"/>
+                    <PasswordField fx:id="passwordField" promptText="PostgreSQL Account Password" styleClass="form-input"/>
+                </VBox>
 
-            <Label text="Username"/>
+            </VBox>
 
-            <TextField fx:id="usernameField"
-                       promptText="postgres"/>
-
-            <Label text="Password"/>
-
-            <PasswordField fx:id="passwordField"
-                           promptText="PostgreSQL Password"/>
-
-            <HBox spacing="15">
-
+            <HBox spacing="14" alignment="CENTER_LEFT">
+                <padding>
+                    <Insets top="10"/>
+                </padding>
                 <Button text="Test Connection"
-                        prefWidth="170"
-                        onAction="#testConnection"/>
+                        prefWidth="180"
+                        onAction="#testConnection"
+                        styleClass="btn-secondary"/>
 
-                <Button text="Continue"
-                        prefWidth="170"
-                        onAction="#continueSetup"/>
-
+                <Button text="Continue Setup"
+                        prefWidth="180"
+                        onAction="#continueSetup"
+                        styleClass="btn-primary"/>
             </HBox>
 
         </VBox>
-
     </children>
-
 </AnchorPane>

@@ -14,25 +14,21 @@
             fx:controller="com.project.demo.api.rest.javafx.ConnectionViewController"
             stylesheets="@css/connection_view.css">
 
-    <!-- Consistent margin surrounding the entire layout workspace -->
     <padding>
         <Insets top="24" right="24" bottom="24" left="24"/>
     </padding>
 
-    <!-- Top Action Bar -->
     <top>
-        <HBox alignment="CENTER_LEFT" spacing="10" BorderPane.alignment="CENTER" styleClass="database" >
-            <BorderPane.margin>
-                <Insets bottom="20"/>
-            </BorderPane.margin>
-
+        <HBox alignment="CENTER_LEFT" spacing="12" styleClass="action-header-bar">
+            <padding>
+                <Insets bottom="16" top="4" left="4" right="4"/>
+            </padding>
             <Label text="Database Connections" styleClass="title"/>
             <Pane HBox.hgrow="ALWAYS"/>
             <Button text="+ Add Connection" onAction="#addConnection" styleClass="primary-button"/>
         </HBox>
     </top>
 
-    <!-- Content Workspace -->
     <center>
         <ScrollPane fitToWidth="true"
                     fitToHeight="true"
@@ -41,13 +37,12 @@
                     styleClass="dashboard-scroll"
                     BorderPane.alignment="CENTER">
             <content>
-                <!-- FlowPane now automatically wraps based on live window size -->
                 <FlowPane fx:id="cardContainer"
                           hgap="16"
                           vgap="16"
                           styleClass="card-container">
                     <padding>
-                        <Insets top="4" right="4" bottom="4" left="4"/>
+                        <Insets top="8" right="8" bottom="8" left="8"/>
                     </padding>
                 </FlowPane>
             </content>

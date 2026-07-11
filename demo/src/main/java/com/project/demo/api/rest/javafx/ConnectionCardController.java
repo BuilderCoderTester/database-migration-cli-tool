@@ -47,4 +47,8 @@ public class ConnectionCardController {
 
         connectionService.createSystemTables(conn);
     }
+
+    public void handleDelete(ActionEvent actionEvent){
+
+    }
 }

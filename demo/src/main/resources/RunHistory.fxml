@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml"
@@ -10,7 +14,6 @@
             stylesheets="@css/run-history.css"
             styleClass="page-root">
 
-    <!-- Header -->
     <top>
         <VBox spacing="15" styleClass="page-header">
             <padding>
@@ -18,181 +21,87 @@
             </padding>
 
             <HBox alignment="CENTER_LEFT">
-
                 <VBox spacing="8" HBox.hgrow="ALWAYS">
-                    <Label text="EXECUTION HISTORY"
-                           styleClass="section-caption"/>
-
-                    <Label text="Migration Run History"
-                           styleClass="page-title"/>
-
+                    <Label text="EXECUTION HISTORY" styleClass="section-caption"/>
+                    <Label text="Migration Run History" styleClass="page-title"/>
                     <Label text="Review previous migration executions, execution time, failures and database changes."
-                           wrapText="true"
-                           styleClass="page-subtitle"/>
+                           wrapText="true" styleClass="page-subtitle"/>
                 </VBox>
 
-                <VBox alignment="CENTER"
-                      spacing="10"
-                      prefWidth="120"
-                      prefHeight="120"
-                      styleClass="summary-card">
-
-                    <Label text="↻"
-                           styleClass="summary-icon"/>
-
-                    <Label text="4"
-                           styleClass="summary-value"/>
-
-                    <Label text="Executions"
-                           styleClass="summary-label"/>
-
+                <VBox alignment="CENTER" spacing="6" prefWidth="120" prefHeight="100" styleClass="summary-card">
+                    <Label text="↻" styleClass="summary-icon"/>
+                    <Label text="4" styleClass="summary-value"/>
+                    <Label text="Executions" styleClass="summary-label"/>
                 </VBox>
-
             </HBox>
-
         </VBox>
     </top>
 
-    <!-- Run History -->
     <center>
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="transparent-scroll">
+            <content>
+                <VBox spacing="12">
+                    <padding>
+                        <Insets top="24" right="24" bottom="24" left="24"/>
+                    </padding>
 
-        <ScrollPane fitToWidth="true"
-                    hbarPolicy="NEVER"
-                    styleClass="transparent-scroll">
-
-            <VBox spacing="18">
-                <!-- Corrected Padding Structure -->
-                <padding>
-                    <Insets top="20" right="20" bottom="20" left="20"/>
-                </padding>
-
-                <!-- Card -->
-                <HBox spacing="20" styleClass="history-card">
-
-                    <VBox spacing="10" HBox.hgrow="ALWAYS">
-
-                        <Label text="V3"
-                               styleClass="migration-version"/>
-
-                        <Label text="insert into entity"
-                               styleClass="migration-title"/>
-
-                        <VBox spacing="4">
-                            <Label text="EXECUTED AT"
-                                   styleClass="field-label"/>
-
-                            <Label text="6/27/2026, 9:00:31 PM"
-                                   styleClass="field-value"/>
+                    <HBox spacing="20" alignment="CENTER_LEFT" styleClass="history-card">
+                        <VBox spacing="8" HBox.hgrow="ALWAYS">
+                            <Label text="V3" styleClass="migration-version"/>
+                            <Label text="insert into entity" styleClass="migration-title"/>
+                            <VBox spacing="2">
+                                <Label text="EXECUTED AT" styleClass="field-label"/>
+                                <Label text="6/27/2026, 9:00:31 PM" styleClass="field-value"/>
+                            </VBox>
                         </VBox>
-
-                    </VBox>
-
-                    <VBox alignment="CENTER_LEFT" spacing="4">
-
-                        <Label text="DURATION"
-                               styleClass="field-label"/>
-
-                        <Label text="101 ms"
-                               styleClass="field-value"/>
-
-                    </VBox>
-
-                    <VBox alignment="TOP_RIGHT"
-                          prefWidth="120">
-
-                        <Label text="SUCCESS"
-                               styleClass="status-success"/>
-
-                    </VBox>
-
-                </HBox>
-
-                <!-- Card -->
-                <HBox spacing="20" styleClass="history-card">
-
-                    <VBox spacing="10" HBox.hgrow="ALWAYS">
-
-                        <Label text="V4"
-                               styleClass="migration-version"/>
-
-                        <Label text="insert into mst"
-                               styleClass="migration-title"/>
-
-                        <VBox spacing="4">
-                            <Label text="EXECUTED AT"
-                                   styleClass="field-label"/>
-
-                            <Label text="6/27/2026, 9:00:32 PM"
-                                   styleClass="field-value"/>
+                        <VBox alignment="CENTER_LEFT" spacing="2" minWidth="100">
+                            <Label text="DURATION" styleClass="field-label"/>
+                            <Label text="101 ms" styleClass="field-value"/>
                         </VBox>
+                        <HBox alignment="CENTER_RIGHT" prefWidth="120">
+                            <Label text="SUCCESS" styleClass="status-success"/>
+                        </HBox>
+                    </HBox>
 
-                    </VBox>
-
-                    <VBox alignment="CENTER_LEFT" spacing="4">
-
-                        <Label text="DURATION"
-                               styleClass="field-label"/>
-
-                        <Label text="877 ms"
-                               styleClass="field-value"/>
-
-                    </VBox>
-
-                    <VBox alignment="TOP_RIGHT"
-                          prefWidth="120">
-
-                        <Label text="SUCCESS"
-                               styleClass="status-success"/>
-
-                    </VBox>
-
-                </HBox>
-
-                <!-- Card -->
-                <HBox spacing="20" styleClass="history-card">
-
-                    <VBox spacing="10" HBox.hgrow="ALWAYS">
-
-                        <Label text="V2"
-                               styleClass="migration-version"/>
-
-                        <Label text="Update table entity"
-                               styleClass="migration-title"/>
-
-                        <VBox spacing="4">
-                            <Label text="EXECUTED AT"
-                                   styleClass="field-label"/>
-
-                            <Label text="6/27/2026, 9:30:40 PM"
-                                   styleClass="field-value"/>
+                    <HBox spacing="20" alignment="CENTER_LEFT" styleClass="history-card">
+                        <VBox spacing="8" HBox.hgrow="ALWAYS">
+                            <Label text="V4" styleClass="migration-version"/>
+                            <Label text="insert into mst" styleClass="migration-title"/>
+                            <VBox spacing="2">
+                                <Label text="EXECUTED AT" styleClass="field-label"/>
+                                <Label text="6/27/2026, 9:00:32 PM" styleClass="field-value"/>
+                            </VBox>
                         </VBox>
+                        <VBox alignment="CENTER_LEFT" spacing="2" minWidth="100">
+                            <Label text="DURATION" styleClass="field-label"/>
+                            <Label text="877 ms" styleClass="field-value"/>
+                        </VBox>
+                        <HBox alignment="CENTER_RIGHT" prefWidth="120">
+                            <Label text="SUCCESS" styleClass="status-success"/>
+                        </HBox>
+                    </HBox>
 
-                    </VBox>
+                    <HBox spacing="20" alignment="CENTER_LEFT" styleClass="history-card">
+                        <VBox spacing="8" HBox.hgrow="ALWAYS">
+                            <Label text="V2" styleClass="migration-version"/>
+                            <Label text="Update table entity" styleClass="migration-title"/>
+                            <VBox spacing="2">
+                                <Label text="EXECUTED AT" styleClass="field-label"/>
+                                <Label text="6/27/2026, 9:30:40 PM" styleClass="field-value"/>
+                            </VBox>
+                        </VBox>
+                        <VBox alignment="CENTER_LEFT" spacing="2" minWidth="100">
+                            <Label text="DURATION" styleClass="field-label"/>
+                            <Label text="184 ms" styleClass="field-value"/>
+                        </VBox>
+                        <HBox alignment="CENTER_RIGHT" prefWidth="120">
+                            <Label text="SUCCESS" styleClass="status-success"/>
+                        </HBox>
+                    </HBox>
 
-                    <VBox alignment="CENTER_LEFT" spacing="4">
-
-                        <Label text="DURATION"
-                               styleClass="field-label"/>
-
-                        <Label text="184 ms"
-                               styleClass="field-value"/>
-
-                    </VBox>
-
-                    <VBox alignment="TOP_RIGHT"
-                          prefWidth="120">
-
-                        <Label text="SUCCESS"
-                               styleClass="status-success"/>
-
-                    </VBox>
-
-                </HBox>
-
-            </VBox>
-
+                </VBox>
+            </content>
         </ScrollPane>
-
     </center>
 
 </BorderPane>

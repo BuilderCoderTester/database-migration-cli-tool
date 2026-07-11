@@ -1,136 +1,134 @@
 /* ==========================================================================
-   Modal Container & Window Baseline
+   1. Modal Container & Window Baseline
    ========================================================================== */
 .modal-container {
-    -fx-background-color: #f4fafb; /* Soft light-teal tint background canvas */
-    -fx-background-radius: 16px;
-    -fx-font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 12px;
+    -fx-font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+    -fx-effect: dropshadow(three-pass-box, rgba(15, 23, 42, 0.06), 16, 0, 0, 4);
+}
+
+.modal-separator {
+    -fx-background-color: transparent;
+    -fx-border-color: #f1f5f9;
+    -fx-border-width: 1px 0 0 0;
 }
 
 /* ==========================================================================
-   Header Elements
+   2. Header Branding Typography
    ========================================================================== */
 .connection-badge {
-    -fx-background-color: #ffffff;
-    -fx-border-color: #bce3e6;
+    -fx-background-color: #f0fdfa; /* Emerald pill token background context */
+    -fx-border-color: #ccfbf1;
     -fx-border-radius: 20px;
     -fx-background-radius: 20px;
-    -fx-text-fill: #0ea5e9;
+    -fx-text-fill: #0d9488;
     -fx-font-size: 11px;
     -fx-font-weight: bold;
     -fx-padding: 4px 12px;
 }
 
 .modal-title {
-    -fx-font-size: 24px;
+    -fx-font-size: 22px;
     -fx-font-weight: bold;
-    -fx-text-fill: #0c232a; /* Deep dark slate navy */
+    -fx-text-fill: #0f172a; /* Deep charcoal navy */
 }
 
 .modal-subtitle {
     -fx-font-size: 13px;
-    -fx-text-fill: #7d969e; /* Soft muted gray-blue */
+    -fx-text-fill: #64748b; /* Soft slate descriptor */
 }
 
-/* Close Cross Button */
 .btn-close-icon {
     -fx-background-color: transparent;
-    -fx-text-fill: #7d969e;
+    -fx-text-fill: #94a3b8;
     -fx-font-size: 16px;
     -fx-cursor: hand;
     -fx-padding: 4px;
 }
 .btn-close-icon:hover {
-    -fx-text-fill: #0c232a;
-}
-
-.modal-separator {
-    -fx-background-color: transparent;
-    -fx-border-color: #e2eff1;
-    -fx-border-width: 1px 0 0 0;
+    -fx-text-fill: #0f172a;
 }
 
 /* ==========================================================================
-   Form Fields & Inputs
+   3. Form Label & Structured Field Inputs
    ========================================================================== */
 .input-label-bold {
-    -fx-font-size: 13px;
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
-    -fx-text-fill: #11343e;
+    -fx-text-fill: #475569;
 }
 
-/* Shared TextField and PasswordField styling */
 .modal-input-field {
     -fx-background-color: #ffffff;
-    -fx-background-radius: 10px;
-    -fx-border-color: #ccdcdf;
-    -fx-border-radius: 10px;
+    -fx-background-radius: 6px;
+    -fx-border-color: #cbd5e1;
+    -fx-border-radius: 6px;
     -fx-border-width: 1px;
     -fx-padding: 10px 14px;
-    -fx-text-fill: #11343e;
+    -fx-text-fill: #1e293b;
     -fx-font-size: 13px;
 }
 
-/* Input Focus States */
 .modal-input-field:focused {
+    -fx-border-color: #2563eb; /* Action blue focus state ring */
     -fx-background-color: #ffffff;
-    -fx-border-color: #0ea5e9; /* Active border color shift */
-    -fx-border-width: 1px;
 }
 
-/* Styling the helper prompt placeholder text color */
-.modal-input-field *.text {
-    -fx-text-fill: #11343e;
+/* Clean handling of prompt placeholder metadata metrics text */
+.modal-input-field:text {
+    -fx-text-fill: #1e293b;
 }
-.modal-input-field:empty *.text {
-    -fx-text-fill: #9ab4bc;
+.modal-input-field:prompt {
+    -fx-text-fill: #94a3b8;
 }
 
 /* ==========================================================================
-   Action Buttons (Footer Area)
+   4. Action Execution Controls (Footer Elements)
    ========================================================================== */
-/* Generic baseline button properties */
-.btn-modal-secondary,
-.btn-modal-neutral,
-.btn-modal-primary {
+.button {
+    -fx-cursor: hand;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-padding: 10px 20px;
-    -fx-background-radius: 8px;
-    -fx-cursor: hand;
+    -fx-padding: 10px 22px;
+    -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
+    -fx-border-width: 1px;
 }
 
-/* Cancel Button: Light outline styling */
-.btn-modal-secondary {
-    -fx-background-color: #e2eff1;
-    -fx-text-fill: #11343e;
-    -fx-border-color: #ccdcdf;
-    -fx-border-radius: 8px;
-}
-.btn-modal-secondary:hover {
-    -fx-background-color: #d5e5e8;
-}
-
-/* Test Connection: Bordered neutral fallback styling */
-.btn-modal-neutral {
-    -fx-background-color: #f4fafb;
-    -fx-border-color: #9eb6bc;
-    -fx-border-radius: 8px;
-    -fx-text-fill: #0c232a;
-}
-.btn-modal-neutral:hover {
-    -fx-background-color: #eef5f6;
-    -fx-border-color: #0ea5e9;
-}
-
-/* Save Connection: Main Brand Primary Teal Solid color */
+/* Main Commit Trigger Button */
 .btn-modal-primary {
-    -fx-background-color: #0ea5e9; /* Recreates the teal accent action shade */
+    -fx-background-color: #2563eb;
+    -fx-border-color: #2563eb;
     -fx-text-fill: #ffffff;
 }
 .btn-modal-primary:hover {
-    -fx-background-color: #0c93d2;
+    -fx-background-color: #1d4ed8;
+    -fx-border-color: #1d4ed8;
 }
 .btn-modal-primary:pressed {
-    -fx-background-color: #0a7fb6;
+    -fx-background-color: #1e40af;
+}
+
+/* Diagnostics Utility Button */
+.btn-modal-neutral {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #cbd5e1;
+    -fx-text-fill: #475569;
+}
+.btn-modal-neutral:hover {
+    -fx-background-color: #f8fafc;
+    -fx-border-color: #94a3b8;
+    -fx-text-fill: #1e293b;
+}
+
+/* Secondary Escape/Cancel Button */
+.btn-modal-secondary {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e2e8f0;
+    -fx-text-fill: #64748b;
+}
+.btn-modal-secondary:hover {
+    -fx-background-color: #f1f5f9;
+    -fx-text-fill: #334155;
 }

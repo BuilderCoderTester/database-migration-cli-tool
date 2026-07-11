@@ -1,37 +1,130 @@
-/* Custom Header Button Styling */
-.btn-secondary-white {
-    -fx-background-color: #ffffff;
-    -fx-border-color: #d1dfe2;
-    -fx-border-radius: 8px;
-    -fx-background-radius: 8px;
-    -fx-text-fill: #1a353e;
-    -fx-font-weight: bold;
-    -fx-padding: 8px 16px;
+/* ==========================================================================
+   1. Canvas Environment Framework & Scroll Bar Properties
+   ========================================================================== */
+.transparent-scroll {
+    -fx-background-color: #f8fafc; /* Standard modern slate background */
+    -fx-background: #f8fafc;
+    -fx-padding: 0;
 }
 
-/* Full Width Search Input Container Frame */
-.search-input-large {
-    -fx-background-color: #f0f6f7;
-    -fx-background-radius: 12px;
-    -fx-border-color: #d6e3e5;
-    -fx-border-radius: 12px;
+.transparent-scroll .viewport {
+    -fx-background-color: #f8fafc;
+}
+
+.transparent-scroll .thumb {
+    -fx-background-color: #cbd5e1;
+    -fx-background-radius: 4px;
+}
+
+.transparent-scroll .track {
+    -fx-background-color: transparent;
+}
+
+/* Base structural container font overriding */
+.content-container {
+    -fx-font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+}
+
+/* ==========================================================================
+   2. Card Panels & Layout Blocks
+   ========================================================================== */
+.dashboard-panel {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 8px;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+}
+
+.header-hero-card {
+    -fx-border-color: #e2e8f0;
+    -fx-effect: dropshadow(three-pass-box, rgba(15, 23, 42, 0.02), 8, 0, 0, 2);
+}
+
+/* ==========================================================================
+   3. Typography & Heading Labels
+   ========================================================================== */
+.section-caption {
+    -fx-text-fill: #0d9488; /* Emerald primary accent token */
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.page-title-large {
+    -fx-text-fill: #0f172a; /* Deep near-black gray */
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+}
+
+.page-subtitle {
+    -fx-text-fill: #64748b; /* Soft slate description */
+    -fx-font-size: 13px;
+    -fx-max-width: 650px;
+}
+
+/* ==========================================================================
+   4. Interactive Search Bar Text Fields
+   ========================================================================== */
+.form-input-large {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
     -fx-padding: 12px 16px;
+    -fx-text-fill: #1e293b;
     -fx-font-size: 14px;
 }
 
-/* Placeholders icons and typography */
+.form-input-large:focused {
+    -fx-border-color: #2563eb; /* Active action blue focus ring */
+}
+
+.form-input-large:prompt {
+    -fx-text-fill: #94a3b8;
+}
+
+/* ==========================================================================
+   5. Empty State / Zero Metric Placeholder Elements
+   ========================================================================== */
 .placeholder-icon-large {
-    -fx-font-size: 42px;
-    -fx-text-fill: #73949f;
+    -fx-font-size: 44px;
+    -fx-text-fill: #94a3b8;
 }
 
 .placeholder-icon-pulse-large {
-    -fx-font-size: 48px;
-    -fx-text-fill: #0ea5e9; /* Styled active pulse accent color */
+    -fx-font-size: 44px;
+    -fx-text-fill: #0d9488; /* Pulse identifier match */
 }
 
 .placeholder-title-bold {
-    -fx-font-size: 16px;
+    -fx-font-size: 15px;
     -fx-font-weight: bold;
-    -fx-text-fill: #0c232a;
+    -fx-text-fill: #0f172a;
+}
+
+/* ==========================================================================
+   6. Control Action Buttons
+   ========================================================================== */
+.btn-secondary {
+    -fx-cursor: hand;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 18px;
+    -fx-background-color: #ffffff;
+    -fx-border-color: #cbd5e1;
+    -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
+    -fx-border-width: 1px;
+    -fx-text-fill: #475569;
+}
+
+.btn-secondary:hover {
+    -fx-background-color: #f8fafc;
+    -fx-border-color: #94a3b8;
+    -fx-text-fill: #1e293b;
+}
+
+.btn-secondary:pressed {
+    -fx-background-color: #f1f5f9;
 }

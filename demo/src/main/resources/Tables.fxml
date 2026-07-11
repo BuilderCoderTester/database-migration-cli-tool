@@ -20,109 +20,103 @@
 <BorderPane xmlns:fx="http://javafx.com/fxml/1"
             xmlns="http://javafx.com/javafx/17"
             fx:controller="com.project.demo.api.rest.javafx.TablesController"
-            styleClass="tables-view">
+            stylesheets="@css/tables.css"
+            styleClass="page-root">
 
-    <!-- ================= HEADER ================= -->
     <top>
-        <VBox spacing="15" BorderPane.alignment="CENTER">
+        <VBox spacing="16" styleClass="page-header">
             <padding>
-                <Insets top="24" right="24" bottom="16" left="24"/>
+                <Insets top="24" right="24" bottom="18" left="24"/>
             </padding>
 
-            <!-- Title & Global Controls -->
             <HBox alignment="CENTER_LEFT" spacing="12">
-                <Label text="Database Tables" styleClass="page-title"/>
-                <Pane HBox.hgrow="ALWAYS"/>
-                <Button text="Refresh" styleClass="secondary-button"/>
-                <Button text="Export" styleClass="secondary-button"/>
+                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="METADATA INSPECTION" styleClass="section-caption"/>
+                    <Label text="Database Tables Explorer" styleClass="page-title"/>
+                </VBox>
+                <Button text="Refresh Schema" onAction="#handleRefresh" styleClass="btn-secondary"/>
+                <Button text="Export DDL" onAction="#handleExport" styleClass="btn-secondary"/>
             </HBox>
 
-            <!-- Search & Filters Bar -->
             <HBox spacing="16" alignment="CENTER_LEFT">
                 <TextField fx:id="searchField"
-                           promptText="Search table..."
+                           promptText="Search interactive table schemas..."
                            HBox.hgrow="ALWAYS"
-                           styleClass="search-field"/>
+                           styleClass="form-input"/>
                 <ComboBox fx:id="schemaCombo"
-                          promptText="Schema"
-                          minWidth="160"
-                          prefWidth="200"
-                          styleClass="schema-combo"/>
+                          promptText="Select Schema"
+                          minWidth="180"
+                          prefWidth="220"
+                          styleClass="form-combo"/>
             </HBox>
         </VBox>
     </top>
 
-    <!-- ================= BODY ================= -->
     <center>
         <SplitPane dividerPositions="0.25"
                    styleClass="dashboard-splitpane"
                    BorderPane.alignment="CENTER">
             <items>
 
-                <!-- LEFT PANEL: Table Explorer List -->
-                <VBox spacing="12" minWidth="220" maxWidth="450" SplitPane.resizableWithParent="true">
+                <VBox spacing="12" minWidth="240" maxWidth="450" styleClass="side-explorer-panel">
                     <padding>
-                        <Insets top="16" right="12" bottom="24" left="24"/>
+                        <Insets top="20" right="16" bottom="20" left="24"/>
                     </padding>
                     <Label text="Tables" styleClass="panel-title"/>
-                    <ListView fx:id="tableList" VBox.vgrow="ALWAYS" styleClass="table-listview"/>
+                    <ListView fx:id="tableList" VBox.vgrow="ALWAYS" styleClass="technical-listview"/>
                 </VBox>
 
-                <!-- RIGHT PANEL: Metadata & Column Schema Details -->
-                <VBox spacing="20" minWidth="500" SplitPane.resizableWithParent="true">
+                <VBox spacing="16" minWidth="550" styleClass="main-details-panel">
                     <padding>
-                        <Insets top="16" right="24" bottom="24" left="12"/>
+                        <Insets top="20" right="24" bottom="20" left="16"/>
                     </padding>
 
-                    <!-- Structural Information Panel -->
                     <VBox spacing="16" styleClass="dashboard-panel" VBox.vgrow="NEVER">
                         <padding>
-                            <Insets top="16" right="20" bottom="16" left="20"/>
+                            <Insets top="18" right="20" bottom="18" left="20"/>
                         </padding>
                         <Label text="Table Information" styleClass="panel-title"/>
 
-                        <!-- Added specific column constraints to prevent jumping text layout -->
                         <GridPane hgap="24" vgap="12">
                             <columnConstraints>
-                                <ColumnConstraints minWidth="100" prefWidth="120" hgrow="NEVER"/>
+                                <ColumnConstraints minWidth="120" prefWidth="140" hgrow="NEVER"/>
                                 <ColumnConstraints hgrow="ALWAYS"/>
                             </columnConstraints>
                             <rowConstraints>
-                                <RowConstraints minHeight="20" vgrow="SOMETIMES"/>
-                                <RowConstraints minHeight="20" vgrow="SOMETIMES"/>
-                                <RowConstraints minHeight="20" vgrow="SOMETIMES"/>
-                                <RowConstraints minHeight="20" vgrow="SOMETIMES"/>
+                                <RowConstraints minHeight="24" vgrow="SOMETIMES"/>
+                                <RowConstraints minHeight="24" vgrow="SOMETIMES"/>
+                                <RowConstraints minHeight="24" vgrow="SOMETIMES"/>
+                                <RowConstraints minHeight="24" vgrow="SOMETIMES"/>
                             </rowConstraints>
                             <children>
-                                <Label text="Table Name" styleClass="metadata-label"/>
-                                <Label fx:id="tableNameLabel" styleClass="metadata-value" GridPane.columnIndex="1"/>
+                                <Label text="Table Name" styleClass="metadata-label" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                                <Label fx:id="tableNameLabel" styleClass="metadata-value" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
 
-                                <Label text="Schema" styleClass="metadata-label" GridPane.rowIndex="1"/>
+                                <Label text="Schema Scope" styleClass="metadata-label" GridPane.rowIndex="1"/>
                                 <Label fx:id="schemaLabel" styleClass="metadata-value" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
 
-                                <Label text="Rows" styleClass="metadata-label" GridPane.rowIndex="2"/>
+                                <Label text="Estimated Rows" styleClass="metadata-label" GridPane.rowIndex="2"/>
                                 <Label fx:id="rowsLabel" styleClass="metadata-value" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
 
-                                <Label text="Columns" styleClass="metadata-label" GridPane.rowIndex="3"/>
+                                <Label text="Total Columns" styleClass="metadata-label" GridPane.rowIndex="3"/>
                                 <Label fx:id="columnCountLabel" styleClass="metadata-value" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
                             </children>
                         </GridPane>
                     </VBox>
 
-                    <!-- Structural Table Columns Schema Detail Panel -->
                     <VBox spacing="12" styleClass="dashboard-panel" VBox.vgrow="ALWAYS">
                         <padding>
-                            <Insets top="16" right="20" bottom="16" left="20"/>
+                            <Insets top="18" right="20" bottom="18" left="20"/>
                         </padding>
-                        <Label text="Columns" styleClass="panel-title"/>
+                        <Label text="Columns Schema Layout" styleClass="panel-title"/>
 
-                        <TableView fx:id="columnTable" VBox.vgrow="ALWAYS">
+                        <TableView fx:id="columnTable" VBox.vgrow="ALWAYS" styleClass="schema-tableview">
                             <columns>
-                                <TableColumn fx:id="nameColumn" text="Column" minWidth="130"/>
-                                <TableColumn fx:id="typeColumn" text="Type" minWidth="100"/>
-                                <TableColumn fx:id="nullableColumn" text="Nullable" minWidth="80"/>
-                                <TableColumn fx:id="defaultColumn" text="Default" minWidth="120"/>
-                                <TableColumn fx:id="keyColumn" text="Key" minWidth="70"/>
+                                <TableColumn fx:id="nameColumn" text="Column" minWidth="140"/>
+                                <TableColumn fx:id="typeColumn" text="Type" minWidth="110"/>
+                                <TableColumn fx:id="nullableColumn" text="Nullable" minWidth="90"/>
+                                <TableColumn fx:id="defaultColumn" text="Default Expression" minWidth="140"/>
+                                <TableColumn fx:id="keyColumn" text="Key Constraint" minWidth="100"/>
                             </columns>
                             <columnResizePolicy>
                                 <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>

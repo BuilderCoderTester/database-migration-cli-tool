@@ -1,9 +1,9 @@
 /* ==========================================
-   GLOBAL VARIABLES & ROOT SETUP
+   GLOBAL VARIABLES & ROOT SETUP (Monospace)
    ========================================== */
 .root {
     -fx-background-color: #f8fafc; /* Soft, light slate gray */
-    -fx-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -fx-font-family: "Courier New", "Lucida Console", "Consolas", monospace;
 }
 
 /* ==========================================
@@ -39,27 +39,43 @@
 }
 
 /* ==========================================
-   TYPOGRAPHY
+   TYPOGRAPHY & BUTTONS
    ========================================== */
 .panel-title-bold {
-    -fx-font-size: 18px;
-    -fx-font-weight: 700;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
     -fx-text-fill: #0f172a; /* Deep slate */
 }
 
 .page-title-large {
-    -fx-font-size: 24px;
-    -fx-font-weight: 700;
+    -fx-font-size: 1.5em;
+    -fx-font-weight: bold;
     -fx-text-fill: #1e293b;
 }
 
 .page-subtitle {
-    -fx-font-size: 14px;
-    -fx-text-fill: #64748b; /* Slate-400 gray text */
+    -fx-font-size: 12px;
+    -fx-text-fill: #64748b;
 }
 
 .panel-separator {
-    -fx-background-color: #e2e8f0;
+    -fx-border-color: #e2e8f0 transparent transparent transparent;
+}
+
+.button {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 6px 12px;
+    -fx-text-fill: #475569;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+.button:hover {
+    -fx-background-color: #f1f5f9;
+    -fx-border-color: #94a3b8;
 }
 
 /* ==========================================
@@ -75,8 +91,8 @@
 .transparent-list-view .list-cell {
     -fx-background-color: transparent;
     -fx-text-fill: #475569;
-    -fx-font-size: 14px;
-    -fx-font-weight: 500;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
     -fx-padding: 10px 14px;
     -fx-background-radius: 6px;
     -fx-border-radius: 6px;
@@ -93,12 +109,11 @@
 .transparent-list-view .list-cell:filled:selected {
     -fx-background-color: #e0f2fe; /* Soft subtle sky blue background */
     -fx-text-fill: #0369a1;       /* Contrasting deep blue text */
-    -fx-font-weight: 600;
 }
 
 /* Empty placeholder styles */
 .table-placeholder-text {
-    -fx-font-size: 13px;
+    -fx-font-size: 12px;
     -fx-text-fill: #94a3b8;
     -fx-font-style: italic;
 }
@@ -108,7 +123,9 @@
     -fx-background-color: #e0f2fe;
 }
 
-/* Prevent the table wrapper from clipped overflows */
+/* ==========================================
+   DYNAMIC TABLE WRAPPERS (Injected Run-time grids)
+   ========================================== */
 .table-wrapper-pane {
     -fx-min-height: 200px;
 }
@@ -119,7 +136,6 @@
     -fx-border-color: transparent;
 }
 
-/* Ensures the table's internal scroll pane respects the layout container borders */
 .table-view .virtual-flow {
     -fx-background-color: transparent;
 }

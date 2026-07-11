@@ -1,10 +1,10 @@
 /* ==========================================================================
-   1. Root Container Style
+   1. Root Container Style (Monospace Engine Integration)
    ========================================================================== */
 .modal-container {
     -fx-background-color: #f4fafb; /* Soft light-teal tint canvas background */
     -fx-background-radius: 16px;
-    -fx-font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    -fx-font-family: "Courier New", "Lucida Console", "Consolas", monospace;
 }
 
 /* ==========================================================================
@@ -13,6 +13,7 @@
 .modal-badge {
     -fx-background-color: #ffffff;
     -fx-border-color: #bce3e6;
+    -fx-border-width: 1px;
     -fx-border-radius: 20px;
     -fx-background-radius: 20px;
     -fx-text-fill: #0ea5e9; /* Cyan/Teal accent text color */
@@ -22,13 +23,13 @@
 }
 
 .modal-title {
-    -fx-font-size: 24px;
+    -fx-font-size: 1.5em;
     -fx-font-weight: bold;
     -fx-text-fill: #0c232a; /* Deep dark slate navy */
 }
 
 .modal-subtitle {
-    -fx-font-size: 13px;
+    -fx-font-size: 12px;
     -fx-text-fill: #7d969e; /* Soft muted gray-blue */
 }
 
@@ -44,9 +45,7 @@
 }
 
 .modal-separator {
-    -fx-background-color: transparent;
-    -fx-border-color: #e2eff1;
-    -fx-border-width: 1px 0 0 0;
+    -fx-border-color: #e2eff1 transparent transparent transparent;
 }
 
 /* ==========================================================================
@@ -69,14 +68,7 @@
     -fx-font-size: 13px;
 }
 .modal-input-field:focused {
-    -fx-background-color: #ffffff;
     -fx-border-color: #0ea5e9;
-}
-.modal-input-field *.text {
-    -fx-text-fill: #11343e;
-}
-.modal-input-field:empty *.text {
-    -fx-text-fill: #9ab4bc; /* Placeholder text shade */
 }
 
 /* ==========================================================================
@@ -91,44 +83,44 @@
 }
 
 .version-box-icon {
-    -fx-font-size: 20px;
+    -fx-font-size: 18px;
     -fx-text-fill: #11343e;
 }
 
 .version-box-title {
-    -fx-font-size: 11px;
+    -fx-font-size: 10px;
     -fx-text-fill: #7d969e;
+    -fx-font-weight: bold;
 }
 
 .version-box-value {
-    -fx-font-size: 22px;
+    -fx-font-size: 20px;
     -fx-font-weight: bold;
-    -fx-text-fill: #0ea5e9; /* Vibrant standout blue/teal 'V' */
+    -fx-text-fill: #0ea5e9;
 }
 
 /* ==========================================================================
    5. SQL Code Editor TextAreas
    ========================================================================== */
 .sql-code-editor {
-    -fx-font-family: 'Consolas', 'Courier New', monospace;
+    -fx-font-family: "Courier New", "Lucida Console", "Consolas", monospace;
     -fx-font-size: 13px;
-}
-
-/* Targets internal text layout contents of the JavaFX TextArea */
-.sql-code-editor .content {
     -fx-background-color: #ffffff;
-    -fx-background-radius: 10px;
     -fx-border-color: #ccdcdf;
-    -fx-border-radius: 10px;
     -fx-border-width: 1px;
-    -fx-text-fill: #0f9f90; /* Green/Teal code comment simulation text color */
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
 }
-
-.sql-code-editor:focused .content {
+.sql-code-editor:focused {
     -fx-border-color: #0ea5e9;
 }
 
-/* Style modification for the nested scrollbars inside the editors */
+/* Refactored layout lookup skin configurations safely targeting internal scroll views */
+.sql-code-editor .content {
+    -fx-background-color: transparent;
+    -fx-text-fill: #0f9f90; /* Green/Teal typography simulation code text */
+}
+
 .sql-code-editor .scroll-pane {
     -fx-background-color: transparent;
 }
@@ -136,13 +128,16 @@
 /* ==========================================================================
    6. Footer Buttons
    ========================================================================== */
+.button {
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+}
+
 .btn-modal-secondary,
 .btn-modal-primary {
     -fx-font-size: 13px;
-    -fx-font-weight: bold;
     -fx-padding: 10px 20px;
     -fx-background-radius: 8px;
-    -fx-cursor: hand;
 }
 
 /* Cancel Button */
@@ -151,6 +146,7 @@
     -fx-text-fill: #11343e;
     -fx-border-color: #ccdcdf;
     -fx-border-radius: 8px;
+    -fx-border-width: 1px;
 }
 .btn-modal-secondary:hover {
     -fx-background-color: #f4fafb;
@@ -160,10 +156,14 @@
 /* Create Migration Button */
 .btn-modal-primary {
     -fx-background-color: #0ea5e9; /* Primary teal button color fill */
+    -fx-border-color: #0ea5e9;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
     -fx-text-fill: #ffffff;
 }
 .btn-modal-primary:hover {
     -fx-background-color: #0c93d2;
+    -fx-border-color: #0c93d2;
 }
 .btn-modal-primary:pressed {
     -fx-background-color: #0a7fb6;

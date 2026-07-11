@@ -1,205 +1,147 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.project.demo.api.rest.javafx.SettingsController">
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.project.demo.api.rest.javafx.SettingsController"
+            stylesheets="@css/settings.css"
+            styleClass="page-root">
 
     <top>
-
-        <HBox alignment="CENTER_LEFT"
-              spacing="10"
-              styleClass="topbar">
-
+        <VBox styleClass="page-header">
             <padding>
-                <Insets top="20" right="20" bottom="20" left="20"/>
+                <Insets top="24" right="24" bottom="20" left="24"/>
             </padding>
-
-            <Label text="Application Settings"
-                   styleClass="page-title"/>
-
-        </HBox>
-
+            <HBox alignment="CENTER_LEFT">
+                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="CONFIGURATION" styleClass="section-caption"/>
+                    <Label text="Application Settings" styleClass="page-title"/>
+                </VBox>
+            </HBox>
+        </VBox>
     </top>
 
     <center>
-
-        <ScrollPane fitToWidth="true">
-
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" styleClass="transparent-scroll">
             <content>
-
-                <VBox spacing="20">
-
+                <VBox spacing="16">
                     <padding>
-                        <Insets top="20"
-                                right="20"
-                                bottom="20"
-                                left="20"/>
+                        <Insets top="24" right="24" bottom="24" left="24"/>
                     </padding>
 
-                    <!-- General -->
+                    <VBox spacing="16" styleClass="dashboard-panel">
+                        <Label text="General" styleClass="panel-title"/>
+                        <GridPane hgap="16" vgap="14">
+                            <columnConstraints>
+                                <ColumnConstraints minWidth="160" prefWidth="180" maxWidth="200" hgrow="NEVER"/>
+                                <ColumnConstraints minWidth="200" prefWidth="320" hgrow="ALWAYS"/>
+                                <ColumnConstraints minWidth="90" prefWidth="100" hgrow="NEVER"/>
+                            </columnConstraints>
 
-                    <VBox spacing="15"
-                          styleClass="dashboard-panel">
+                            <Label text="Application Name" styleClass="form-label" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                            <TextField fx:id="appNameField" styleClass="form-input" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="2"/>
 
-                        <Label text="General"
-                               styleClass="panel-title"/>
+                            <Label text="Workspace Root" styleClass="form-label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                            <TextField fx:id="workspaceField" styleClass="form-input" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="2"/>
 
-                        <GridPane hgap="20"
-                                  vgap="15">
-
-                            <Label text="Application Name"/>
-                            <TextField fx:id="appNameField"
-                                       GridPane.columnIndex="1"/>
-
-                            <Label text="Workspace"/>
-                            <TextField fx:id="workspaceField"
-                                       GridPane.columnIndex="1"
-                                       GridPane.rowIndex="1"/>
-
-                            <Label text="Migration Folder"/>
-                            <TextField fx:id="migrationFolderField"
-                                       GridPane.columnIndex="1"
-                                       GridPane.rowIndex="2"/>
-
-                            <Button text="Browse"
-                                    GridPane.columnIndex="2"
-                                    GridPane.rowIndex="2"/>
-
+                            <Label text="Migration Directory" styleClass="form-label" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                            <TextField fx:id="migrationFolderField" styleClass="form-input" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                            <Button text="Browse" onAction="#handleBrowseFolder" styleClass="btn-secondary" maxWidth="Infinity" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
                         </GridPane>
-
                     </VBox>
 
-                    <!-- Database -->
+                    <VBox spacing="16" styleClass="dashboard-panel">
+                        <Label text="Database Engine Defaults" styleClass="panel-title"/>
+                        <GridPane hgap="16" vgap="14">
+                            <columnConstraints>
+                                <ColumnConstraints minWidth="160" prefWidth="180" maxWidth="200" hgrow="NEVER"/>
+                                <ColumnConstraints minWidth="200" prefWidth="320" hgrow="ALWAYS"/>
+                            </columnConstraints>
 
-                    <VBox spacing="15"
-                          styleClass="dashboard-panel">
+                            <Label text="Default Schema" styleClass="form-label" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                            <TextField fx:id="schemaField" styleClass="form-input" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
 
-                        <Label text="Database"
-                               styleClass="panel-title"/>
+                            <Label text="Connection Timeout (s)" styleClass="form-label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                            <Spinner fx:id="timeoutSpinner" styleClass="form-spinner" maxWidth="160" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
 
-                        <GridPane hgap="20"
-                                  vgap="15">
-
-                            <Label text="Default Schema"/>
-                            <TextField fx:id="schemaField"
-                                       GridPane.columnIndex="1"/>
-
-                            <Label text="Connection Timeout"/>
-                            <Spinner fx:id="timeoutSpinner"
-                                     GridPane.columnIndex="1"
-                                     GridPane.rowIndex="1"/>
-
-                            <Label text="Auto Connect"/>
-                            <CheckBox fx:id="autoConnectCheck"
-                                      GridPane.columnIndex="1"
-                                      GridPane.rowIndex="2"/>
-
+                            <Label text="Lifecycle Strategy" styleClass="form-label" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                            <CheckBox fx:id="autoConnectCheck" text="Auto-connect to active metadata store on startup" styleClass="form-checkbox" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
                         </GridPane>
-
                     </VBox>
 
-                    <!-- Migration -->
-
-                    <VBox spacing="15"
-                          styleClass="dashboard-panel">
-
-                        <Label text="Migration"
-                               styleClass="panel-title"/>
-
-                        <VBox spacing="10">
-
-                            <CheckBox fx:id="checksumCheck"
-                                      text="Enable checksum validation"/>
-
-                            <CheckBox fx:id="backupCheck"
-                                      text="Create backup before migration"/>
-
-                            <CheckBox fx:id="transactionCheck"
-                                      text="Run migration inside transaction"/>
-
-                            <CheckBox fx:id="lockCheck"
-                                      text="Enable migration locking"/>
-
+                    <VBox spacing="16" styleClass="dashboard-panel">
+                        <Label text="Migration Pipeline Guardrails" styleClass="panel-title"/>
+                        <VBox spacing="12" styleClass="checkbox-group-container">
+                            <CheckBox fx:id="checksumCheck" text="Enable schema checksum validation prior to script execution" styleClass="form-checkbox"/>
+                            <CheckBox fx:id="backupCheck" text="Create fallback database snapshot before executing structural runs" styleClass="form-checkbox"/>
+                            <CheckBox fx:id="transactionCheck" text="Encapsulate independent migration runs within isolated SQL transactions" styleClass="form-checkbox"/>
+                            <CheckBox fx:id="lockCheck" text="Enable explicit migration metadata locking (prevents concurrent execution threads)" styleClass="form-checkbox"/>
                         </VBox>
-
                     </VBox>
 
-                    <!-- AI -->
+                    <VBox spacing="16" styleClass="dashboard-panel">
+                        <Label text="AI Assistant Integration" styleClass="panel-title"/>
+                        <GridPane hgap="16" vgap="14">
+                            <columnConstraints>
+                                <ColumnConstraints minWidth="160" prefWidth="180" maxWidth="200" hgrow="NEVER"/>
+                                <ColumnConstraints minWidth="200" prefWidth="320" hgrow="ALWAYS"/>
+                            </columnConstraints>
 
-                    <VBox spacing="15"
-                          styleClass="dashboard-panel">
+                            <Label text="LLM Service Provider" styleClass="form-label" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                            <ComboBox fx:id="providerCombo" styleClass="form-combo" maxWidth="240" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
 
-                        <Label text="AI Assistant"
-                               styleClass="panel-title"/>
+                            <Label text="API Credentials Key" styleClass="form-label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                            <PasswordField fx:id="apiKeyField" styleClass="form-input" placeholder="••••••••••••••••" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
 
-                        <GridPane hgap="20"
-                                  vgap="15">
-
-                            <Label text="Provider"/>
-                            <ComboBox fx:id="providerCombo"
-                                      GridPane.columnIndex="1"/>
-
-                            <Label text="API Key"/>
-                            <PasswordField fx:id="apiKeyField"
-                                           GridPane.columnIndex="1"
-                                           GridPane.rowIndex="1"/>
-
-                            <Label text="Model"/>
-                            <ComboBox fx:id="modelCombo"
-                                      GridPane.columnIndex="1"
-                                      GridPane.rowIndex="2"/>
-
+                            <Label text="Target Model Profile" styleClass="form-label" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                            <ComboBox fx:id="modelCombo" styleClass="form-combo" maxWidth="240" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
                         </GridPane>
-
                     </VBox>
 
-                    <!-- Appearance -->
+                    <VBox spacing="16" styleClass="dashboard-panel">
+                        <Label text="Appearance &amp; Accessibility" styleClass="panel-title"/>
+                        <GridPane hgap="16" vgap="14">
+                            <columnConstraints>
+                                <ColumnConstraints minWidth="160" prefWidth="180" maxWidth="200" hgrow="NEVER"/>
+                                <ColumnConstraints minWidth="200" prefWidth="320" hgrow="ALWAYS"/>
+                            </columnConstraints>
 
-                    <VBox spacing="15"
-                          styleClass="dashboard-panel">
+                            <Label text="Interface Theme Profile" styleClass="form-label" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                            <ComboBox fx:id="themeCombo" styleClass="form-combo" maxWidth="240" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
 
-                        <Label text="Appearance"
-                               styleClass="panel-title"/>
-
-                        <GridPane hgap="20"
-                                  vgap="15">
-
-                            <Label text="Theme"/>
-                            <ComboBox fx:id="themeCombo"
-                                      GridPane.columnIndex="1"/>
-
-                            <Label text="Font Size"/>
-                            <Slider fx:id="fontSlider"
-                                    min="10"
-                                    max="22"
-                                    value="14"
-                                    GridPane.columnIndex="1"
-                                    GridPane.rowIndex="1"/>
-
+                            <Label text="Workspace Font Size" styleClass="form-label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                            <HBox alignment="CENTER_LEFT" spacing="12" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                <Slider fx:id="fontSlider" min="10" max="22" value="14" styleClass="form-slider" HBox.hgrow="ALWAYS"/>
+                            </HBox>
                         </GridPane>
-
                     </VBox>
 
-                    <!-- Bottom Buttons -->
-
-                    <HBox alignment="CENTER_RIGHT"
-                          spacing="10">
-
-                        <Button text="Reset"/>
-
-                        <Button text="Save Settings"/>
-
+                    <HBox alignment="CENTER_RIGHT" spacing="12">
+                        <padding>
+                            <Insets top="8"/>
+                        </padding>
+                        <Button text="Reset Defaults" onAction="#handleResetDefaults" styleClass="btn-secondary"/>
+                        <Button text="Save Configuration" onAction="#handleSaveSettings" styleClass="btn-primary"/>
                     </HBox>
-
                 </VBox>
-
             </content>
-
         </ScrollPane>
-
     </center>
 
 </BorderPane>

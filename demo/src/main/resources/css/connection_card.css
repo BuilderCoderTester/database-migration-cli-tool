@@ -1,60 +1,71 @@
-/* ==========================================
+/* ==========================================================================
    CARD CONTAINER (Gives the card its shape)
-   ========================================== */
+   ========================================================================== */
 .connection-card {
     -fx-background-color: #ffffff; /* Solid white background */
     -fx-border-color: #cbd5e1;     /* Distinct gray border line */
     -fx-border-width: 1px;
     -fx-border-radius: 8px;
     -fx-background-radius: 8px;
+    -fx-font-family: "JetBrains Mono", "Cascadia Code", "Consolas", "Courier New", monospace;
 
     /* Subtle drop shadow to lift the card up */
-    -fx-effect: dropshadow(three-pass-box, rgba(15, 23, 42, 0.08), 10, 0, 0, 3);
+    -fx-effect: dropshadow(three-pass-box, rgba(15, 23, 42, 0.06), 8, 0, 0, 2);
 }
 
 .connection-card:hover {
     -fx-border-color: #94a3b8;
-    -fx-effect: dropshadow(three-pass-box, rgba(15, 23, 42, 0.15), 14, 0, 0, 5);
+    -fx-effect: dropshadow(three-pass-box, rgba(15, 23, 42, 0.12), 12, 0, 0, 4);
 }
 
-/* ... keep the rest of your typography and button css down here unchanged ... */
-
-/* ==========================================
+/* ==========================================================================
    TYPOGRAPHY
-   ========================================== */
+   ========================================================================= */
 .card-database {
-    -fx-font-size: 18px;
-    -fx-font-family: "Consolas", monospace;
-    -fx-font-weight: 400;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
     -fx-text-fill: #0f172a; /* Strong dark slate */
 }
 
-/* ==========================================
+/* ==========================================================================
    CARD FOOTER BUTTONS
-   ========================================== */
+   ========================================================================== */
 .button {
     -fx-font-size: 12px;
-    -fx-font-weight: 600;
+    -fx-font-weight: bold;
     -fx-padding: 6px 14px;
     -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
     -fx-cursor: hand;
 }
 
-/* Set Active Button */
+/* Set Active Button Styles */
 .card-button-active {
     -fx-background-color: #2563eb; /* Deep indigo action blue */
+    -fx-border-color: #2563eb;
+    -fx-border-width: 1px;
     -fx-text-fill: #ffffff;
 }
 .card-button-active:hover {
     -fx-background-color: #1d4ed8;
+    -fx-border-color: #1d4ed8;
+}
+.card-button-active:pressed {
+    -fx-background-color: #1e40af;
 }
 
-/* Delete Button */
+/* Delete Button Styles */
 .card-button-delete {
-    -fx-background-color: #dc2626;
+    -fx-background-color: #dc2626; /* Crimson default background */
+    -fx-border-color: #dc2626;
+    -fx-border-width: 1px;
     -fx-text-fill: #ffffff;
 }
 .card-button-delete:hover {
     -fx-background-color: #fee2e2; /* Crimson alert splash on hover */
-    -fx-text-fill: #dc2626;
+    -fx-border-color: #fca5a5;
+    -fx-text-fill: #dc2626;          /* Contrasting deep red text focus */
+}
+.card-button-delete:pressed {
+    -fx-background-color: #fecaca;
 }

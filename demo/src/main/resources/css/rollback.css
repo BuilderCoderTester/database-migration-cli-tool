@@ -1,8 +1,12 @@
-/* Core Modal Setup */
+/* ==========================================================================
+   1. Root Canvas Framework & Font Stack
+   ========================================================================== */
 .modal-container {
     -fx-background-color: #ffffff;
-    -fx-background-radius: 8px;
+    -fx-background-radius: 12px;
+    -fx-font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
 }
+
 .modal-body-scroll {
     -fx-background-color: transparent;
     -fx-background-insets: 0;
@@ -12,7 +16,13 @@
     -fx-background-color: transparent;
 }
 
-/* Typography */
+.modal-separator {
+    -fx-border-color: #f1f5f9 transparent transparent transparent;
+}
+
+/* ==========================================================================
+   2. Header & Central Headers
+   ========================================================================== */
 .modal-title {
     -fx-font-size: 20px;
     -fx-font-weight: bold;
@@ -23,43 +33,56 @@
     -fx-text-fill: #64748b;
 }
 .section-title {
-    -fx-font-size: 16px;
+    -fx-font-size: 15px;
     -fx-font-weight: bold;
-    -fx-text-fill: #0f172a;
+    -fx-text-fill: #334155;
 }
 
-/* Custom Card RadioButtons */
+/* ==========================================================================
+   3. Modern Selection Strategy Option Cards
+   ========================================================================== */
 .strategy-card {
     -fx-background-color: #ffffff;
     -fx-border-color: #e2e8f0;
     -fx-border-width: 1px;
-    -fx-border-radius: 12px;
-    -fx-background-radius: 12px;
-    -fx-padding: 16px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 14px 16px;
     -fx-max-width: infinity;
-    -fx-alignment: center-left;
 }
 .strategy-card:hover {
     -fx-border-color: #cbd5e1;
+    -fx-background-color: #f8fafc;
+}
+
+/* Selector monitoring state to match child radio updates */
+.strategy-card:has(RadioButton:selected) {
+    -fx-border-color: #2563eb;
+    -fx-border-width: 1px;
+    -fx-background-color: #f0f5ff;
+}
+
+.strategy-card .radio-button {
     -fx-cursor: hand;
 }
-/* When selected, give it the distinct blue border */
-.strategy-card:selected {
-    -fx-border-color: #2563eb;
-    -fx-border-width: 2px;
-    -fx-padding: 15px; /* Adjust padding to prevent shifting due to border-width change */
+
+.card-text-container {
+    -fx-padding: 0 0 0 8px;
 }
+
 .card-title {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
     -fx-text-fill: #1e293b;
 }
 .card-description {
-    -fx-font-size: 13px;
+    -fx-font-size: 12px;
     -fx-text-fill: #64748b;
 }
 
-/* Warning Banner */
+/* ==========================================================================
+   4. Warning Component Banner
+   ========================================================================== */
 .warning-banner {
     -fx-background-color: #fffbeb;
     -fx-border-color: #fef3c7;
@@ -71,25 +94,67 @@
     -fx-font-size: 13px;
     -fx-text-fill: #b45309;
 }
+.svg-icon-warning {
+    -fx-fill: #b45309;
+}
 
-/* Buttons */
+/* ==========================================================================
+   5. Interactive Buttons & Icons
+   ========================================================================== */
+.button {
+    -fx-cursor: hand;
+}
+
 .close-button {
     -fx-background-color: transparent;
-    -fx-padding: 4px;
+    -fx-padding: 6px;
+    -fx-background-radius: 4px;
 }
-.btn-cancel {
-    -fx-background-color: #e2e8f0;
-    -fx-text-fill: #374151;
+.close-button:hover {
+    -fx-background-color: #f1f5f9;
+}
+.svg-icon-close {
+    -fx-fill: #64748b;
+}
+.close-button:hover .svg-icon-close {
+    -fx-fill: #0f172a;
+}
+
+/* Footer Control Elements */
+.btn-cancel,
+.btn-execute {
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-padding: 10px 20px;
     -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
+    -fx-border-width: 1px;
 }
+
+/* Cancel Button Profile */
+.btn-cancel {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e2e8f0;
+    -fx-text-fill: #374151;
+}
+.btn-cancel:hover {
+    -fx-background-color: #f8fafc;
+    -fx-border-color: #cbd5e1;
+}
+.btn-icon-secondary {
+    -fx-fill: #475569;
+}
+
+/* Execute Action Profile */
 .btn-execute {
     -fx-background-color: #fee2e2;
+    -fx-border-color: #fee2e2;
     -fx-text-fill: #991b1b;
-    -fx-font-weight: bold;
-    -fx-padding: 10px 20px;
-    -fx-background-radius: 6px;
 }
-.btn-cancel:hover { -fx-background-color: #cbd5e1; }
-.btn-execute:hover { -fx-background-color: #fca5a5; }
+.btn-execute:hover {
+    -fx-background-color: #fca5a5;
+    -fx-border-color: #fca5a5;
+}
+.btn-icon-destructive {
+    -fx-fill: #991b1b;
+}
