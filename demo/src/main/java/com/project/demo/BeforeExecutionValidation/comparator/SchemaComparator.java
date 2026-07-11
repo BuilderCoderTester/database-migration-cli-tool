@@ -44,17 +44,18 @@ public class SchemaComparator {
             TableModel existing,
             TableModel incoming) {
 
+        // Different number of columns
         if (existing.getColumns().size() !=
                 incoming.getColumns().size()) {
             return false;
         }
 
-        for (ColumnModel column :
+        for (ColumnModel incomingColumn :
                 incoming.getColumns().values()) {
 
             ColumnModel existingColumn =
                     existing.getColumns()
-                            .get(column.getColumnName());
+                            .get(incomingColumn.getColumnName());
 
             if (existingColumn == null) {
                 return false;
@@ -62,14 +63,21 @@ public class SchemaComparator {
 
             if (!compareColumn(
                     existingColumn,
-                    column)) {
+                    incomingColumn)) {
                 return false;
             }
+        }
 
+        // Detect removed columns
+        for (String columnName :
+                existing.getColumns().keySet()) {
+
+            if (!incoming.getColumns().containsKey(columnName)) {
+                return false;
+            }
         }
 
         return true;
-
     }
 
     private boolean compareColumn(
@@ -82,18 +90,19 @@ public class SchemaComparator {
             return false;
         }
 
-        if (first.isNullable() !=
-                second.isNullable()) {
+        if (first.isNullable() != second.isNullable()) {
             return false;
         }
 
-        if (first.isPrimaryKey() !=
-                second.isPrimaryKey()) {
+        if (first.isPrimaryKey() != second.isPrimaryKey()) {
             return false;
         }
 
-        if (first.isForeignKey() !=
-                second.isForeignKey()) {
+        if (first.isForeignKey() != second.isForeignKey()) {
+            return false;
+        }
+
+        if (first.isUnique() != second.isUnique()) {
             return false;
         }
 
@@ -111,7 +120,6 @@ public class SchemaComparator {
 
         return true;
     }
-
     private boolean equalsIgnoreCase(
             String a,
             String b) {
@@ -164,6 +172,7 @@ public class SchemaComparator {
             TableModel existingTable,
             TableModel incomingTable) {
 
+        // New or modified columns
         for (ColumnModel incomingColumn :
                 incomingTable.getColumns().values()) {
 
@@ -171,18 +180,26 @@ public class SchemaComparator {
                     existingTable.getColumns()
                             .get(incomingColumn.getColumnName());
 
-            // New column found
             if (existingColumn == null) {
                 return true;
             }
 
-            // Same column name but different definition
-            if (!compareColumn(existingColumn, incomingColumn)) {
+            if (!compareColumn(
+                    existingColumn,
+                    incomingColumn)) {
                 return true;
             }
         }
 
-        // No new columns or changes
+        // Dropped columns
+        for (String columnName :
+                existingTable.getColumns().keySet()) {
+
+            if (!incomingTable.getColumns().containsKey(columnName)) {
+                return true;
+            }
+        }
+
         return false;
     }
 }

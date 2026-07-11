@@ -1,4 +1,4 @@
-package com.project.demo.modules.migration.model;
+package com.project.demo.enumuration;
 
 public enum LogLevel {
     SUCCESS,

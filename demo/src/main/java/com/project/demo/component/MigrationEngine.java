@@ -1,8 +1,10 @@
 // MigrationEngine.java
 package com.project.demo.component;
 
+import com.project.demo.enumuration.DatabaseOperation;
 import com.project.demo.modules.migration.dto.MigrationScriptStatus;
 import com.project.demo.enumuration.Status;
+import com.project.demo.modules.migration.dto.dependency.response.DependencyAnalysisResult;
 import com.project.demo.modules.migration.model.Dependency;
 import com.project.demo.modules.migration.model.Migration;
 import com.project.demo.modules.migration.model.MigrationScript;
@@ -38,6 +40,7 @@ public class MigrationEngine {
     private final Helper helper;
     private final ConnectionService connectionService;
     private final MigrationRepair migrationRepair;
+
     public void initialize() {
         repository.createSchemaHistoryTable();
         logger.info("Schema history table initialized");
@@ -45,7 +48,7 @@ public class MigrationEngine {
 
     // MIGRATE UP MODULE
     @Transactional(rollbackFor = Exception.class)
-    public void migrateUp(MigrationScript script, Long connectionId,String currentDatabase) throws SQLException {
+    public void migrateUp(MigrationScript script, Long connectionId, String currentDatabase) throws SQLException {
         log.debug("Starting migrate up for script {} on connection {}", script.getVersion(), connectionId);
         if (connectionId == null) {
             throw new RuntimeException("No active connection selected");
@@ -57,31 +60,53 @@ public class MigrationEngine {
 
         try {
             Connection conn = helper.activeConnection(currentDatabase);
-//            helper.saveMigrationRecord(script, connectionId, System.currentTimeMillis() - startTime, false,conn);
             log.debug("Active migration connection opened for database {}", currentDatabase);
-            // has bugs (workings.............)
-//            validator.validateBeforeUp(script);
 
-            // 2. 🔥 AST Dependency Extraction
+// 2. 🔥 AST Dependency Extraction
             ASTDependencyExtractor extractor = new ASTDependencyExtractor();
-            List<Dependency> deps = extractor.extract(script.getUpScript());
+            DependencyAnalysisResult deps = extractor.extract(script.getUpScript());
             log.debug("Extracted dependencies for {}: {}", script.getVersion(), deps);
 
-            // only checked for CREATE not for others
+// Pretty print banner for local console debugging
+            System.out.println("\n🔥 ========================================================");
+            System.out.println("   AST DEPENDENCY EXTRACTION REPORT");
+            System.out.println("========================================================");
+            System.out.printf("  • Script Version : %s%n", script.getVersion());
+            System.out.printf("  • Total Deps     : %d%n", deps.getDependencies() != null ? deps.getDependencies().size() : 0);
+
+// If your DependencyAnalysisResult holds error details, print them clearly
+//            if (deps.hasErrors()) {
+//                System.out.printf("  • ⚠️ Parsing Errors: %s%n", deps.getErrorMessages());
+//            } else {
+//                System.out.println("  • Status         : AST Parsed Successfully ✅");
+//            }
+            System.out.println("========================================================\n");
+// only checked for CREATE not for others
             DependencyValidator validator = new DependencyValidator();
             MigrationScriptStatus scriptStatus = validator.validate(deps, conn);
             log.debug("Dependency validation status for table {}: {}", scriptStatus.getTableName(), scriptStatus.getStatus());
-            // if failed then call the repair function .
-            if(scriptStatus.getStatus() == Status.FAILURE){
+
+// Clear, high-visibility console print
+            System.out.println("\n==================================================");
+            System.out.println("   MIGRATION SCRIPT VALIDATION REPORT            ");
+            System.out.println("==================================================");
+            System.out.printf(" Script Version : %s%n", script.getVersion());
+            System.out.printf(" Target Table   : %s%n", scriptStatus.getTableName());
+            System.out.printf(" Status         : %s%n", scriptStatus.getStatus());
+            System.out.printf(" Deps Found     : %d%n", deps.getDependencies().size());
+            System.out.println(" Scope Notice   : Validated CREATE actions only.");
+            System.out.println("==================================================\n");            // if failed then call the repair function .
+
+            if (scriptStatus.getStatus() == Status.FAILURE) {
                 log.error(
                         "Migration {} failed validation. Reason: {}",
                         script.getVersion(),
                         scriptStatus.getReason()
                 );
 
-                MigrationScript currentScript =  migrationRepair.migrationRepairFlow(script,connectionId);
+                MigrationScript currentScript = migrationRepair.migrationRepairFlow(script, connectionId);
                 log.info("Applying repaired migration script for {}", script.getVersion());
-                helper.applyVersioned(currentScript,startTime,connectionId);
+                helper.applyVersioned(currentScript, startTime, connectionId);
             }
             if (script.isRepeatable()) {
                 // not done yet (working ............)
@@ -132,9 +157,9 @@ public class MigrationEngine {
                 script.getDescription());
 
         String deleteMigrationSql = """
-            DELETE FROM sub_migration
-            WHERE version = ?
-            """;
+                DELETE FROM sub_migration
+                WHERE version = ?
+                """;
 
         try (
                 Connection connection =

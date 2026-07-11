@@ -5,7 +5,7 @@ import com.project.demo.config.MigrationProperties;
 import com.project.demo.modules.migration.dto.MigrationStatisticsDTO;
 import com.project.demo.modules.migration.dto.RelatedScriptDTO;
 import com.project.demo.modules.migration.dto.response.ValidationResult;
-import com.project.demo.modules.migration.model.LogLevel;
+import com.project.demo.enumuration.LogLevel;
 import com.project.demo.modules.migration.model.Migration;
 import com.project.demo.modules.migration.model.MigrationScript;
 import com.project.demo.modules.migration.repository.MigrationLogRepo;

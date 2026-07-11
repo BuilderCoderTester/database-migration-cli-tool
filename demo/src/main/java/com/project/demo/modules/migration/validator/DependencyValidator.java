@@ -1,7 +1,9 @@
 package com.project.demo.modules.migration.validator;
 
-import com.project.demo.modules.migration.dto.MigrationScriptStatus;
+import com.project.demo.enumuration.DatabaseOperation;
 import com.project.demo.enumuration.Status;
+import com.project.demo.modules.migration.dto.MigrationScriptStatus;
+import com.project.demo.modules.migration.dto.dependency.response.DependencyAnalysisResult;
 import com.project.demo.modules.migration.model.Dependency;
 import org.springframework.stereotype.Component;
 
@@ -13,21 +15,59 @@ import java.util.List;
 @Component
 public class DependencyValidator {
 
-    public MigrationScriptStatus validate(List<Dependency> deps,
-                                          Connection conn) throws Exception {
-        MigrationScriptStatus status = new MigrationScriptStatus();
+    public MigrationScriptStatus validate(
+            DependencyAnalysisResult dependencyAnalysisResult,
+            Connection conn
+    ) throws Exception {
 
+        MigrationScriptStatus status =
+                new MigrationScriptStatus(Status.PASSED, "Validation Successful");
+        List<Dependency> deps = dependencyAnalysisResult.getDependencies();
+        DatabaseOperation operation = dependencyAnalysisResult.getDatabaseOperation();
         for (Dependency dep : deps) {
-
 
             switch (dep.getType()) {
 
                 case TABLE:
-                    status = validateTable(dep, conn);
+
+                    switch (operation) {
+
+                        case CREATE:
+                            status = validateCreateTable(dep, conn);
+                            break;
+
+                        case ALTER:
+                        case DROP:
+                        case INSERT:
+                        case UPDATE:
+                        case DELETE:
+                            status = validateExistingTable(dep, conn);
+                            break;
+                    }
+
                     break;
 
                 case COLUMN:
-                    validateColumn(dep, conn);
+
+                    switch (dependencyAnalysisResult.getAlterOperation()) {
+
+                        case ADD_COLUMN:
+                            validateColumnNotExists(dep, conn);
+                            break;
+
+                        case DROP_COLUMN:
+                            validateColumnExists(dep, conn);
+                            break;
+
+                        case MODIFY_COLUMN:
+                            validateColumnExists(dep, conn);
+                            break;
+
+                        case RENAME_COLUMN:
+                            validateRenameColumn(dep, conn);
+                            break;
+                    }
+
                     break;
 
                 case FOREIGN_KEY:
@@ -35,7 +75,38 @@ public class DependencyValidator {
                     break;
 
                 case INDEX:
-                    validateIndex(dep, conn);
+
+                    switch (operation) {
+
+                        case CREATE:
+                            validateCreateIndex(dep, conn);
+                            break;
+
+                        case DROP:
+                            validateDropIndex(dep, conn);
+                            break;
+                    }
+
+                    break;
+
+                case INSERT:
+                    status = validateInsert(dep, conn);
+                    break;
+
+                case UPDATE:
+                    status = validateUpdate(dep, conn);
+                    break;
+
+                case DELETE:
+                    status = validateDelete(dep, conn);
+                    break;
+
+                case ALTER:
+                    status = validateAlter(dep, conn);
+                    break;
+
+                case DROP:
+                    status = validateDrop(dep, conn);
                     break;
 
                 case VERSION:
@@ -43,101 +114,379 @@ public class DependencyValidator {
 
                 default:
                     throw new RuntimeException(
-                            "Unknown dependency type: " + dep.getType()
+                            "Unknown dependency type : " + dep.getType()
                     );
             }
 
+            if (status.getStatus() == Status.FAILURE) {
+                return status;
+            }
         }
+
         return status;
     }
 
-    // =========================
-    // 🔍 TABLE VALIDATION
-    // =========================
-    private MigrationScriptStatus validateTable(Dependency dep, Connection conn) throws SQLException {
-        if (!tableExists(conn, dep.getTable())) {
+    // ===================================================
+    // TABLE
+    // ===================================================
+// ===================================================
+// CREATE INDEX
+// ===================================================
+    private void validateRenameColumn(
+            Dependency dep,
+            Connection conn) throws SQLException {
 
-            System.out.println("The table is not present."  + dep.getTable());
+        String oldColumn = dep.getOldColumnName();
+        String newColumn = dep.getNewColumnName();
+
+        // Old column must exist
+        if (!columnExists(conn, dep.getTable(), oldColumn)) {
+            throw new RuntimeException(
+                    "Column does not exist : " + oldColumn);
+        }
+
+        // New column must not already exist
+        if (columnExists(conn, dep.getTable(), newColumn)) {
+            throw new RuntimeException(
+                    "Column already exists : " + newColumn);
+        }
+    }
+    private void validateColumnNotExists(
+            Dependency dep,
+            Connection conn) throws SQLException {
+
+        if (columnExists(
+                conn,
+                dep.getTable(),
+                dep.getColumnName())) {
+
+            throw new RuntimeException(
+                    "Column already exists "
+                            + dep.getColumnName()
+                            + " in table "
+                            + dep.getTable()
+            );
+        }
+    }
+
+    private void validateColumnExists(
+            Dependency dep,
+            Connection conn) throws SQLException {
+
+        if (!columnExists(
+                conn,
+                dep.getTable(),
+                dep.getColumnName())) {
+
+            throw new RuntimeException(
+                    "Missing column "
+                            + dep.getColumnName()
+                            + " in table "
+                            + dep.getTable()
+            );
+        }
+    }
+
+    private void validateCreateIndex(
+            Dependency dep,
+            Connection conn) throws SQLException {
+
+        if (dep.getTable() == null) {
+            throw new RuntimeException("Table not specified for index.");
+        }
+
+        if (dep.getIndexName() == null) {
+            throw new RuntimeException("Index name not specified.");
+        }
+
+        if (indexExists(conn, dep.getTable(), dep.getIndexName())) {
+
+            throw new RuntimeException(
+                    "Index already exists : "
+                            + dep.getIndexName()
+            );
+        }
+    }
+    // ===================================================
+// DROP INDEX
+// ===================================================
+
+    private void validateDropIndex(
+            Dependency dep,
+            Connection conn) throws SQLException {
+
+        if (dep.getTable() == null) {
+            throw new RuntimeException("Table not specified for index.");
+        }
+
+        if (dep.getIndexName() == null) {
+            throw new RuntimeException("Index name not specified.");
+        }
+
+        if (!indexExists(conn, dep.getTable(), dep.getIndexName())) {
+
+            throw new RuntimeException(
+                    "Index does not exist : "
+                            + dep.getIndexName()
+            );
+        }
+    }
+
+    private MigrationScriptStatus validateCreateTable(
+            Dependency dep,
+            Connection conn)
+            throws SQLException {
+
+        if (tableExists(conn, dep.getTable())) {
 
             return new MigrationScriptStatus(
                     Status.FAILURE,
                     dep.getTable(),
-                    "Missing Table : "
+                    "Table already exists : " + dep.getTable()
             );
         }
 
-        return new MigrationScriptStatus(Status.PASSED, "Function Not Working");
+        return new MigrationScriptStatus(
+                Status.PASSED,
+                dep.getTable(),
+                "Table can be created."
+        );
     }
 
-    // =========================
-    // 🔍 COLUMN VALIDATION
-    // =========================
-    private void validateColumn(Dependency dep, Connection conn) throws SQLException {
+    private MigrationScriptStatus validateExistingTable(
+            Dependency dep,
+            Connection conn)
+            throws SQLException {
+
+        if (!tableExists(conn, dep.getTable())) {
+
+            return new MigrationScriptStatus(
+                    Status.FAILURE,
+                    dep.getTable(),
+                    "Missing table : " + dep.getTable()
+            );
+        }
+
+        return new MigrationScriptStatus(
+                Status.PASSED,
+                dep.getTable(),
+                "Table exists."
+        );
+    }
+
+    private MigrationScriptStatus validateTable(
+            Dependency dep,
+            Connection conn) throws SQLException {
+
+        if (!tableExists(conn, dep.getTable())) {
+
+            return new MigrationScriptStatus(
+                    Status.FAILURE,
+                    dep.getTable(),
+                    "Missing table : " + dep.getTable()
+            );
+        }
+
+        return new MigrationScriptStatus(
+                Status.PASSED,
+                "Table exists."
+        );
+    }
+
+    // ===================================================
+    // INSERT
+    // ===================================================
+
+    private MigrationScriptStatus validateInsert(
+            Dependency dep,
+            Connection conn) throws SQLException {
+
+        return validateTable(dep, conn);
+    }
+
+    // ===================================================
+    // UPDATE
+    // ===================================================
+
+    private MigrationScriptStatus validateUpdate(
+            Dependency dep,
+            Connection conn) throws SQLException {
+
+        return validateTable(dep, conn);
+    }
+
+    // ===================================================
+    // DELETE
+    // ===================================================
+
+    private MigrationScriptStatus validateDelete(
+            Dependency dep,
+            Connection conn) throws SQLException {
+
+        return validateTable(dep, conn);
+    }
+
+    // ===================================================
+    // ALTER
+    // ===================================================
+
+    private MigrationScriptStatus validateAlter(
+            Dependency dep,
+            Connection conn) throws SQLException {
+
+        return validateTable(dep, conn);
+    }
+
+    // ===================================================
+    // DROP
+    // ===================================================
+
+    private MigrationScriptStatus validateDrop(
+            Dependency dep,
+            Connection conn) throws SQLException {
+
+        return validateTable(dep, conn);
+    }
+
+    // ===================================================
+    // COLUMN
+    // ===================================================
+
+    private void validateColumn(
+            Dependency dep,
+            Connection conn) throws SQLException {
 
         if (dep.getTable() == null) {
-            throw new RuntimeException("⚠️ Column validation failed: table not specified for column " + dep.getColumn());
+
+            throw new RuntimeException(
+                    "Table not specified for column "
+                            + dep.getColumnName()
+            );
         }
 
-        if (!columnExists(conn, dep.getTable(), String.valueOf(dep.getColumn()))) {
+        if (!columnExists(
+                conn,
+                dep.getTable(),
+                dep.getColumnName())) {
+
             throw new RuntimeException(
-                    "❌ Missing column: " + dep.getColumn() + " in table " + dep.getTable()
+                    "Missing column "
+                            + dep.getColumnName()
+                            + " in table "
+                            + dep.getTable()
             );
         }
     }
 
-    // =========================
-    // 🔍 FOREIGN KEY VALIDATION
-    // =========================
-    private void validateForeignKey(Dependency dep, Connection conn) throws SQLException {
+    // ===================================================
+    // FOREIGN KEY
+    // ===================================================
+
+    private void validateForeignKey(
+            Dependency dep,
+            Connection conn) throws SQLException {
 
         if (!tableExists(conn, dep.getReferenceTable())) {
-            throw new RuntimeException("❌ Missing FK table: " + dep.getReferenceTable());
+
+            throw new RuntimeException(
+                    "Missing FK table : "
+                            + dep.getReferenceTable()
+            );
         }
 
-        if (!columnExists(conn, dep.getReferenceTable(), dep.getReferenceColumn())) {
+        if (!columnExists(
+                conn,
+                dep.getReferenceTable(),
+                dep.getReferenceColumn())) {
+
             throw new RuntimeException(
-                    "❌ Missing FK column: " + dep.getReferenceColumn()
-                            + " in table " + dep.getReferenceTable()
+                    "Missing FK column : "
+                            + dep.getReferenceColumn()
             );
         }
     }
 
-    // =========================
-    // 🔍 INDEX VALIDATION
-    // =========================
-    private void validateIndex(Dependency dep, Connection conn) throws SQLException {
+    // ===================================================
+    // INDEX
+    // ===================================================
 
-        if (!indexExists(conn, dep.getTable(), String.valueOf(dep.getColumn()))) {
+    private void validateIndex(
+            Dependency dep,
+            Connection conn) throws SQLException {
+
+        if (!indexExists(
+                conn,
+                dep.getTable(),
+                dep.getColumnName())) {
+
             throw new RuntimeException(
-                    "❌ Missing index: " + dep.getColumn()
-                            + " on table " + dep.getTable()
+                    "Missing index : "
+                            + dep.getColumnName()
             );
         }
     }
 
-    // =========================
-    // 🗄️ METADATA METHODS
-    // =========================
+    // ===================================================
+    // METADATA
+    // ===================================================
 
-    private boolean tableExists(Connection conn, String table) throws SQLException {
-        ResultSet rs = conn.getMetaData().getTables(null, null, table, null);
+    private boolean tableExists(
+            Connection conn,
+            String table) throws SQLException {
+
+        ResultSet rs =
+                conn.getMetaData().getTables(
+                        null,
+                        null,
+                        table,
+                        null
+                );
+
         return rs.next();
     }
 
-    private boolean columnExists(Connection conn, String table, String column) throws SQLException {
-        ResultSet rs = conn.getMetaData().getColumns(null, null, table, column);
+    private boolean columnExists(
+            Connection conn,
+            String table,
+            String column) throws SQLException {
+
+        ResultSet rs =
+                conn.getMetaData().getColumns(
+                        null,
+                        null,
+                        table,
+                        column
+                );
+
         return rs.next();
     }
 
-    private boolean indexExists(Connection conn, String table, String index) throws SQLException {
-        ResultSet rs = conn.getMetaData().getIndexInfo(null, null, table, false, false);
+    private boolean indexExists(
+            Connection conn,
+            String table,
+            String index) throws SQLException {
+
+        ResultSet rs =
+                conn.getMetaData().getIndexInfo(
+                        null,
+                        null,
+                        table,
+                        false,
+                        false
+                );
 
         while (rs.next()) {
-            String idxName = rs.getString("INDEX_NAME");
-            if (index != null && index.equalsIgnoreCase(idxName)) {
+
+            String idxName =
+                    rs.getString("INDEX_NAME");
+
+            if (index != null &&
+                    index.equalsIgnoreCase(idxName)) {
+
                 return true;
             }
         }
+
         return false;
     }
 }

@@ -282,6 +282,7 @@ public class MigrationLifecycleService {
             );
 
             // Execute migration
+
             engine.migrateUp(
                     targetScript,
                     connectionId,

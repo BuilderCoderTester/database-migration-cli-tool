@@ -1,4 +1,4 @@
-package com.project.demo.driver;
+package com.project.demo.enumuration;
 
 public enum DatabaseType {
 

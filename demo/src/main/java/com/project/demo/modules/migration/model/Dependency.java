@@ -1,9 +1,10 @@
 package com.project.demo.modules.migration.model;
 
+import com.project.demo.enumuration.DatabaseOperation;
+import com.project.demo.enumuration.DependencyType;
 import com.project.demo.modules.migration.dto.schemaRequest.ColumnSchemaDto;
 import com.project.demo.modules.migration.dto.schemaRequest.ForeignKeyDTO;
 import com.project.demo.modules.migration.dto.schemaRequest.PrimaryKeyDTO;
-import com.project.demo.enumuration.DependencyType;
 import lombok.*;
 
 @Getter
@@ -18,7 +19,8 @@ public class Dependency {
      * Type of dependency.
      */
     private DependencyType type;
-
+    private DatabaseOperation operation;
+    private String indexName;
     /**
      * Current table.
      */
@@ -28,7 +30,10 @@ public class Dependency {
      * Complete column information.
      */
     private ColumnSchemaDto column;
+    // Existing column
 
+    // NEW
+    private ColumnSchemaDto targetColumn;
     /**
      * Primary key information.
      */
@@ -44,6 +49,9 @@ public class Dependency {
      */
     private String version;
 
+    /**
+     * Constructor used by ASTDependencyExtractor.
+     */
     public Dependency(
             DependencyType type,
             String table,
@@ -58,15 +66,46 @@ public class Dependency {
         this.foreignKey = foreignKey;
     }
 
+    /**
+     * Returns the referenced table for FK dependencies.
+     */
     public String getReferenceTable() {
-        return foreignKey != null
-                ? foreignKey.getReferencedTable()
-                : null;
+
+        if (foreignKey == null) {
+            return null;
+        }
+
+        return foreignKey.getReferencedTable();
     }
 
+    /**
+     * Returns the referenced column for FK dependencies.
+     */
     public String getReferenceColumn() {
-        return foreignKey != null
-                ? foreignKey.getReferencedColumn()
-                : null;
+
+        if (foreignKey == null) {
+            return null;
+        }
+
+        return foreignKey.getReferencedColumn();
+    }
+
+    /**
+     * Convenience method.
+     */
+    public String getColumnName() {
+
+        if (column == null) {
+            return null;
+        }
+
+        return column.getColumnName();
+    }
+    public String getOldColumnName() {
+        return column == null ? null : column.getColumnName();
+    }
+
+    public String getNewColumnName() {
+        return targetColumn == null ? null : targetColumn.getColumnName();
     }
 }

@@ -8,6 +8,6 @@ import java.util.Map;
 @Data
 public class TableModel {
     private String tableName;
-
+    private boolean dropped;
     private Map<String, ColumnModel> columns = new LinkedHashMap<>();
 }

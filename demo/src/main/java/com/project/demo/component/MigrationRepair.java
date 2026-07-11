@@ -29,6 +29,7 @@ public class MigrationRepair {
     public static class AnalysisResult {
         private String tableName;
         private DatabaseOperation databaseOperation;
+
     }
 
     private final MigrationLoader loader;

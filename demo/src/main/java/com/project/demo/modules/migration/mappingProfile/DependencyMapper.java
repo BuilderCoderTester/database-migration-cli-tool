@@ -16,27 +16,38 @@ public class DependencyMapper {
 
         for (Dependency dependency : dependencies) {
 
+            if (dependency.getTable() == null) {
+                continue;
+            }
+
             TableSchemaDto table = tableMap.computeIfAbsent(
                     dependency.getTable(),
                     t -> {
                         TableSchemaDto dto = new TableSchemaDto();
                         dto.setTableName(t);
                         dto.setColumns(new ArrayList<>());
-                        dto.setForeignKeys(new ArrayList<>());
                         dto.setPrimaryKeys(new ArrayList<>());
+                        dto.setForeignKeys(new ArrayList<>());
                         return dto;
                     });
 
             switch (dependency.getType()) {
 
-                case COLUMN -> {
-                    ColumnSchemaDto column = new ColumnSchemaDto();
-                    column.setColumnName(String.valueOf(dependency.getColumn()));
+                case TABLE:
+                    // Nothing to add.
+                    break;
 
-                    table.getColumns().add(column);
-                }
+                case COLUMN:
 
-                case PRIMARY_KEY -> {
+                    ColumnSchemaDto column = dependency.getColumn();
+
+                    if (column != null) {
+                        table.getColumns().add(column);
+                    }
+
+                    break;
+
+                case PRIMARY_KEY:
 
                     PrimaryKeyDTO pk;
 
@@ -48,22 +59,46 @@ public class DependencyMapper {
                         pk = table.getPrimaryKeys().get(0);
                     }
 
-                    pk.getColumnNames().add(String.valueOf(dependency.getColumn()));
-                }
+                    if (dependency.getColumnName() != null) {
+                        pk.getColumnNames().add(
+                                dependency.getColumnName()
+                        );
+                    }
 
-                case FOREIGN_KEY -> {
+                    break;
 
-                    ForeignKeyDTO fk = new ForeignKeyDTO();
-                    fk.setColumnName(String.valueOf(dependency.getColumn()));
-                    fk.setReferencedTable(dependency.getReferenceTable());
-                    fk.setReferencedColumn(dependency.getReferenceColumn());
+                case FOREIGN_KEY:
 
-                    table.getForeignKeys().add(fk);
-                }
+                    ForeignKeyDTO fk = dependency.getForeignKey();
 
-                default -> {
-                    // Ignore TABLE or other dependency types
-                }
+                    if (fk != null) {
+                        table.getForeignKeys().add(fk);
+                    }
+
+                    break;
+
+                /*
+                 * These are DML operations.
+                 * They don't affect the schema model.
+                 */
+                case INSERT:
+                case UPDATE:
+                case DELETE:
+                case ALTER:
+                case DROP:
+                case INDEX:
+                case VIEW:
+                case FUNCTION:
+                case TRIGGER:
+                case SEQUENCE:
+                case VERSION:
+                    break;
+
+                default:
+                    throw new IllegalStateException(
+                            "Unsupported dependency type: "
+                                    + dependency.getType()
+                    );
             }
         }
 

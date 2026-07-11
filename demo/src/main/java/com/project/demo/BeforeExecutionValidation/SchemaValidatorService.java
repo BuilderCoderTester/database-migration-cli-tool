@@ -23,35 +23,36 @@ public class SchemaValidatorService {
             List<MigrationScript> history)
             throws Exception {
 
+        // Build schema from executed migrations
         SchemaModel current =
                 schemaBuilder.build(history);
-//        System.out.println("Other scripts : "+current.toString());
+
+        // Build schema from incoming migration
         SchemaModel incoming =
                 schemaBuilder.build(newMigration);
-//        System.out.println("New created Script: " + incoming.toString());
-        boolean value = comparator.isDuplicate(current, incoming);
-        if (value) {
+
+        // Check duplicate schema
+        if (comparator.isDuplicate(current, incoming)) {
+
             return ValidationResult.error(
-                    "An identical migration already exists."
+                    "An identical schema already exists."
             );
         }
-        boolean val = !comparator.introducesNewChanges(
-                current,
-                incoming);
-        System.out.println("the boolean value is " + val);
 
-        if (val) {
+        // Check whether migration changes anything
+        if (!comparator.introducesNewChanges(
+                current,
+                incoming)) {
 
             return ValidationResult.error(
                     "Migration introduces no new schema changes."
             );
         }
-        System.out.println("reach point schema service -1");
 
         return ValidationResult.success(
-                "Validation successful.", newMigration.getName()
+                "Schema validation successful.",
+                newMigration.getName()
         );
-
     }
 
 }

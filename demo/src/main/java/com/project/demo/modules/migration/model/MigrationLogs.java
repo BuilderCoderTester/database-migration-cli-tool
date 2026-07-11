@@ -1,5 +1,6 @@
 package com.project.demo.modules.migration.model;
 
+import com.project.demo.enumuration.LogLevel;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
