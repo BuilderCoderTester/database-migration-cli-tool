@@ -48,4 +48,8 @@ public class HealthCheckService {
         return buildReport(results);
 
     }
+
+    private HealthReport buildReport(List<HealthCheckResult> results) {
+        return  new HealthReport();
+    }
 }
