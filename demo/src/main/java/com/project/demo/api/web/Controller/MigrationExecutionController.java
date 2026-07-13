@@ -1,15 +1,12 @@
-package com.project.demo.api.rest.Controller;
+package com.project.demo.api.web.Controller;
 
-import com.project.demo.modules.migration.dto.connection.response.ActiveResponseDto;
 import com.project.demo.modules.migration.dto.migration.request.ExecuteMigrationRequestDto;
 import com.project.demo.modules.migration.dto.migration.request.MigrationRollbackRequestDto;
 import com.project.demo.modules.migration.dto.migration.request.MigrationUpdateRequestDto;
 import com.project.demo.modules.migration.dto.migration.response.MigrationRepairResponseDto;
 import com.project.demo.modules.migration.dto.migration.response.MigrationResultResponseDto;
-import com.project.demo.modules.migration.dto.RollbackRequest;
 import com.project.demo.modules.migration.dto.migration.response.MigrationRollbackResponseDto;
 import com.project.demo.modules.migration.dto.migration.response.MigrationUpdateResponseDto;
-import com.project.demo.modules.migration.dto.request.MigrationRequest;
 import com.project.demo.modules.migration.service.MigrationLifecycleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;

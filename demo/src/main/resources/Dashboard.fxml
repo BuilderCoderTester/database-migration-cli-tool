@@ -18,7 +18,7 @@
 
 <BorderPane xmlns:fx="http://javafx.com/fxml/1"
             xmlns="http://javafx.com/javafx/17"
-            fx:controller="com.project.demo.api.rest.javafx.DashboardController"
+            fx:controller="com.project.demo.api.desktop.javafx.DashboardController"
             fx:id="mainPane"
             stylesheets="@css/dashboard.css">
 
@@ -195,22 +195,22 @@
                 <children>
                     <VBox styleClass="stat-card" GridPane.columnIndex="0">
                         <Label text="TOTAL MIGRATIONS" styleClass="stat-title"/>
-                        <Label text="08" styleClass="stat-value"/>
+                        <Label fx:id="totalMigrationsLabel" text="00" styleClass="stat-value"/>
                         <Label text="Registered scripts" styleClass="stat-subtitle"/>
                     </VBox>
                     <VBox styleClass="stat-card" GridPane.columnIndex="1">
                         <Label text="APPLIED" styleClass="stat-title"/>
-                        <Label text="08" styleClass="stat-success"/>
+                        <Label fx:id="appliedMigrationsLabel" text="00" styleClass="stat-success"/>
                         <Label text="Successfully executed" styleClass="stat-subtitle"/>
                     </VBox>
                     <VBox styleClass="stat-card" GridPane.columnIndex="2">
                         <Label text="PENDING" styleClass="stat-title"/>
-                        <Label text="00" styleClass="stat-warning"/>
+                        <Label fx:id="pendingMigrationsLabel" text="00" styleClass="stat-warning"/>
                         <Label text="Waiting to execute" styleClass="stat-subtitle"/>
                     </VBox>
                     <VBox styleClass="stat-card" GridPane.columnIndex="3">
                         <Label text="FAILED" styleClass="stat-title"/>
-                        <Label text="00" styleClass="stat-danger"/>
+                        <Label fx:id="failedMigrationsLabel" text="00" styleClass="stat-danger"/>
                         <Label text="Execution failures" styleClass="stat-subtitle"/>
                     </VBox>
                 </children>

@@ -21,7 +21,7 @@
 
 <BorderPane xmlns:fx="http://javafx.com/fxml/1"
             xmlns="http://javafx.com/javafx/17"
-            fx:controller="com.project.demo.api.rest.javafx.MigrationScriptsController"
+            fx:controller="com.project.demo.api.desktop.javafx.MigrationScriptsController"
             fx:id="scriptPane"
             stylesheets="@css/script.css">
 

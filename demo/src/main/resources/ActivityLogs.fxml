@@ -13,7 +13,7 @@
 
 <ScrollPane xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.project.demo.api.rest.javafx.ActivityLogsController"
+            fx:controller="com.project.demo.api.desktop.javafx.ActivityLogsController"
             fitToWidth="true"
             fitToHeight="true"
             hbarPolicy="NEVER"

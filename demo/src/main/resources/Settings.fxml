@@ -19,7 +19,7 @@
 
 <BorderPane xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.project.demo.api.rest.javafx.SettingsController"
+            fx:controller="com.project.demo.api.desktop.javafx.SettingsController"
             stylesheets="@css/settings.css"
             styleClass="page-root">
 

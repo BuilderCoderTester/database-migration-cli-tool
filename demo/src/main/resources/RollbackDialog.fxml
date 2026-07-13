@@ -13,7 +13,7 @@
 
 <VBox prefWidth="550.0" spacing="0" styleClass="modal-container" stylesheets="@css/rollback.css"
       xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.project.demo.api.rest.javafx.RollbackDialogController">
+      fx:controller="com.project.demo.api.desktop.javafx.RollbackDialogController">
 
     <HBox alignment="CENTER_LEFT" styleClass="modal-header">
         <padding>

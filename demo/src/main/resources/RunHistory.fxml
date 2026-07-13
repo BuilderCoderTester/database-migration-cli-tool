@@ -10,7 +10,7 @@
 
 <BorderPane xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.project.demo.api.rest.javafx.RunHistory"
+            fx:controller="com.project.demo.api.desktop.javafx.RunHistory"
             stylesheets="@css/run-history.css"
             styleClass="page-root">
 

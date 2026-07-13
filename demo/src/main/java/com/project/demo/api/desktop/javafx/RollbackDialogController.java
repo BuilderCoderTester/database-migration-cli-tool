@@ -1,16 +1,12 @@
-package com.project.demo.api.rest.javafx;
+package com.project.demo.api.desktop.javafx;
 
-import com.project.demo.modules.migration.dto.migration.request.ExecuteMigrationRequestDto;
 import com.project.demo.modules.migration.dto.migration.request.MigrationRollbackRequestDto;
-import com.project.demo.modules.migration.dto.migration.response.MigrationResultResponseDto;
 import com.project.demo.modules.migration.dto.migration.response.MigrationRollbackResponseDto;
 import com.project.demo.modules.migration.dto.response.MigrationDescriptionResponse;
 import com.project.demo.modules.migration.service.MigrationLifecycleService;
-import com.project.demo.modules.migration.service.MigrationService;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
-import javafx.scene.control.Alert;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.stage.Stage;

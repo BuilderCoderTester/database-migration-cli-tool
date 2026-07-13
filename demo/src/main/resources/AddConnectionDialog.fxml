@@ -13,7 +13,7 @@
 
 <VBox xmlns:fx="http://javafx.com/fxml/1"
       xmlns="http://javafx.com/javafx/17"
-      fx:controller="com.project.demo.api.rest.javafx.AddConnectionController"
+      fx:controller="com.project.demo.api.desktop.javafx.AddConnectionController"
       fx:id="root"
       spacing="20"
       prefWidth="750"
