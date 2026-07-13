@@ -15,7 +15,7 @@
 
 <ScrollPane xmlns:fx="http://javafx.com/fxml/1"
             xmlns="http://javafx.com/javafx/17"
-            fx:controller="com.project.demo.api.rest.javafx.CreateMigrationController"
+            fx:controller="com.project.demo.api.desktop.javafx.CreateMigrationController"
             fitToWidth="true"
             hbarPolicy="NEVER"
             vbarPolicy="AS_NEEDED"
