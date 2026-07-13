@@ -56,7 +56,14 @@ public class MigrationQuery {
                 url TEXT
             );
             """;
-
+    public static final String CREATE_SCRIPT_STATUS = """
+            CREATE TYPE Status AS ENUM (
+                'PENDING',
+                'RUNNING',
+                'SUCCESS',
+                'FAILED'
+            );
+            """;
     public static final String CREATE_TABLE_SUM_MIGRATION = """
             CREATE TABLE IF NOT EXISTS sub_migration (
                 id BIGSERIAL PRIMARY KEY,
@@ -64,9 +71,11 @@ public class MigrationQuery {
                 description VARCHAR(255),
                 script TEXT,
                 checksum VARCHAR(64),
+                created_at TIMESTAMP,
                 executed_at TIMESTAMP,
-                execution_time BIGINT,
-                success BOOLEAN DEFAULT FALSE,
+                running_time BIGINT,
+                execution_success BOOLEAN DEFAULT FALSE,
+                status Status DEFAULT 'PENDING',
                 error_message TEXT,
                 error_stack_trace TEXT,
                 retry_count INT DEFAULT 0,
@@ -133,10 +142,12 @@ public class MigrationQuery {
                       script TEXT,
                       checksum VARCHAR(64),
                 \s
+                      created_at TIMESTAMP,
                       executed_at TIMESTAMP,
-                      execution_time BIGINT,
+                      running_time BIGINT,
                 \s
                       success BOOLEAN DEFAULT FALSE,
+                      status Status Status DEFAULT 'PENDING',\s
                 \s
                       error_message TEXT,
                       error_stack_trace TEXT,
@@ -157,23 +168,26 @@ public class MigrationQuery {
             \s""";
 
     public static final String INSERT_INTO_SUB_MIGRATION = """
-                INSERT INTO sub_migration (
+            INSERT INTO sub_migration (
                 version,
                 description,
                 script,
                 checksum,
+                created_at,
                 executed_at,
-                execution_time,
-                success,
+                running_time,
+                execution_success,
+                status,
                 connection_id
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (version)
             DO UPDATE SET
-                success = EXCLUDED.success,
-                execution_time = EXCLUDED.execution_time
-               \s""";
-
+                executed_at = EXCLUDED.executed_at,
+                running_time = EXCLUDED.running_time,
+                execution_success = EXCLUDED.execution_success,
+                status = EXCLUDED.status
+            """;
     public static final String SAVE_DATABASE_CONNECTIONS = """
             INSERT INTO DbConnections (
                 name,

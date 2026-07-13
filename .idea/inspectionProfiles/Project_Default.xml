@@ -1,0 +1,43 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="AutoCloseableResource" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="METHOD_MATCHER_CONFIG" value="java.util.Formatter,format,java.io.Writer,append,com.google.common.base.Preconditions,checkNotNull,org.hibernate.Session,close,java.io.PrintWriter,printf,java.io.PrintStream,printf,java.lang.foreign.Arena,ofAuto,java.lang.foreign.Arena,global,com.project.demo.modules.migration.service.ConnectionService,activeConnection" />
+    </inspection_tool>
+    <inspection_tool class="CssUnknownProperty" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="myCustomPropertiesEnabled" value="true" />
+      <option name="myIgnoreVendorSpecificProperties" value="false" />
+      <option name="myCustomPropertiesList">
+        <value>
+          <list size="25">
+            <item index="0" class="java.lang.String" itemvalue="-fx-text-fill" />
+            <item index="1" class="java.lang.String" itemvalue="-fx-primary-teal" />
+            <item index="2" class="java.lang.String" itemvalue="-fx-primary-dark" />
+            <item index="3" class="java.lang.String" itemvalue="-fx-teal-light" />
+            <item index="4" class="java.lang.String" itemvalue="-fx-bg-main" />
+            <item index="5" class="java.lang.String" itemvalue="-fx-bg-card" />
+            <item index="6" class="java.lang.String" itemvalue="-fx-text-main" />
+            <item index="7" class="java.lang.String" itemvalue="-fx-text-muted" />
+            <item index="8" class="java.lang.String" itemvalue="-fx-border-color" />
+            <item index="9" class="java.lang.String" itemvalue="-fx-background-color" />
+            <item index="10" class="java.lang.String" itemvalue="-fx-font-family" />
+            <item index="11" class="java.lang.String" itemvalue="-fx-font-size" />
+            <item index="12" class="java.lang.String" itemvalue="-fx-font-weight" />
+            <item index="13" class="java.lang.String" itemvalue="-fx-padding" />
+            <item index="14" class="java.lang.String" itemvalue="-fx-opacity" />
+            <item index="15" class="java.lang.String" itemvalue="-fx-alignment" />
+            <item index="16" class="java.lang.String" itemvalue="-fx-background-radius" />
+            <item index="17" class="java.lang.String" itemvalue="-fx-cursor" />
+            <item index="18" class="java.lang.String" itemvalue="-fx-max-width" />
+            <item index="19" class="java.lang.String" itemvalue="-fx-border-width" />
+            <item index="20" class="java.lang.String" itemvalue="-fx-background-insets" />
+            <item index="21" class="java.lang.String" itemvalue="-fx-effect" />
+            <item index="22" class="java.lang.String" itemvalue="-fx-border-radius" />
+            <item index="23" class="java.lang.String" itemvalue="-fx-spacing" />
+            <item index="24" class="java.lang.String" itemvalue="-fx-background" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

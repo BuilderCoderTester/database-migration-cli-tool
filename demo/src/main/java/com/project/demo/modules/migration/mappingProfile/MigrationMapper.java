@@ -25,8 +25,8 @@ public class MigrationMapper {
                 .version(migration.getVersion())
                 .description(migration.getDescription())
                 .type(migration.isRepeatable() ? "REPEATABLE" : "VERSIONED")
-                .status(migration.isSuccess() ? "SUCCESS" : "FAILED")
-                .success(migration.isSuccess())
+                .status(migration.getSuccess() ? "SUCCESS" : "FAILED")
+                .success(migration.getSuccess())
                 .author(null)
                 .database(null)
                 .connectionName(

@@ -45,14 +45,10 @@ public class CreateMigrationController {
     @FXML
     public void handleCreate(ActionEvent actionEvent) {
         String migrationScriptName = migrationNameField.getText();
-        System.out.println("Saving: " + migrationScriptName);
         String upScript = upMigrationArea.getText();
-        System.out.println("up script: " + upScript);
         String downScript = downMigrationArea.getText();
-        System.out.println("down script : " + downScript);
 
         MigrationScriptCreateResponse response = migrationScriptService.create(null, migrationScriptName, upScript, downScript);
-        System.out.println(response.toString());
         returnToDashboard();
     }
 

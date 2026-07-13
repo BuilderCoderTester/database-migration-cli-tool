@@ -409,7 +409,7 @@ public class MigrationService {
                     m.getDescription(),
                     m.getExecutedAt() != null ? m.getExecutedAt().format(formatter) : "-",
                     m.getExecutionTime() != null ? m.getExecutionTime().toString() : "-",
-                    m.isSuccess() ? "✓" : "✗"
+                    m.getSuccess() ? "✓" : "✗"
             };
         }
         return migrations;

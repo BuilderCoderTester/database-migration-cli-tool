@@ -6,90 +6,96 @@
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox xmlns:fx="http://javafx.com/fxml/1"
-      xmlns="http://javafx.com/javafx/17"
-      fx:controller="com.project.demo.api.rest.javafx.CreateMigrationController"
-      spacing="20"
-      prefWidth="780"
-      styleClass="modal-container"
-      stylesheets="@css/createMigrationScript.css">
+<ScrollPane xmlns:fx="http://javafx.com/fxml/1"
+            xmlns="http://javafx.com/javafx/17"
+            fx:controller="com.project.demo.api.rest.javafx.CreateMigrationController"
+            fitToWidth="true"
+            hbarPolicy="NEVER"
+            vbarPolicy="AS_NEEDED"
+            prefWidth="780"
+            styleClass="modal-scrollpane"
+            stylesheets="@css/createMigrationScript.css">
 
-    <padding>
-        <Insets top="24" right="24" bottom="20" left="24"/>
-    </padding>
+    <content>
+        <VBox spacing="20" styleClass="modal-container">
+            <padding>
+                <Insets top="24" right="24" bottom="20" left="24"/>
+            </padding>
 
-    <HBox alignment="TOP_LEFT" spacing="10">
-        <VBox spacing="6" HBox.hgrow="ALWAYS">
-            <HBox>
-                <Label text="✨ MANUAL MIGRATION" styleClass="modal-badge"/>
+            <HBox alignment="TOP_LEFT" spacing="10">
+                <VBox spacing="6" HBox.hgrow="ALWAYS">
+                    <HBox>
+                        <Label text="✨ MANUAL MIGRATION" styleClass="modal-badge"/>
+                    </HBox>
+                    <Label text="Create Database Migration" styleClass="modal-title"/>
+                    <Label text="Create a versioned SQL migration that can be executed against the selected database." styleClass="modal-subtitle"/>
+                </VBox>
+                <Button text="✕" onAction="#handleCancel" styleClass="btn-close-icon"/>
             </HBox>
-            <Label text="Create Database Migration" styleClass="modal-title"/>
-            <Label text="Create a versioned SQL migration that can be executed against the selected database." styleClass="modal-subtitle"/>
-        </VBox>
-        <Button text="✕" onAction="#handleCancel" styleClass="btn-close-icon"/>
-    </HBox>
 
-    <Separator styleClass="modal-separator"/>
+            <Separator styleClass="modal-separator"/>
 
-    <GridPane hgap="20" vgap="10" VBox.vgrow="NEVER">
-        <columnConstraints>
-            <ColumnConstraints hgrow="ALWAYS" minWidth="350"/>
-            <ColumnConstraints hgrow="NEVER" prefWidth="220"/>
-        </columnConstraints>
-        <rowConstraints>
-            <RowConstraints vgrow="NEVER"/>
-        </rowConstraints>
-        <children>
-            <VBox spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="0">
-                <Label text="Migration Name" styleClass="input-label-bold"/>
-                <TextField fx:id="migrationNameField" promptText="create_employee_table" styleClass="modal-input-field"/>
+            <GridPane hgap="20" vgap="10" VBox.vgrow="NEVER">
+                <columnConstraints>
+                    <ColumnConstraints hgrow="ALWAYS" minWidth="350"/>
+                    <ColumnConstraints hgrow="NEVER" prefWidth="220"/>
+                </columnConstraints>
+                <rowConstraints>
+                    <RowConstraints vgrow="NEVER"/>
+                </rowConstraints>
+                <children>
+                    <VBox spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                        <Label text="Migration Name" styleClass="input-label-bold"/>
+                        <TextField fx:id="migrationNameField" promptText="create_employee_table" styleClass="modal-input-field"/>
+                    </VBox>
+
+                    <HBox spacing="12" alignment="CENTER_LEFT" GridPane.columnIndex="1" GridPane.rowIndex="0" styleClass="version-display-box">
+                        <padding>
+                            <Insets top="12" right="16" bottom="12" left="16"/>
+                        </padding>
+                        <Label text="📄" styleClass="version-box-icon"/>
+                        <VBox spacing="2">
+                            <Label text="Version" styleClass="version-box-title"/>
+                            <Label text="V" styleClass="version-box-value"/>
+                        </VBox>
+                    </HBox>
+                </children>
+            </GridPane>
+
+            <VBox spacing="8" VBox.vgrow="ALWAYS">
+                <Label text="UP Migration" styleClass="input-label-bold"/>
+                <TextArea fx:id="upMigrationArea"
+                          text="-- Write your UP SQL here&#10;"
+                          prefHeight="180"
+                          minHeight="120"
+                          styleClass="sql-code-editor"
+                          wrapText="true"/>
             </VBox>
 
-            <HBox spacing="12" alignment="CENTER_LEFT" GridPane.columnIndex="1" GridPane.rowIndex="0" styleClass="version-display-box">
+            <VBox spacing="8" VBox.vgrow="ALWAYS">
+                <Label text="DOWN Migration" styleClass="input-label-bold"/>
+                <TextArea fx:id="downMigrationArea"
+                          text="-- Write your DOWN SQL here&#10;"
+                          prefHeight="150"
+                          minHeight="100"
+                          styleClass="sql-code-editor"
+                          wrapText="true"/>
+            </VBox>
+
+            <HBox alignment="CENTER_RIGHT" spacing="12" VBox.vgrow="NEVER">
                 <padding>
-                    <Insets top="12" right="16" bottom="12" left="16"/>
+                    <Insets top="10"/>
                 </padding>
-                <Label text="📄" styleClass="version-box-icon"/>
-                <VBox spacing="2">
-                    <Label text="Version" styleClass="version-box-title"/>
-                    <Label text="V" styleClass="version-box-value"/>
-                </VBox>
+                <Button text="Cancel" onAction="#handleCancel" styleClass="btn-modal-secondary"/>
+                <Button text="Create Migration" onAction="#handleCreate" styleClass="btn-modal-primary"/>
             </HBox>
-        </children>
-    </GridPane>
-
-    <VBox spacing="8" VBox.vgrow="ALWAYS">
-        <Label text="UP Migration" styleClass="input-label-bold"/>
-        <TextArea fx:id="upMigrationArea"
-                  text="-- Write your UP SQL here&#10;"
-                  prefHeight="130"
-                  minHeight="100"
-                  styleClass="sql-code-editor"
-                  wrapText="true"/>
-    </VBox>
-
-    <VBox spacing="8" VBox.vgrow="ALWAYS">
-        <Label text="DOWN Migration" styleClass="input-label-bold"/>
-        <TextArea fx:id="downMigrationArea"
-                  text="-- Write your DOWN SQL here&#10;"
-                  prefHeight="130"
-                  minHeight="100"
-                  styleClass="sql-code-editor"
-                  wrapText="true"/>
-    </VBox>
-
-    <HBox alignment="CENTER_RIGHT" spacing="12" VBox.vgrow="NEVER">
-        <padding>
-            <Insets top="10"/>
-        </padding>
-        <Button text="Cancel" onAction="#handleCancel" styleClass="btn-modal-secondary"/>
-        <Button text="Create Migration" onAction="#handleCreate" styleClass="btn-modal-primary"/>
-    </HBox>
-
-</VBox>
+        </VBox>
+    </content>
+</ScrollPane>

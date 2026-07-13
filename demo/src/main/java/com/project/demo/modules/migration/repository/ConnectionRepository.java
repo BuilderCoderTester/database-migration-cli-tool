@@ -185,9 +185,9 @@ public class ConnectionRepository {
                 ORDER BY datname
                 """;
         DatabaseConfig databaseConfig = ConfigManager.load();
-
+        System.out.println("The JDBC url : " + databaseConfig.getJdbcUrl());
         Connection metadataConn = DriverManager.getConnection(
-                "jdbc:postgresql://localhost:5432/postgres",
+                databaseConfig.getJdbcUrl(),
                 databaseConfig.getUsername(),
                 databaseConfig.getPassword()
         );

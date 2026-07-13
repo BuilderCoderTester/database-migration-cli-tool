@@ -2,6 +2,7 @@ package com.project.demo.component;
 
 import com.project.demo.BeforeExecutionValidation.SchemaValidatorService;
 import com.project.demo.config.MigrationProperties;
+import com.project.demo.enumuration.Status;
 import com.project.demo.modules.migration.dto.MigrationStatisticsDTO;
 import com.project.demo.modules.migration.dto.RelatedScriptDTO;
 import com.project.demo.modules.migration.dto.response.ValidationResult;
@@ -229,15 +230,21 @@ public class MigrationLoader {
         return new MigrationScript(version, description, upScript, downScript);
     }
 
-    /// CREATION OF MIGRATION FILE
-    /// PARAMETERS - VERSION , DESCRIPTION , UP_SCRIPT , DOWN_SCRIPT
+    /// CREATION & INITIAL STATUS SETUP OF MIGRATION FILE
     public ValidationResult createMigrationFile(String description, String upScript, String downScript, Connection connection)
             throws Exception {
 
+        // ANSI Colors for high-visibility terminal printing
+        final String RESET = "\u001B[0m";
+        final String CYAN = "\u001B[36m";
+        final String GREEN = "\u001B[32m";
+        final String YELLOW = "\u001B[33m";
+        final String RED = "\u001B[31m";
+        final String BOLD = "\u001B[1m";
+
         Long connectionId = connectionContext.getCurrentConnectionId();
-        System.out.println("teh connection id : "+ connectionId);
         if (connectionId == null) {
-            logService.log("No active connection. Please connect first.", LogLevel.ERROR);
+            System.out.println(RED + BOLD + "[💥 ERROR] No active connection found. Please connect first." + RESET);
             throw new RuntimeException("No active connection. Please connect first.");
         }
 
@@ -245,8 +252,9 @@ public class MigrationLoader {
         Path connectionFolder = basePath.resolve("conn_" + connectionId);
         Files.createDirectories(connectionFolder);
 
-        // ── AUTO-INCREMENT VERSION LOGIC ──
-        int nextVersion = 1; // default if no files exist
+        // ── CHECK IF THIS SCRIPT HAS ANY PRIOR EXECUTED NEIGHBORS ──
+        int nextVersion = 1;
+        boolean isFirstCreationNoExecution = true;
 
         try (Stream<Path> files = Files.list(connectionFolder)) {
             List<Path> migrationFiles = files
@@ -258,21 +266,21 @@ public class MigrationLoader {
                         } catch (IOException e) {
                             return 0L;
                         }
-                    }).reversed()) // most recent first
+                    }).reversed())
                     .collect(Collectors.toList());
 
             if (!migrationFiles.isEmpty()) {
+                // There are already files here, meaning past migrations exist/executed
+                isFirstCreationNoExecution = false;
                 Path latestFile = migrationFiles.get(0);
                 String fileName = latestFile.getFileName().toString();
 
-                // Extract version number: V{number}__...
                 Matcher matcher = Pattern.compile("V(\\d+)__").matcher(fileName);
                 if (matcher.find()) {
                     nextVersion = Integer.parseInt(matcher.group(1)) + 1;
                 }
             }
         }
-        // ──────────────────────────────────
 
         String version = String.valueOf(nextVersion);
         String fileName = String.format("V%s__%s.sql", version, description.replace(" ", "_"));
@@ -287,8 +295,18 @@ public class MigrationLoader {
             content.append("\n\n-- DOWN\n\n");
             content.append(downScript);
         }
-        String properVersion = 'V' + version;
-        System.out.println("the version is " + properVersion);
+
+        String properVersion = "V" + version;
+
+        // Beautiful CLI Dashboard
+        System.out.println(CYAN + "\n==================================================" + RESET);
+        System.out.println(CYAN + BOLD + "🚀 MIGRATION LIFECYCLE MANAGEMENT" + RESET);
+        System.out.println(CYAN + "==================================================" + RESET);
+        System.out.println(YELLOW + " 🏷️  Version        : " + RESET + BOLD + properVersion + RESET);
+        System.out.println(YELLOW + " 📂 File Path      : " + RESET + filePath.getFileName());
+        System.out.println(YELLOW + " 🔄 Execution State: " + RESET + (isFirstCreationNoExecution ? YELLOW + BOLD + "PENDING EXECUTION (First Script)" + RESET : CYAN + "SUBSEQUENT SCRIPT"));
+        System.out.println(CYAN + "--------------------------------------------------" + RESET);
+
         MigrationScript migrationScript = new MigrationScript();
         migrationScript.setVersion(properVersion);
         migrationScript.setDescription(description);
@@ -296,27 +314,40 @@ public class MigrationLoader {
         migrationScript.setUpScript(upScript);
         migrationScript.setDownScript(downScript);
 
-//        System.out.println("The migration script is : " + migrationScript.toString());
-        ValidationResult result = migrationValidatorService.validate(migrationScript, loadOtherMigrationScript(migrationScript.getVersion(), connectionId));
-        System.out.println("the result after is : "+result.toString());
+        System.out.println(CYAN + " 🔍 Validating script architecture..." + RESET);
+        ValidationResult result = migrationValidatorService.validate(
+                migrationScript,
+                loadOtherMigrationScript(migrationScript.getVersion(), connectionId)
+        );
+
         if (result.isValid()) {
             Files.writeString(filePath, content.toString());
 
             // ---------- SAVE TO SUB_MIGRATION TABLE ----------
+            // We track that because it's just created and not executed yet, its initial status is PENDING
             migrationRepository.saveCreatedMigration(
                     migrationScript,
                     connectionId,
-                    connection, content
+                    connection, content, Status.PENDING
             );
 
-            logService.log((fileName + " Migration Applied."), LogLevel.SUCCESS);
-            return ValidationResult.success("Migration Applied !!!!! ", migrationScript.getName());
+            System.out.println(GREEN + BOLD + "\n ✅ SUCCESS: File generated! Status set to PENDING until execution engine runs it." + RESET);
+            System.out.println(CYAN + "==================================================\n" + RESET);
+            return ValidationResult.success("Migration Created with PENDING status!", migrationScript.getName());
         } else {
+            System.out.println(RED + BOLD + "\n ❌ FILE CREATION REJECTED" + RESET);
+            System.out.println(RED + "--------------------------------------------------" + RESET);
 
-            logService.log((fileName + " Migration Failed."), LogLevel.ERROR);
+            if (isFirstCreationNoExecution) {
+                System.out.println(YELLOW + BOLD + " [STATUS] -> PENDING" + RESET + " (Validation failed on first creation, no execution was attempted.)");
+                System.out.println(CYAN + "==================================================\n" + RESET);
+                return ValidationResult.error("PENDING_VALIDATION_ERR");
+            } else {
+                System.out.println(RED + BOLD + " [STATUS] -> FAILED" + RESET + " (Validation failed for subsequent script setup.)");
+                System.out.println(CYAN + "==================================================\n" + RESET);
+                return ValidationResult.error("MIGRATION_CREATION_FAILED");
+            }
         }
-        return ValidationResult.error("Migration not Applied !HAHA!HADA! ");
-
     }
 
     public List<MigrationScript> loadOtherMigrationScript(

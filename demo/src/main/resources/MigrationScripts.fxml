@@ -9,6 +9,7 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
@@ -17,6 +18,7 @@
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.control.Separator?>
+
 <BorderPane xmlns:fx="http://javafx.com/fxml/1"
             xmlns="http://javafx.com/javafx/17"
             fx:controller="com.project.demo.api.rest.javafx.MigrationScriptsController"
@@ -49,71 +51,83 @@
     <center>
         <SplitPane dividerPositions="0.65" styleClass="dashboard-splitpane" BorderPane.alignment="CENTER">
             <items>
-                <VBox spacing="10" minWidth="400">
+                <VBox spacing="10" minWidth="400" VBox.vgrow="ALWAYS">
                     <padding>
                         <Insets top="10" right="15" bottom="20" left="20"/>
                     </padding>
                     <TableView fx:id="migrationTable" VBox.vgrow="ALWAYS">
                         <columns>
-                            <TableColumn fx:id="selectColumn" text="" prefWidth="40" minWidth="40" maxWidth="40" resizable="false"/>
-                            <TableColumn fx:id="versionColumn" text="Version" prefWidth="100"/>
-                            <TableColumn fx:id="descriptionColumn" text="Description" prefWidth="220"/>
-                            <TableColumn fx:id="typeColumn" text="Type" prefWidth="90"/>
-                            <TableColumn fx:id="statusColumn" text="Status" prefWidth="100"/>
-                            <TableColumn fx:id="executedColumn" text="Executed" prefWidth="150"/>
-                            <TableColumn fx:id="durationColumn" text="Duration" prefWidth="90"/>
+                            <TableColumn fx:id="selectColumn" text="" prefWidth="40" minWidth="40" maxWidth="40"
+                                         resizable="false"/>
+                            <TableColumn fx:id="versionColumn" text="Version" prefWidth="70"/>
+                            <TableColumn fx:id="descriptionColumn" text="Description" prefWidth="180"/>
+                            <TableColumn fx:id="typeColumn" text="Type" prefWidth="70"/>
+                            <TableColumn fx:id="statusColumn" text="Status" prefWidth="80"/>
+                            <TableColumn fx:id="executedColumn" text="Executed" prefWidth="120"/>
+                            <TableColumn fx:id="durationColumn" text="Duration" prefWidth="70"/>
                         </columns>
                         <columnResizePolicy>
-                            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                            <TableView fx:constant="UNCONSTRAINED_RESIZE_POLICY"/>
                         </columnResizePolicy>
                     </TableView>
                 </VBox>
 
-                <VBox spacing="12" styleClass="dashboard-panel" minWidth="350">
-                    <padding>
-                        <Insets top="15" right="15" bottom="15" left="15"/>
-                    </padding>
+                <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" minWidth="350"
+                            styleClass="dashboard-scrollpane">
+                    <content>
+                        <VBox spacing="12" styleClass="dashboard-panel">
+                            <padding>
+                                <Insets top="15" right="15" bottom="15" left="15"/>
+                            </padding>
 
-                    <Label text="Migration Preview" styleClass="panel-title"/>
+                            <Label text="Migration Preview" styleClass="panel-title"/>
 
-                    <GridPane hgap="15" vgap="10" VBox.vgrow="NEVER">
-                        <columnConstraints>
-                            <ColumnConstraints hgrow="NEVER" minWidth="90"/>
-                            <ColumnConstraints hgrow="ALWAYS"/>
-                        </columnConstraints>
-                        <children>
-                            <Label text="Version" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-                            <Label fx:id="versionLabel" styleClass="meta-value" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                            <GridPane hgap="15" vgap="10" VBox.vgrow="NEVER">
+                                <columnConstraints>
+                                    <ColumnConstraints hgrow="NEVER" minWidth="90"/>
+                                    <ColumnConstraints hgrow="ALWAYS"/>
+                                </columnConstraints>
+                                <children>
+                                    <Label text="Version" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                                    <Label fx:id="versionLabel" styleClass="meta-value" GridPane.rowIndex="0"
+                                           GridPane.columnIndex="1"/>
 
-                            <Label text="Description" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-                            <Label fx:id="descriptionLabel" styleClass="meta-value" wrapText="true" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                                    <Label text="Description" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                                    <Label fx:id="descriptionLabel" styleClass="meta-value" wrapText="true"
+                                           GridPane.rowIndex="1" GridPane.columnIndex="1"/>
 
-                            <Label text="Status" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-                            <Label fx:id="statusLabel" styleClass="meta-value" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                                    <Label text="Status" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                                    <Label fx:id="statusLabel" styleClass="meta-value" GridPane.rowIndex="2"
+                                           GridPane.columnIndex="1"/>
 
-                            <Label text="Type" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-                            <Label fx:id="typeLabel" styleClass="meta-value" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
-                        </children>
-                    </GridPane>
+                                    <Label text="Type" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                                    <Label fx:id="typeLabel" styleClass="meta-value" GridPane.rowIndex="3"
+                                           GridPane.columnIndex="1"/>
+                                </children>
+                            </GridPane>
 
-                    <Separator styleClass="panel-separator"/>
+                            <Separator styleClass="panel-separator"/>
 
-                    <Label text="UP Script" styleClass="script-section-heading"/>
-                    <TextArea fx:id="upScriptArea" editable="false" wrapText="true" VBox.vgrow="ALWAYS"/>
+                            <Label text="UP Script" styleClass="script-section-heading"/>
+                            <TextArea fx:id="upScriptArea" editable="false" wrapText="true" prefHeight="200"
+                                      minHeight="150" VBox.vgrow="ALWAYS"/>
 
-                    <Label text="DOWN Script" styleClass="script-section-heading"/>
-                    <TextArea fx:id="downScriptArea" editable="false" wrapText="true" prefHeight="130" minHeight="100" VBox.vgrow="SOMETIMES"/>
+                            <Label text="DOWN Script" styleClass="script-section-heading"/>
+                            <TextArea fx:id="downScriptArea" editable="false" wrapText="true" prefHeight="130"
+                                      minHeight="100" VBox.vgrow="SOMETIMES"/>
 
-                    <HBox spacing="10" alignment="CENTER_RIGHT" VBox.vgrow="NEVER">
-                        <padding>
-                            <Insets top="5"/>
-                        </padding>
-                        <Button fx:id="migrateButton" text="Migrate" onAction="#handleMigrate"/>
-                        <Button fx:id="updateButton" text="Update" onAction="#handleUpdate"/>
-                        <Button fx:id="repairButton" text="Repair" onAction="#handleRepair"/>
-                        <Button fx:id="rollbackButton" text="Rollback" onAction="#handleRollback"/>
-                    </HBox>
-                </VBox>
+                            <HBox spacing="10" alignment="CENTER_RIGHT" VBox.vgrow="NEVER">
+                                <padding>
+                                    <Insets top="5"/>
+                                </padding>
+                                <Button fx:id="migrateButton" text="Migrate" onAction="#handleMigrate"/>
+                                <Button fx:id="updateButton" text="Update" onAction="#handleUpdate"/>
+                                <Button fx:id="repairButton" text="Repair" onAction="#handleRepair"/>
+                                <Button fx:id="rollbackButton" text="Rollback" onAction="#handleRollback"/>
+                            </HBox>
+                        </VBox>
+                    </content>
+                </ScrollPane>
             </items>
         </SplitPane>
     </center>
