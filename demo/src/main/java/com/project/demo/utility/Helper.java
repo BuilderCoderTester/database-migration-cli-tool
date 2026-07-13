@@ -3,6 +3,7 @@ package com.project.demo.utility;
 import com.project.demo.component.*;
 import com.project.demo.config.ConfigManager;
 import com.project.demo.config.DatabaseConfig;
+import com.project.demo.enumuration.Status;
 import com.project.demo.migrationValidator.exception.ValidationException;
 import com.project.demo.modules.migration.model.Migration;
 import com.project.demo.modules.migration.model.MigrationScript;
@@ -103,7 +104,7 @@ public class Helper {
         m.setRepeatable(repeatable);
         m.setName(script.getName());
 
-        repository.save(m,connectionId ,connection);
+        repository.save(m,connectionId ,connection, Status.PASSED);
     }
 
     /// SFA checksum

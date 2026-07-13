@@ -51,51 +51,10 @@ public class MigrationRepository {
     }
 
     public void createSchemaHistoryTable() {
-        String sql = """
-                
-                    CREATE TABLE IF NOT EXISTS migration (
-                     id BIGSERIAL PRIMARY KEY,
-                
-                     version VARCHAR(50) NOT NULL UNIQUE,
-                     description VARCHAR(255),
-                
-                     script TEXT,
-                     checksum VARCHAR(64),
-                
-                     executed_at TIMESTAMP,
-                     execution_time BIGINT,
-                
-                     success BOOLEAN DEFAULT FALSE,
-                
-                     error_message TEXT,
-                     error_stack_trace TEXT,
-                
-                     retry_count INT DEFAULT 0,
-                
-                     dirty BOOLEAN DEFAULT FALSE,
-                     repeatable BOOLEAN DEFAULT FALSE,
-                
-                     name VARCHAR(255),
-                     connection_id BIGINT,  -- ✅ correct type
-                
-                         CONSTRAINT fk_connection
-                             FOREIGN KEY (connection_id)
-                             REFERENCES connections(connection_id)
-                             ON DELETE CASCADE
-                 );
-                """;
-        jdbcTemplate.execute(sql);
+        jdbcTemplate.execute(MigrationQuery.CREATE_TABLE_MIGRATION);
 
-        String check = """
-                CREATE TABLE IF NOT EXISTS migration_lock (
-                    id VARCHAR(255) PRIMARY KEY,
-                    locked BOOLEAN DEFAULT FALSE,
-                    locked_at TIMESTAMP,
-                    locked_by VARCHAR(255)
-                    );
-                """;
         try {
-            jdbcTemplate.execute(check);
+            jdbcTemplate.execute(MigrationQuery.CREATE_TABLE_MIGRATION_LOCK);
             log.info("Migration lock table is ready");
         } catch (Exception e) {
             log.error("Failed to create migration lock table", e);
@@ -105,7 +64,7 @@ public class MigrationRepository {
     @Transactional
     public void save(Migration migration,
                      Long connectionId,
-                     Connection connection) throws SQLException {
+                     Connection connection,Status status) throws SQLException {
 
         try (PreparedStatement debugStmt =
                      connection.prepareStatement("SELECT current_database()");
@@ -151,8 +110,11 @@ public class MigrationRepository {
             // execution_success
             stmt.setBoolean(8, false);
 
-            // status (PostgreSQL enum)
-            stmt.setObject(9, migration.getStatus().name(), Types.OTHER);
+            if (status == null) {
+                throw new IllegalArgumentException("Status cannot be null.");
+            }
+
+            stmt.setObject(9, status.name(), Types.OTHER);
 
             // connection_id
             stmt.setLong(10, connectionId);
@@ -230,7 +192,7 @@ public class MigrationRepository {
                     );
 
                     migration.setSuccess(
-                            rs.getBoolean("success")
+                            rs.getBoolean("execution_success")
                     );
 
                     ConnectionConfig connObj = new ConnectionConfig();
@@ -257,9 +219,7 @@ public class MigrationRepository {
     }
 
     public Optional<Migration> findByVersion(String version, Connection connection) throws SQLException {
-        String sql = "SELECT * FROM sub_migration WHERE version = ?";
-
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+        try (PreparedStatement statement = connection.prepareStatement( "SELECT * FROM sub_migration WHERE version = ?")) {
             statement.setString(1, version);
 
             try (ResultSet rs = statement.executeQuery()) {
@@ -364,8 +324,9 @@ public class MigrationRepository {
         m.setDirty(false);
         m.setRepeatable(repeatable);
         m.setName(script.getName());
+        m.setStatus(Status.PASSED);
 
-        save(m, connectionId, connection);
+        save(m, connectionId, connection,Status.PASSED);
     }
 
     public void saveCreatedMigration(MigrationScript script, Long connectionId, Connection connection, StringBuilder content, Status status) throws SQLException {
@@ -383,7 +344,7 @@ public class MigrationRepository {
         migration.setRepeatable(false);
         migration.setExecutionTime(System.currentTimeMillis());
         migration.setRunningTime(0L);
-        save(migration, connectionId, connection);
+        save(migration, connectionId, connection,status);
     }
 
     /// SFA checksum
@@ -464,9 +425,6 @@ public class MigrationRepository {
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
-    }
-
-    public void saveSuccess(MigrationScript script, Long connectionId, long l) {
     }
 
     public void saveFailure(MigrationScript script, Long connectionId, Exception e) {

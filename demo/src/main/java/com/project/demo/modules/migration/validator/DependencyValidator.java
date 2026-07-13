@@ -1,5 +1,6 @@
 package com.project.demo.modules.migration.validator;
 
+import com.project.demo.enumuration.AlterOperation;
 import com.project.demo.enumuration.DatabaseOperation;
 import com.project.demo.enumuration.Status;
 import com.project.demo.modules.migration.dto.MigrationScriptStatus;
@@ -48,6 +49,21 @@ public class DependencyValidator {
                     break;
 
                 case COLUMN:
+                    if (operation == DatabaseOperation.CREATE) {
+                        // For CREATE TABLE, nothing to validate per column.
+                        // The table existence check is already handled by validateCreateTable().
+                        break;
+                    }
+
+                    if (operation != DatabaseOperation.ALTER) {
+                        break;
+                    }
+
+                    AlterOperation alterOperation = dependencyAnalysisResult.getAlterOperation();
+
+                    if (alterOperation == null) {
+                        throw new RuntimeException("Missing AlterOperation for ALTER statement.");
+                    }
 
                     switch (dependencyAnalysisResult.getAlterOperation()) {
 
